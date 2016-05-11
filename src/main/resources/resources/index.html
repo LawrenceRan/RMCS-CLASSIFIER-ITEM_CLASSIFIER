@@ -1,0 +1,97 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Rendezvous Shopping Content Classification Demo.</title>
+    <link href="css/demo.css" rel="stylesheet" type="text/css" />
+    <style>
+        * { margin: 0; padding: 0; }
+    </style>
+</head>
+<body>
+<div id="page-wrap">
+    <div class="input-group">
+        <span class="input-group-label">?</span>
+        <input type="text" class="input-group-field" id="id-text" name="query" value="" size="46px" required
+                placeholder="enter a text or url"/>
+        <div class="input-group-button">
+            <input type="submit" class="button" id="btn_analyze" value="Classify">
+        </div>
+    </div>
+    <div id="response-div" class="responseDiv">
+        <!--<img id="id-loader" src="img/ajax-loader.gif" />-->
+    </div>
+</div>
+</body>
+<script src="js/vendor/jquery.min.js"></script>
+<script>
+    $(document).ready(function(){
+        $('#id-text').focus();
+    });
+    $('#btn_analyze').on('click', function(){
+        var text = $('#id-text').val();
+        if(text.length !== 0){
+            //$('#id-loader').show();
+            //Todo: find a proper way to assign base url
+//            var url = "http://sandbox.rancardmobility.com:9090/text?text="+ encodeURIComponent(text);
+            var url = "http://localhost:9090/text?text="+ encodeURIComponent(text);
+            $.getJSON(url, null, function(response){
+                if(response) {
+                    console.log("Response: " + JSON.stringify(response));
+                    if(response.hasOwnProperty("data")) {
+                        var data = response['data'];
+                        if (data.hasOwnProperty("classification")) {
+                            var classification = data['classification'];
+                            if (classification) {
+                                var htmlStr = [];
+                                htmlStr.push("<ul>");
+                                if (classification.hasOwnProperty("category")) {
+                                    var category = classification['category'];
+                                    if (category) {
+                                        htmlStr.push("<li><span><b>Category : </b> " + category + "</span></li>");
+                                    }
+                                }
+
+                                if(classification.hasOwnProperty("categories")){
+                                    var categories = classification['categories'];
+                                    if(categories){
+                                        $.each(categories, function(k, v){
+                                            htmlStr.push("<li>"+ v +"</li>")
+                                        });
+                                    }
+                                }
+
+                                if(classification.hasOwnProperty("color")){
+                                    var color = classification['color'];
+                                    if(color){
+                                        htmlStr.push("<li><span><b>Possible Color:</b> </span><span style='color: "+
+                                        color +"'>" + color + "</span></li>");
+                                    }
+                                }
+
+                                if(classification.hasOwnProperty("attribute")){
+                                    var attributes = classification['attribute'];
+                                    htmlStr.push("<li>");
+                                    htmlStr.push("<span><b>Attribute :</b></span>");
+                                    if(attributes){
+                                        htmlStr.push("<span>");
+                                            htmlStr.push("<ul>");
+                                            $.each(attributes, function(k,v){
+                                                htmlStr.push("<li>"+ attributes[k] + "</li>");
+                                            });
+                                            htmlStr.push("</ul>");
+                                        htmlStr.push("</span>");
+                                    }
+                                    htmlStr.push("</li>");
+                                }
+                                htmlStr.push("</ul>");
+
+                                $('#response-div').html(htmlStr.join(" "));
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+</html>
