@@ -1,9 +1,11 @@
 package contentclassification.controller;
 
+import contentclassification.config.WordNetDictConfig;
 import contentclassification.domain.AppUtils;
 import contentclassification.domain.Color;
 import contentclassification.domain.RestResponseKeys;
 import contentclassification.service.JsoupService;
+import contentclassification.service.WordNetService;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
@@ -17,6 +19,7 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 import weka.core.ClassloaderUtil;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +33,12 @@ public class Index {
 
     @Autowired
     private JsoupService jsoupService;
+
+    @Autowired
+    private WordNetService wordNetService;
+
+    @Autowired
+    private WordNetDictConfig wordNetDictConfig;
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public ModelAndView index(){
@@ -71,7 +80,7 @@ public class Index {
     }
 
     @RequestMapping(value = "/url", method = RequestMethod.GET, produces = "application/json")
-    public ModelAndView generateTagsByUrl(@RequestParam(required = true, name = "url") String url) {
+    public ModelAndView generateTagsByUrl(@RequestParam(required = true, name = "url") String url){
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
         if(StringUtils.isNotBlank(url)){
@@ -85,10 +94,28 @@ public class Index {
 
             String text = jsoupService.bodyTextByHtmlUnit(url);
              if(StringUtils.isNotBlank(text)) {
-                List<String> potentialColor = AppUtils.getColorByRegEx(text);
-                if(!potentialColor.isEmpty()){
-                    List<String> getColorsFromRegExObj = AppUtils.getColorsFromRegEx(potentialColor);
-                    response.put("data", getColorsFromRegExObj);
+                 List<String> potentialColor = AppUtils.getColorByRegEx(text);
+
+                 if(!potentialColor.isEmpty()){
+                     List<String> getColorsFromRegExObj = AppUtils.getColorsFromRegEx(potentialColor);
+                     Map<String, Object> colors = new HashMap<>();
+                     colors.put("colors", getColorsFromRegExObj);
+                     response.putAll(colors);
+
+                     boolean displayResults = wordNetDictConfig.getDisplayResultsBool();
+                     if(displayResults){
+                         List<Map> definitions = new ArrayList<>();
+                         if(!getColorsFromRegExObj.isEmpty()) {
+                             for(String s : getColorsFromRegExObj) {
+                                 Map<String, Object> map = new HashMap<>();
+                                 List<Map> m = wordNetService.getResponse(s);
+                                 map.put(s, m);
+                                 definitions.add(map);
+                             }
+                         }
+                         response.put("definitions", definitions);
+                     }
+
                 }
                 logger.info("Potential Color: "+ potentialColor.toString());
             }

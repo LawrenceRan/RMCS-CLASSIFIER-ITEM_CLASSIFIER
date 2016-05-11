@@ -123,7 +123,7 @@ public class AppUtils {
         if (potentialColors != null && !potentialColors.isEmpty()) {
             for(String s : potentialColors){
                 String d = s.replaceAll("\\b(Color|Colour|COLOR|COLOUR|color|colour)\\b(\\s|\\:|\\s\\:\\s|\\:\\s||)\\b(\\:|)","");
-                colors.add(d);
+                colors.add(d.trim().toUpperCase());
             }
         }
         Set<String> cleanUp = new HashSet<>();
