@@ -68,6 +68,7 @@ public class AppUtils {
                 text.add(matcher.group());
             }
         }
+
         Set<String> cleanUp = new HashSet<>();
         cleanUp.addAll(text);
         text.clear();
@@ -126,10 +127,40 @@ public class AppUtils {
                 colors.add(d.trim().toUpperCase());
             }
         }
+
+        List<String> breakUp = breakUp(colors, new String[]{","});
         Set<String> cleanUp = new HashSet<>();
         cleanUp.addAll(colors);
+        if(!breakUp.isEmpty()){
+            cleanUp.clear();
+            cleanUp.addAll(breakUp);
+        }
         colors.clear();
         colors.addAll(cleanUp);
         return colors;
+    }
+
+    public static List<String> breakUp(List<String> hayStack, String... niddles){
+        List<String> output = new ArrayList<>();
+        if (niddles != null && niddles.length > 0) {
+            for(String n : niddles) {
+                if (!hayStack.isEmpty()) {
+                    for (String h : hayStack) {
+                        if(h.contains(n)){
+                            List<String> g = Arrays.asList(h.split(n));
+                            if(!g.isEmpty()) {
+                                for(String f : g) {
+                                    output.add(f.trim().toUpperCase());
+                                }
+                            }
+                        } else {
+                            output.add(h);
+                        }
+                    }
+                }
+            }
+        }
+
+        return output;
     }
 }
