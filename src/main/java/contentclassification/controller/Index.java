@@ -108,7 +108,9 @@ public class Index {
                          if(!getColorsFromRegExObj.isEmpty()) {
                              for(String s : getColorsFromRegExObj) {
                                  Map<String, Object> map = new HashMap<>();
-                                 List<Map> m = wordNetService.getResponse(s);
+//                                 List<Map> m = wordNetService.getResponse(s);
+//                                 map.put(s, m);
+                                 List<Map> m = wordNetService.findStemmers(s);
                                  map.put(s, m);
                                  definitions.add(map);
                              }

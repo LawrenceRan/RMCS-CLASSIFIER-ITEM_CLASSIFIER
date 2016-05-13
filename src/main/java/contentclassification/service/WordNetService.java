@@ -1,5 +1,6 @@
 package contentclassification.service;
 
+import contentclassification.domain.JWIImpl;
 import contentclassification.domain.WordNetImpl;
 import org.springframework.stereotype.Service;
 
@@ -14,5 +15,10 @@ public class WordNetService {
     public List<Map> getResponse(String query){
         WordNetImpl wordNet = new WordNetImpl(query);
         return wordNet.getResults();
+    }
+
+    public List<Map> findStemmers(String query){
+        JWIImpl jwi = new JWIImpl(query);
+        return jwi.findStems();
     }
 }
