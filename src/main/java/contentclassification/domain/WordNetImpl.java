@@ -23,7 +23,13 @@ public class WordNetImpl {
     }
 
     private WordNetDatabase database(){
-        return WordNetDatabase.getFileInstance();
+        WordNetDatabase database = null;
+        try {
+            database = WordNetDatabase.getFileInstance();
+        } catch (Exception e){
+            logger.debug("Error in getting word net database instance. Message: "+ e.getMessage());
+        }
+        return database;
     }
 
     private Synset[] getSynsets(){
