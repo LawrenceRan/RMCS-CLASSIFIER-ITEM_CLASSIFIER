@@ -2,6 +2,9 @@ package contentclassification.domain;
 
 import edu.mit.jwi.Dictionary;
 import edu.mit.jwi.IDictionary;
+import edu.mit.jwi.item.IIndexWord;
+import edu.mit.jwi.item.IWord;
+import edu.mit.jwi.item.IWordID;
 import edu.mit.jwi.item.POS;
 import edu.mit.jwi.morph.WordnetStemmer;
 import org.slf4j.Logger;
@@ -77,8 +80,8 @@ public class JWIImpl {
                 if(stemmer != null) {
                     List<String> stemmers = stemmer.findStems(this.query, pos);
                     if(stemmers != null && !stemmers.isEmpty()) {
-                        Map<String, Object> map = new HashMap<>();
-                        map.put(pos.toString(), stemmers);
+                        Map<Integer, Object> map = new HashMap<>();
+                        map.put(pos.getNumber(), stemmers.get(0));
                         if (!map.isEmpty()) {
                             stems.add(map);
                         }
@@ -87,5 +90,34 @@ public class JWIImpl {
             }
         }
         return stems;
+    }
+
+    public List<Map> glosses(){
+        List<Map> glosses = new ArrayList<>();
+        List<Map> stemmers = findStems();
+        if(!stemmers.isEmpty()){
+            IDictionary dictionary = database();
+            for(Map map : stemmers){
+                Map<String, Object> resultsMap = new HashMap<>();
+
+                for(Object keySet : map.keySet()){
+                    Integer posInt = (Integer) keySet;
+                    POS pos = POS.getPartOfSpeech(posInt);
+                    String value = map.get(keySet).toString();
+                    IIndexWord iIndexWord = dictionary.getIndexWord(value, pos);
+                    if(iIndexWord != null) {
+                        IWordID iWordID = iIndexWord.getWordIDs().get(0);
+                        IWord iWord = dictionary.getWord(iWordID);
+
+                        //resultsMap.put("wordId", iWordID);
+                        resultsMap.put("lemma", iWord.getLemma());
+                        resultsMap.put("gloss", iWord.getSynset().getGloss());
+                        resultsMap.put("type", POS.getPartOfSpeech(iWord.getSynset().getType()).toString());
+                        glosses.add(resultsMap);
+                    }
+                }
+            }
+        }
+        return glosses;
     }
 }

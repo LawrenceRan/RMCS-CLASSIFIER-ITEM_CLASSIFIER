@@ -110,7 +110,9 @@ public class Index {
                                  Map<String, Object> map = new HashMap<>();
 //                                 List<Map> m = wordNetService.getResponse(s);
 //                                 map.put(s, m);
-                                 List<Map> m = wordNetService.findStemmers(s);
+//                                 List<Map> m = wordNetService.findStemmers(s);
+//                                 map.put(s, m);
+                                 List<Map> m = wordNetService.glosses(s);
                                  map.put(s, m);
                                  definitions.add(map);
                              }

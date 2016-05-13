@@ -21,4 +21,9 @@ public class WordNetService {
         JWIImpl jwi = new JWIImpl(query);
         return jwi.findStems();
     }
+
+    public List<Map> glosses(String query){
+        JWIImpl jwi = new JWIImpl(query);
+        return jwi.glosses();
+    }
 }
