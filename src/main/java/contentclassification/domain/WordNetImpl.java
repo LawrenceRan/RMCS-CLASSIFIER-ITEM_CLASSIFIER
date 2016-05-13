@@ -3,6 +3,8 @@ package contentclassification.domain;
 import edu.smu.tspell.wordnet.Synset;
 import edu.smu.tspell.wordnet.SynsetType;
 import edu.smu.tspell.wordnet.WordNetDatabase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,7 +15,7 @@ import java.util.Map;
  * Created by rsl_prod_005 on 5/11/16.
  */
 public class WordNetImpl {
-
+    private Logger logger = LoggerFactory.getLogger(WordNetImpl.class);
     private String query;
 
     public WordNetImpl(String query){
@@ -26,9 +28,14 @@ public class WordNetImpl {
 
     private Synset[] getSynsets(){
         Synset[] synsets  = null;
-        WordNetDatabase databaseObj = database();
-        if(databaseObj != null){
-            synsets = databaseObj.getSynsets(this.query);
+        try {
+            logger.info("WordNet database dictionary: "+ System.getProperty("wordnet.database.dir"));
+            WordNetDatabase databaseObj = database();
+            if (databaseObj != null) {
+                synsets = databaseObj.getSynsets(this.query);
+            }
+        } catch (Exception e){
+            logger.debug("Error in getting wordnet database. Message: "+ e.getMessage());
         }
         return synsets;
     }
