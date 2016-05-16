@@ -1,10 +1,13 @@
 package contentclassification.domain;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,5 +82,73 @@ public class Color {
             System.out.println("Error: "+ e.getMessage());
         }
         return colors;
+    }
+
+    @Override
+    public int hashCode(){
+        return new HashCodeBuilder(15, 39).append(name).toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj){
+        if(!(obj instanceof Color)){
+            return false;
+        }
+
+        if(obj == this){
+            return true;
+        }
+
+        Color color = (Color) obj;
+        return new EqualsBuilder().append(name, color.getName()).isEquals();
+    }
+
+    @Override
+    public String toString(){
+        return this.getName();
+    }
+
+    public static <Color> boolean containInstance(List<Color> colorList, Class<? extends Color> colorObj){
+        if(!colorList.isEmpty()){
+            for(Color c : colorList){
+                if(colorObj.isInstance(c)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static <Color> boolean isEqual(List<Color> colorList, Color colorObj){
+        if(!colorList.isEmpty()){
+            for(Color c : colorList){
+                if(colorObj.equals(c)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean isValid(String color){
+        Color c = new Color(color);
+        ClassLoader classLoader = c.getClass().getClassLoader();
+        URL url = classLoader.getResource("colors.yml");
+        String urlStr = null;
+        if(url != null){
+            urlStr = url.getFile();
+        }
+        return containInstance(loadColors(urlStr), c.getClass());
+    }
+
+    public static boolean isExisting(String color){
+        Color c = new Color(color);
+        ClassLoader classLoader = c.getClass().getClassLoader();
+        URL url = classLoader.getResource("colors.yml");
+        String urlStr = null;
+        if(url != null){
+            urlStr = url.getFile();
+        }
+        return isEqual(loadColors(urlStr), c);
     }
 }

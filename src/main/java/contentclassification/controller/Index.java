@@ -100,6 +100,17 @@ public class Index {
                      List<String> getColorsFromRegExObj = AppUtils.getColorsFromRegEx(potentialColor);
                      Map<String, Object> colors = new HashMap<>();
                      colors.put("colors", getColorsFromRegExObj);
+
+                     List<Map> colorsValidation = new ArrayList<>();
+                     if(!colors.isEmpty()){
+                         for(String s : getColorsFromRegExObj){
+                             Map<String, Object> map = new HashMap<>();
+                             map.put("name", s);
+                             map.put("isValidated", Color.isExisting(s.trim().toLowerCase()));
+                             colorsValidation.add(map);
+                         }
+                     }
+                     colors.put("colorsValidation", colorsValidation);
                      response.putAll(colors);
 
                      boolean displayResults = wordNetDictConfig.getDisplayResultsBool();

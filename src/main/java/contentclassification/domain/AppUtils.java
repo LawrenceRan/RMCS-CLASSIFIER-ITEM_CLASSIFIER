@@ -137,6 +137,18 @@ public class AppUtils {
         }
         colors.clear();
         colors.addAll(cleanUp);
+
+        if(!colors.isEmpty()) {
+            for(String d : colors) {
+                boolean isValidated = Color.isExisting(d.trim().toLowerCase());
+                if (isValidated) {
+                    System.out.println("Yes validated: " + d);
+                } else {
+                    System.out.println("Not validated: " + d);
+                }
+            }
+        }
+
         return colors;
     }
 
