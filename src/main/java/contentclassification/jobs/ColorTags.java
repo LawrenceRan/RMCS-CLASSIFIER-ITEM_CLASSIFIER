@@ -35,15 +35,15 @@ public class ColorTags {
         List<String> colors = colorsFromSite();
 
         ClassLoader classLoader = getClass().getClassLoader();
-        String colorYmlFile = null;
+        URL colorYmlFile = null;
         try {
-            colorYmlFile = classLoader.getResource("colors.yml").getFile();
+            colorYmlFile = classLoader.getResource("colors.yml");
         } catch (Exception e){
             logger.debug("Resource colors yml file not found. Message: " + e.getMessage());
         }
 
-        if(StringUtils.isNotBlank(colorYmlFile)) {
-            List<Color> exitingColors = Color.loadColors(colorYmlFile);
+        if(colorYmlFile != null) {
+            List<Color> exitingColors = Color.loadColorsByInputStream(colorYmlFile);
             int p = exitingColors.size();
             logger.info("Existing colors size: " + exitingColors.size());
 
@@ -106,6 +106,7 @@ public class ColorTags {
             URL url = classLoader.getResource("colors.yml");
             if(url != null) {
                 String colorYamlFile = url.getFile();
+
                 if (StringUtils.isNotBlank(colorYamlFile)) {
                     try {
                         FileWriter fileWriter = new FileWriter(colorYamlFile);

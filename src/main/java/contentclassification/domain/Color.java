@@ -84,6 +84,25 @@ public class Color {
         return colors;
     }
 
+    public static List<Color> loadColorsByInputStream(URL filePath){
+        List<Color> colors = new ArrayList<Color>();
+        Yaml yaml = new Yaml();
+        try {
+            if(filePath != null) {
+                List<String> ymlContent = (List<String>) yaml.load(filePath.openStream());
+                if (!ymlContent.isEmpty()) {
+                    for (String c : ymlContent) {
+                        Color color = new Color(c);
+                        colors.add(color);
+                    }
+                }
+            }
+        } catch (Exception e){
+            System.out.println("Error: "+ e.getMessage());
+        }
+        return colors;
+    }
+
     @Override
     public int hashCode(){
         return new HashCodeBuilder(15, 39).append(name).toHashCode();
@@ -134,21 +153,13 @@ public class Color {
         Color c = new Color(color);
         ClassLoader classLoader = c.getClass().getClassLoader();
         URL url = classLoader.getResource("colors.yml");
-        String urlStr = null;
-        if(url != null){
-            urlStr = url.getFile();
-        }
-        return containInstance(loadColors(urlStr), c.getClass());
+        return containInstance(loadColorsByInputStream(url), c.getClass());
     }
 
     public static boolean isExisting(String color){
         Color c = new Color(color);
         ClassLoader classLoader = c.getClass().getClassLoader();
         URL url = classLoader.getResource("colors.yml");
-        String urlStr = null;
-        if(url != null){
-            urlStr = url.getFile();
-        }
-        return isEqual(loadColors(urlStr), c);
+        return isEqual(loadColorsByInputStream(url), c);
     }
 }
