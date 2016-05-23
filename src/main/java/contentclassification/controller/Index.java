@@ -4,6 +4,7 @@ import contentclassification.config.WordNetDictConfig;
 import contentclassification.domain.AppUtils;
 import contentclassification.domain.Color;
 import contentclassification.domain.RestResponseKeys;
+//import contentclassification.service.DomainGraphDBImpl;
 import contentclassification.service.JsoupService;
 import contentclassification.service.WordNetService;
 import org.apache.commons.lang3.StringUtils;
@@ -39,6 +40,9 @@ public class Index {
 
     @Autowired
     private WordNetDictConfig wordNetDictConfig;
+
+//    @Autowired
+//    private DomainGraphDBImpl domainGraphDB;
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public ModelAndView index(){
@@ -141,7 +145,6 @@ public class Index {
 //                response.put("data", color);
 //                logger.info("content");
 //            }
-
 
         } else {
             response.put(RestResponseKeys.MESSAGE.toString(), "empty or missing url.");
