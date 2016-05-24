@@ -1,10 +1,9 @@
 package contentclassification.controller;
 
 import contentclassification.config.WordNetDictConfig;
-import contentclassification.domain.AppUtils;
-import contentclassification.domain.Color;
-import contentclassification.domain.RestResponseKeys;
+import contentclassification.domain.*;
 //import contentclassification.service.DomainGraphDBImpl;
+import contentclassification.service.ClassificationServiceImpl;
 import contentclassification.service.JsoupService;
 import contentclassification.service.WordNetService;
 import org.apache.commons.lang3.StringUtils;
@@ -20,10 +19,7 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 import weka.core.ClassloaderUtil;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by rsl_prod_005 on 5/6/16.
@@ -41,6 +37,9 @@ public class Index {
     @Autowired
     private WordNetDictConfig wordNetDictConfig;
 
+    @Autowired
+    private ClassificationServiceImpl classificationService;
+
 //    @Autowired
 //    private DomainGraphDBImpl domainGraphDB;
 
@@ -53,21 +52,21 @@ public class Index {
         return modelAndView;
     }
 
-    @RequestMapping(value = "/feed", method = RequestMethod.GET)
+    @RequestMapping(value = "/v1/feed", method = RequestMethod.GET)
     public ModelAndView analyzeFeed(@RequestParam(required = true) String url) {
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
 
         return modelAndView;
     }
 
-    @RequestMapping(value = "/text", method = RequestMethod.GET)
+    @RequestMapping(value = "/v1/text", method = RequestMethod.GET)
     public ModelAndView analyzeText(@RequestParam(required = true) String text) {
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
 
         return modelAndView;
     }
 
-    @RequestMapping(value = "/tags", method = RequestMethod.GET)
+    @RequestMapping(value = "/v1/tags", method = RequestMethod.GET)
     public ModelAndView generateTags(@RequestParam(required = true) String text) {
         logger.info("Request for custom tags using parameter: " + text);
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
@@ -75,7 +74,7 @@ public class Index {
         return modelAndView;
     }
 
-    @RequestMapping(value = "/learning", method = RequestMethod.GET, produces = "application/json")
+    @RequestMapping(value = "/v1/learning", method = RequestMethod.GET, produces = "application/json")
     public ModelAndView getExternalData(@RequestParam(required = true) String query) {
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
@@ -83,7 +82,7 @@ public class Index {
         return modelAndView;
     }
 
-    @RequestMapping(value = "/url", method = RequestMethod.GET, produces = "application/json")
+    @RequestMapping(value = "/v1/url", method = RequestMethod.GET, produces = "application/json")
     public ModelAndView generateTagsByUrl(@RequestParam(required = true, name = "url") String url){
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
@@ -98,16 +97,19 @@ public class Index {
 
             String text = jsoupService.bodyTextByHtmlUnit(url);
              if(StringUtils.isNotBlank(text)) {
+                 /**
+                  * The start of getting potential colors.
+                  */
                  List<String> potentialColor = AppUtils.getColorByRegEx(text);
 
-                 if(!potentialColor.isEmpty()){
+                 if(!potentialColor.isEmpty()) {
                      List<String> getColorsFromRegExObj = AppUtils.getColorsFromRegEx(potentialColor);
                      Map<String, Object> colors = new HashMap<>();
                      colors.put("colors", getColorsFromRegExObj);
 
                      List<Map> colorsValidation = new ArrayList<>();
-                     if(!colors.isEmpty()){
-                         for(String s : getColorsFromRegExObj){
+                     if (!colors.isEmpty()) {
+                         for (String s : getColorsFromRegExObj) {
                              Map<String, Object> map = new HashMap<>();
                              map.put("name", s);
                              map.put("isValidated", Color.isExisting(s.trim().toLowerCase()));
@@ -118,10 +120,10 @@ public class Index {
                      response.putAll(colors);
 
                      boolean displayResults = wordNetDictConfig.getDisplayResultsBool();
-                     if(displayResults){
+                     if (displayResults) {
                          List<Map> definitions = new ArrayList<>();
-                         if(!getColorsFromRegExObj.isEmpty()) {
-                             for(String s : getColorsFromRegExObj) {
+                         if (!getColorsFromRegExObj.isEmpty()) {
+                             for (String s : getColorsFromRegExObj) {
                                  Map<String, Object> map = new HashMap<>();
 //                                 List<Map> m = wordNetService.getResponse(s);
 //                                 map.put(s, m);
@@ -134,8 +136,47 @@ public class Index {
                          }
                          response.put("definitions", definitions);
                      }
+                 }
+                 //End of getting potential colors.
 
-                }
+                 List<String> uniqueCollection = classificationService.uniqueCollection(text);
+                 String[] tokens = classificationService.tokenize(text);
+
+                 List<Map> posList = null;
+                 if(tokens != null && tokens.length > 0){
+                     List<String> tokensAsList = Arrays.asList(tokens);
+                     List<Categories> categoriesList = classificationService.getCategories();
+
+                     List<String> allAttributes = new ArrayList<>();
+
+                     if(categoriesList != null && !categoriesList.isEmpty()){
+                         for(Categories c : categoriesList){
+                              allAttributes.addAll(c.getAttributes());
+                         }
+                     }
+
+                     List<String> intersect = classificationService.getIntersection(tokensAsList, allAttributes);
+
+                     if(intersect != null && !intersect.isEmpty()){
+                         List<TFIDFWeightedScore> tfidfWeightedScores = new ArrayList<>();
+                         for(String i : intersect){
+                             double tfScore = classificationService.getTFScore(tokens, i);
+                             double idfScore = classificationService.getIdfScore(tokens, i);
+                             double tfIdfWeightScore = classificationService.getTfIdfWeightScore(tokens, i);
+
+                             TFIDFWeightedScore tfidfWeightedScore = new TFIDFWeightedScore();
+                             tfidfWeightedScore.setTerm(i);
+                             tfidfWeightedScore.setScore(tfIdfWeightScore);
+                             tfidfWeightedScore.setIdfScore(idfScore);
+                             tfidfWeightedScore.setTfScore(tfScore);
+                             tfidfWeightedScores.add(tfidfWeightedScore);
+                         }
+                         Collections.sort(tfidfWeightedScores, TFIDFWeightedScore.tfidfWeightedScoreComparator);
+
+                         logger.info("map of intersect to score");
+                     }
+                     posList = classificationService.getPos(tokens);
+                 }
                 logger.info("Potential Color: "+ potentialColor.toString());
             }
 

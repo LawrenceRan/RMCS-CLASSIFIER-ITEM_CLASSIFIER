@@ -57,7 +57,6 @@ public class WordNetImpl {
                 SynsetType synsetType = synsets[x].getType();
 
                 map.put("type", synsetType.toString());
-
                 String[] wordForms = synsets[x].getWordForms();
                 map.put("wordForms", wordForms);
                 output.add(map);

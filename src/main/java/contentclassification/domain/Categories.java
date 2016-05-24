@@ -9,6 +9,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.net.URL;
 import java.util.*;
 
 /**
@@ -80,6 +81,53 @@ public class Categories {
                     }
                     categories.add(c);
                     x++;
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+        return categories;
+    }
+
+    public List<Categories> loadCategoriesFromYml() {
+        List<Categories> categories = new ArrayList<Categories>();
+        try {
+            Yaml yaml = new Yaml();
+            ClassLoader classLoader = getClass().getClassLoader();
+            URL url = classLoader.getResource("fashion-categories.yml");
+            if(url != null) {
+                Map<String, List<String>> ymlCategories = (Map<String, List<String>>)
+                        yaml.load(new FileInputStream(new File(url.getFile())));
+
+                if (ymlCategories != null && !ymlCategories.isEmpty()) {
+                    int x = 0;
+                    for (Map.Entry<String, List<String>> category : ymlCategories.entrySet()) {
+                        Categories c = new Categories();
+                        c.category = category.getKey();
+
+                        List<String> attributes = category.getValue();
+                        List<String> attributesPluralized = new LinkedList<>();
+                        if (!attributes.isEmpty()) {
+                            for (String s : attributes) {
+                                Set<String> pluralized = pluralize(s);
+                                if (!pluralized.isEmpty()) {
+                                    for (String p : pluralized) {
+                                        attributesPluralized.add(p);
+                                    }
+                                }
+                            }
+
+                            Set<String> cleanUp = new HashSet<>();
+                            cleanUp.addAll(attributesPluralized);
+
+                            attributesPluralized.clear();
+                            attributesPluralized.addAll(cleanUp);
+
+                            c.attributes = attributesPluralized;
+                        }
+                        categories.add(c);
+                        x++;
+                    }
                 }
             }
         } catch (Exception e) {

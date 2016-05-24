@@ -1,18 +1,26 @@
 package contentclassification.domain;
 
+import com.google.common.collect.Sets;
 import contentclassification.utilities.BM25;
 import info.debatty.java.stringsimilarity.Jaccard;
 import net.sf.javaml.core.Dataset;
 import net.sf.javaml.core.DefaultDataset;
 import net.sf.javaml.core.DenseInstance;
 import net.sf.javaml.core.Instance;
+import opennlp.tools.cmdline.postag.POSModelLoader;
+import opennlp.tools.postag.POSModel;
+import opennlp.tools.postag.POSTaggerME;
+import opennlp.tools.tokenize.Tokenizer;
+import opennlp.tools.tokenize.TokenizerME;
+import opennlp.tools.tokenize.TokenizerModel;
+import opennlp.tools.util.InvalidFormatException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.*;
+import java.net.URL;
 import java.util.*;
 
 /**
@@ -144,14 +152,45 @@ public class Classification {
 
     public List<String> uniqueCollection(){
         List<String> titleAsList = new LinkedList<>();
-        titleAsList.addAll(Arrays.asList(title.replaceAll("\\|", " ").replaceAll(" - ", " ")
-                .split(" ")));
+        List<String> tokensIncludeWhitespaces = Arrays.asList(title.replaceAll("\\|", " ").replaceAll(" - ", " ")
+                .split(" "));
+
+        if(!tokensIncludeWhitespaces.isEmpty()) {
+            for(String s : tokensIncludeWhitespaces) {
+                if(StringUtils.isNotBlank(s)) {
+                    titleAsList.add(s);
+                }
+            }
+        }
         //Remove any duplicates in words.
         Set<String> unique = new HashSet<>();
         unique.addAll(titleAsList);
         titleAsList.clear();
         titleAsList.addAll(unique);
         return titleAsList;
+    }
+
+    public String[] getTokens(){
+        String[] tokens = new String[]{};
+        try{
+            ClassLoader classLoader = getClass().getClassLoader();
+            URL url = classLoader.getResource("en-token.bin");
+            if(url != null) {
+                InputStream modelStream = url.openStream();
+                if (modelStream != null) {
+                    TokenizerModel tokenizerModel = new TokenizerModel(modelStream);
+                    Tokenizer tokenizer = new TokenizerME(tokenizerModel);
+                    tokens = tokenizer.tokenize(title);
+                }
+            }
+        } catch (FileNotFoundException e){
+            logger.debug("File not found exception: "+ e.getMessage());
+        } catch (InvalidFormatException e){
+            logger.debug("Invalid format exception: "+ e.getMessage());
+        } catch (IOException e){
+            logger.debug("IO exception: "+ e.getMessage());
+        }
+        return tokens;
     }
 
     private String getCategory(String attribute){
@@ -368,5 +407,47 @@ public class Classification {
             logger.debug("Error in getting color phrases. Message: "+ e.getMessage());
         }
         return colorPhrases;
+    }
+
+    public List<Map> getPos(String[] tokens){
+        List<Map> pos = new ArrayList<>();
+        if(tokens != null && tokens.length > 0){
+            ClassLoader classLoader = getClass().getClassLoader();
+            URL url = classLoader.getResource("en-pos-maxent.bin");
+            if(url != null ) {
+                try {
+                    POSModel posModel = new POSModelLoader().load(new File(url.getFile()));
+                    POSTaggerME posTaggerME = new POSTaggerME(posModel);
+                    String[] tags = posTaggerME.tag(tokens);
+                    int x = 0;
+                    for (String t : tags) {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("token", tokens[x]);
+                        map.put("pos", t);
+                        pos.add(map);
+                        x++;
+                    }
+                } catch (Exception e){
+                    logger.debug("IO Exception: "+ e.getMessage());
+                }
+            }
+        }
+        return pos;
+    }
+
+    public <T> List<T> union(List<T> a, List<T> b){
+        Set<T> set = new HashSet<>();
+        set.addAll(a);
+        set.addAll(b);
+        return new ArrayList<>(set);
+    }
+
+    public <T> List<T> intersection(List<T> a, List<T> b){
+        List<T> intersect = new ArrayList<>();
+//        b.retainAll(a);
+//        intersect.addAll(b);
+        Set<T> inter = Sets.intersection(Sets.newHashSet(a), Sets.newHashSet(b));
+        intersect.addAll(inter);
+        return intersect;
     }
 }

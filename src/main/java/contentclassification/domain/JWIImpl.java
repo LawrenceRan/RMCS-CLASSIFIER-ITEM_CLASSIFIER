@@ -92,6 +92,23 @@ public class JWIImpl {
         return stems;
     }
 
+    public String getStem(){
+        String stem = null;
+        List<POS> posList = Arrays.asList(POS.values());
+        if(!posList.isEmpty()){
+            for(POS pos : posList){
+                WordnetStemmer stemmer = wordnetStemmer();
+                if(stemmer != null) {
+                    List<String> stemmers = stemmer.findStems(this.query, pos);
+                    if(stemmers != null && !stemmers.isEmpty()) {
+                        stem = stemmers.get(0);
+                    }
+                }
+            }
+        }
+        return stem;
+    }
+
     public List<Map> glosses(){
         List<Map> glosses = new ArrayList<>();
         List<Map> stemmers = findStems();
