@@ -10,6 +10,8 @@ import net.sf.javaml.core.Instance;
 import opennlp.tools.cmdline.postag.POSModelLoader;
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;
+import opennlp.tools.sentdetect.SentenceDetectorME;
+import opennlp.tools.sentdetect.SentenceModel;
 import opennlp.tools.tokenize.Tokenizer;
 import opennlp.tools.tokenize.TokenizerME;
 import opennlp.tools.tokenize.TokenizerModel;
@@ -191,6 +193,29 @@ public class Classification {
             logger.debug("IO exception: "+ e.getMessage());
         }
         return tokens;
+    }
+
+    public String[] getSentences(){
+        String[] sentences = new String[]{};
+        try{
+            ClassLoader classLoader = getClass().getClassLoader();
+            URL url = classLoader.getResource("en-sent.bin");
+            if(url != null) {
+                InputStream modelStream = url.openStream();
+                if (modelStream != null) {
+                    SentenceModel sentenceModel = new SentenceModel(modelStream);
+                    SentenceDetectorME sentenceDetectorME = new SentenceDetectorME(sentenceModel);
+                    sentences = sentenceDetectorME.sentDetect(this.title);
+                }
+            }
+        } catch (FileNotFoundException e){
+            logger.debug("File not found exception: "+ e.getMessage());
+        } catch (InvalidFormatException e){
+            logger.debug("Invalid format exception: "+ e.getMessage());
+        } catch (IOException e){
+            logger.debug("IO exception: "+ e.getMessage());
+        }
+        return sentences;
     }
 
     private String getCategory(String attribute){
@@ -446,7 +471,9 @@ public class Classification {
         List<T> intersect = new ArrayList<>();
 //        b.retainAll(a);
 //        intersect.addAll(b);
-        Set<T> inter = Sets.intersection(Sets.newHashSet(a), Sets.newHashSet(b));
+        Set<T> setA = Sets.newHashSet(a);
+        Set<T> setB = Sets.newHashSet(b);
+        Set<T> inter = Sets.intersection(setA, setB);
         intersect.addAll(inter);
         return intersect;
     }

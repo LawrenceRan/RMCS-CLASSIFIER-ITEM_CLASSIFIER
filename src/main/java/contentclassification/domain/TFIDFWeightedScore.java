@@ -1,6 +1,8 @@
 package contentclassification.domain;
 
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by rsl_prod_005 on 5/24/16.
@@ -62,5 +64,12 @@ public class TFIDFWeightedScore implements Comparable<TFIDFWeightedScore> {
     @Override
     public int compareTo(TFIDFWeightedScore o) {
         return 0;
+    }
+
+    public Map<String, Object> toMap(){
+        Map<String, Object> map = new HashMap<>();
+        map.put("term", this.getTerm());
+        map.put("score", this.getScore());
+        return map;
     }
 }

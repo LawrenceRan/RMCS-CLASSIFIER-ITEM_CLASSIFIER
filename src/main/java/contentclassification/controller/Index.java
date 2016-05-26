@@ -88,8 +88,12 @@ public class Index {
         Map<String, Object> response = new HashMap<>();
         if(StringUtils.isNotBlank(url)){
             String title = jsoupService.getTitle(url);
-            if(StringUtils.isNotBlank(title)){
+            List<String> metaList = jsoupService.metas(url);
 
+            List<String> titleTokens = new ArrayList<>();
+            if(StringUtils.isNotBlank(title)){
+                titleTokens.addAll(classificationService
+                        .prepareTokens(Arrays.asList(classificationService.tokenize(title))));
             } else{
                 response.put(RestResponseKeys.MESSAGE.toString(), "empty title from document from url.");
                 modelAndView.addAllObjects(response);
@@ -139,22 +143,36 @@ public class Index {
                  }
                  //End of getting potential colors.
 
-                 List<String> uniqueCollection = classificationService.uniqueCollection(text);
+                 //Start of content analysis of content page.
                  String[] tokens = classificationService.tokenize(text);
+                 String[] sentences = classificationService.sentenceDetection(text);
 
-                 List<Map> posList = null;
-                 if(tokens != null && tokens.length > 0){
-                     List<String> tokensAsList = Arrays.asList(tokens);
-                     List<Categories> categoriesList = classificationService.getCategories();
+                 List<Categories> categoriesList = classificationService.getCategories();
+                 List<String> multiWordAttributes = new ArrayList<>();
+                 List<String> allAttributes = new ArrayList<>();
 
-                     List<String> allAttributes = new ArrayList<>();
+                 if(categoriesList != null && !categoriesList.isEmpty()){
+                     for(Categories c : categoriesList){
+                         allAttributes.addAll(c.getAttributes());
+                         multiWordAttributes.addAll(classificationService.getMultiWordedAttributes(c));
+                     }
+                 }
 
-                     if(categoriesList != null && !categoriesList.isEmpty()){
-                         for(Categories c : categoriesList){
-                              allAttributes.addAll(c.getAttributes());
+                 List<String> foundInSentences = new ArrayList<>();
+                 if(!multiWordAttributes.isEmpty()){
+                     for(String s : multiWordAttributes){
+                         boolean termFound = classificationService.termFoundInSentences(sentences, s);
+                         if(termFound){
+                             foundInSentences.add(s);
                          }
                      }
+                     logger.info("Found in sentences "+ foundInSentences);
+                 }
 
+                 List<Map> posList = null;
+                 List<Map> scoredTermsFromContent = new ArrayList<>();
+                 if(tokens != null && tokens.length > 0){
+                     List<String> tokensAsList = classificationService.prepareTokens(Arrays.asList(tokens));
                      List<String> intersect = classificationService.getIntersection(tokensAsList, allAttributes);
 
                      if(intersect != null && !intersect.isEmpty()){
@@ -173,10 +191,38 @@ public class Index {
                          }
                          Collections.sort(tfidfWeightedScores, TFIDFWeightedScore.tfidfWeightedScoreComparator);
 
-                         logger.info("map of intersect to score");
+                         if(!tfidfWeightedScores.isEmpty()){
+                             List<Map> tfIdfWeightedScoresMap = new ArrayList<>();
+                             for(TFIDFWeightedScore tfidfWeightedScore : tfidfWeightedScores){
+                                 tfIdfWeightedScoresMap.add(tfidfWeightedScore.toMap());
+                             }
+                             response.put("tokensScore", tfIdfWeightedScoresMap);
+                             scoredTermsFromContent.addAll(tfIdfWeightedScoresMap);
+                         }
                      }
                      posList = classificationService.getPos(tokens);
                  }
+
+                 //end of content analysis...
+
+                 //Addition analysis of title and content meta data
+                 List<String> keywordsList = null;
+                 List<String> descriptionList = null;
+
+                 List<Map> metaKeyValuePair = classificationService.generateKeyValuePairs(metaList);
+                 if (!metaKeyValuePair.isEmpty()) {
+                     String description = classificationService
+                             .getContentMetaDataValue(NameAndContentMetaData.NAME,
+                                     metaKeyValuePair, WebMetaName.DESCRIPTION);
+                     String keywords = classificationService
+                             .getContentMetaDataValue(NameAndContentMetaData.NAME,
+                                     metaKeyValuePair, WebMetaName.KEYWORDS);
+                     keywordsList = Arrays.asList(classificationService.tokenize(keywords));
+                     descriptionList = Arrays.asList(classificationService.tokenize(description));
+                 }
+
+                 //end of content meta data
+
                 logger.info("Potential Color: "+ potentialColor.toString());
             }
 
