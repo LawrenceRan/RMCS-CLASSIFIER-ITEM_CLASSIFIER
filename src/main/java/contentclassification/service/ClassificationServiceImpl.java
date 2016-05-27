@@ -205,4 +205,17 @@ public class ClassificationServiceImpl implements ClassificationService{
         }
         return answer;
     }
+
+    @Override
+    public Integer getTermToGroupScore(String term, String group){
+        Integer score = 0;
+        if(StringUtils.isNotBlank(term)){
+            Pattern pattern = Pattern.compile(term, Pattern.CASE_INSENSITIVE);
+            Matcher matcher = pattern.matcher(group);
+            while(matcher.find()){
+                score++;
+            }
+        }
+        return score;
+    }
 }

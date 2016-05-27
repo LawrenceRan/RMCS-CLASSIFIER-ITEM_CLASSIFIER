@@ -166,17 +166,80 @@ public class Index {
                              foundInSentences.add(s);
                          }
                      }
-                     logger.info("Found in sentences "+ foundInSentences);
                  }
+
+                 //Get possible title or item description from first list
+                 String possibleTitle = null;
+                 if(sentences != null && sentences.length > 0){
+                     if(StringUtils.isNotBlank(sentences[0])) {
+                         String t = sentences[0];
+                         if (t.contains("\n")) {
+                             possibleTitle = t.substring(0, t.indexOf("\n"));
+                         }
+                     }
+                 }
+                 //End of getting a possible title.
+
+                 //Addition analysis of title and content meta data
+                 List<String> keywordsList = null;
+                 List<String> descriptionList = null;
+
+                 String description = null;
+                 String keywords = null;
+
+                 List<Map> metaKeyValuePair = classificationService.generateKeyValuePairs(metaList);
+                 if (!metaKeyValuePair.isEmpty()) {
+                     description = classificationService
+                             .getContentMetaDataValue(NameAndContentMetaData.NAME,
+                                     metaKeyValuePair, WebMetaName.DESCRIPTION);
+                     keywords = classificationService
+                             .getContentMetaDataValue(NameAndContentMetaData.NAME,
+                                     metaKeyValuePair, WebMetaName.KEYWORDS);
+
+                     if(StringUtils.isNotBlank(keywords)) {
+                         keywordsList = classificationService
+                                 .prepareTokens(Arrays.asList(classificationService.tokenize(keywords)));
+                     }
+
+                     if(StringUtils.isNotBlank(description)) {
+                         descriptionList = classificationService
+                                 .prepareTokens(Arrays.asList(classificationService.tokenize(description)));
+                     }
+                 }
+                 //end of content meta data
+
+
+                 //Sentences from content, description and keywords from meta all merged into a holistic data set.
+                 List<String> doubleWordedFoundInContent = new ArrayList<>();
+                 if(!multiWordAttributes.isEmpty()){
+                     for(String s : multiWordAttributes){
+                         boolean isPresent = classificationService.termFoundInSentences(sentences, s);
+                         if(isPresent){
+                             doubleWordedFoundInContent.add(s);
+                         }
+                     }
+                 }
+                 //end of getting content from description and keywords
+
 
                  List<Map> posList = null;
                  List<Map> scoredTermsFromContent = new ArrayList<>();
                  if(tokens != null && tokens.length > 0){
                      List<String> tokensAsList = classificationService.prepareTokens(Arrays.asList(tokens));
+
+                     //Added keywords and description from meta data to the list to used in computing TF-IDF
+                     if(keywordsList != null && !keywordsList.isEmpty()) { tokensAsList.addAll(keywordsList);}
+                     if(descriptionList != null && !descriptionList.isEmpty()){tokensAsList.addAll(descriptionList);}
+                     if(possibleTitle != null){
+                         tokensAsList.addAll(classificationService
+                                 .prepareTokens(Arrays.asList(classificationService.tokenize(possibleTitle))));
+                     }
+                     //End of keywords and description to token list.
+
                      List<String> intersect = classificationService.getIntersection(tokensAsList, allAttributes);
 
                      if(intersect != null && !intersect.isEmpty()){
-                         List<TFIDFWeightedScore> tfidfWeightedScores = new ArrayList<>();
+                         List<TFIDFWeightedScore> tfIdfWeightedScores = new ArrayList<>();
                          for(String i : intersect){
                              double tfScore = classificationService.getTFScore(tokens, i);
                              double idfScore = classificationService.getIdfScore(tokens, i);
@@ -187,13 +250,13 @@ public class Index {
                              tfidfWeightedScore.setScore(tfIdfWeightScore);
                              tfidfWeightedScore.setIdfScore(idfScore);
                              tfidfWeightedScore.setTfScore(tfScore);
-                             tfidfWeightedScores.add(tfidfWeightedScore);
+                             tfIdfWeightedScores.add(tfidfWeightedScore);
                          }
-                         Collections.sort(tfidfWeightedScores, TFIDFWeightedScore.tfidfWeightedScoreComparator);
+                         Collections.sort(tfIdfWeightedScores, TFIDFWeightedScore.tfidfWeightedScoreComparator);
 
-                         if(!tfidfWeightedScores.isEmpty()){
+                         if(!tfIdfWeightedScores.isEmpty()){
                              List<Map> tfIdfWeightedScoresMap = new ArrayList<>();
-                             for(TFIDFWeightedScore tfidfWeightedScore : tfidfWeightedScores){
+                             for(TFIDFWeightedScore tfidfWeightedScore : tfIdfWeightedScores){
                                  tfIdfWeightedScoresMap.add(tfidfWeightedScore.toMap());
                              }
                              response.put("tokensScore", tfIdfWeightedScoresMap);
@@ -202,26 +265,83 @@ public class Index {
                      }
                      posList = classificationService.getPos(tokens);
                  }
-
                  //end of content analysis...
 
-                 //Addition analysis of title and content meta data
-                 List<String> keywordsList = null;
-                 List<String> descriptionList = null;
-
-                 List<Map> metaKeyValuePair = classificationService.generateKeyValuePairs(metaList);
-                 if (!metaKeyValuePair.isEmpty()) {
-                     String description = classificationService
-                             .getContentMetaDataValue(NameAndContentMetaData.NAME,
-                                     metaKeyValuePair, WebMetaName.DESCRIPTION);
-                     String keywords = classificationService
-                             .getContentMetaDataValue(NameAndContentMetaData.NAME,
-                                     metaKeyValuePair, WebMetaName.KEYWORDS);
-                     keywordsList = Arrays.asList(classificationService.tokenize(keywords));
-                     descriptionList = Arrays.asList(classificationService.tokenize(description));
+                 //Aggregate keywords and merge with double worded description found.
+                 List<String> allKeywords = new LinkedList<>();
+                 if(!scoredTermsFromContent.isEmpty()){
+                     for(Map mapScore : scoredTermsFromContent){
+                         for(Object keySet : mapScore.keySet()){
+                             if(keySet instanceof String){
+                                 if(((String) keySet).equalsIgnoreCase("term")) {
+                                     allKeywords.add(mapScore.get(keySet).toString());
+                                 }
+                             }
+                         }
+                     }
                  }
 
-                 //end of content meta data
+                 if(!doubleWordedFoundInContent.isEmpty()){
+                     for(String s : doubleWordedFoundInContent){
+                         allKeywords.add(s);
+                     }
+                 }
+
+                 response.put("allKeywords", allKeywords);
+
+
+                 /**
+                  * About to build a frequency computation on all keywords in respect to where in the document
+                  * they are found.
+                  */
+                 if(!allKeywords.isEmpty()){
+                     List<TermToGroupScore> groupScoreList = new ArrayList<>();
+                     List<ContentAreaGroupings> cList = ContentAreaGroupings.contentAreaGroupingsList();
+
+                     for(ContentAreaGroupings c : cList) {
+                         for(String s : allKeywords) {
+                             TermToGroupScore termToGroupScore = new TermToGroupScore();
+                             termToGroupScore.setGroup(c);
+                             termToGroupScore.setTerm(s);
+
+                             switch (c){
+                                 case BODY:
+                                     termToGroupScore.setScore(1);
+                                     break;
+                                 case TITLE:
+                                     if(StringUtils.isNotBlank(possibleTitle)) {
+                                         Integer tScore = classificationService.getTermToGroupScore(s, possibleTitle);
+                                         termToGroupScore.setScore(tScore);
+                                     } else {
+                                         termToGroupScore.setScore(0);
+                                     }
+                                     break;
+                                 case DESCRIPTION:
+                                     if(StringUtils.isNotBlank(description)) {
+                                         Integer tDesc = classificationService.getTermToGroupScore(s, description);
+                                         termToGroupScore.setScore(tDesc);
+                                     } else {
+                                         termToGroupScore.setScore(0);
+                                     }
+                                     break;
+                                 case KEYWORDS:
+                                     if(StringUtils.isNotBlank(keywords)) {
+                                         Integer tKeywords = classificationService.getTermToGroupScore(s, keywords);
+                                         termToGroupScore.setScore(tKeywords);
+                                     } else {
+                                         termToGroupScore.setScore(0);
+                                     }
+                                     break;
+                                 default:
+                                     termToGroupScore.setScore(0);
+                                     break;
+                             }
+                             groupScoreList.add(termToGroupScore);
+                         }
+                     }
+
+                     logger.info("Term to group score");
+                 }
 
                 logger.info("Potential Color: "+ potentialColor.toString());
             }

@@ -1,8 +1,6 @@
 package contentclassification.service;
 
-import contentclassification.domain.Categories;
-import contentclassification.domain.NameAndContentMetaData;
-import contentclassification.domain.WebMetaName;
+import contentclassification.domain.*;
 
 import java.util.List;
 import java.util.Map;
@@ -28,4 +26,5 @@ public interface ClassificationService {
     public String getContentMetaDataValue(NameAndContentMetaData n, List<Map> metaList, WebMetaName webMetaName);
     public List<String> getMultiWordedAttributes(Categories categories);
     public boolean termFoundInSentences(String[] sentences, String term);
+    public Integer getTermToGroupScore(String term, String group);
 }
