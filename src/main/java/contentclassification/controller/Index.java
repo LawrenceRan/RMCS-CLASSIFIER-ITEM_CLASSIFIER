@@ -224,6 +224,8 @@ public class Index {
 
                  List<Map> posList = null;
                  List<Map> scoredTermsFromContent = new ArrayList<>();
+                 List<TotalTermToGroup> totalTermToGroups = new ArrayList<>();
+
                  if(tokens != null && tokens.length > 0){
                      List<String> tokensAsList = classificationService.prepareTokens(Arrays.asList(tokens));
 
@@ -259,7 +261,6 @@ public class Index {
                              for(TFIDFWeightedScore tfidfWeightedScore : tfIdfWeightedScores){
                                  tfIdfWeightedScoresMap.add(tfidfWeightedScore.toMap());
                              }
-                             response.put("tokensScore", tfIdfWeightedScoresMap);
                              scoredTermsFromContent.addAll(tfIdfWeightedScoresMap);
                          }
                      }
@@ -340,7 +341,74 @@ public class Index {
                          }
                      }
 
-                     logger.info("Term to group score");
+                     if(!groupScoreList.isEmpty()){
+                         Map<String, List<TermToGroupScore>> m = new HashMap<>();
+                         for(ContentAreaGroupings c : cList){
+                             List<TermToGroupScore> t = classificationService
+                                     .getTermToGroupByContentAreaGroupings(groupScoreList, c);
+                             m.put(c.toString(), t);
+                         }
+
+                         Map<String, Integer> totalTermToGroup = new HashMap<>();
+                         for(ContentAreaGroupings c : cList) {
+                             if (m.containsKey(c.toString())) {
+                                 List<TermToGroupScore> tag = m.get(c.toString());
+                                 if(tag != null && !tag.isEmpty()) {
+                                     for(TermToGroupScore t : tag){
+                                         if(totalTermToGroup.containsKey(t.getTerm())) {
+                                             Integer i = totalTermToGroup.get(t.getTerm());
+                                             Integer x = i + t.getScore();
+                                             totalTermToGroup.put(t.getTerm(), x);
+                                         } else {
+                                             totalTermToGroup.put(t.getTerm(), t.getScore());
+                                         }
+                                     }
+                                 }
+                             }
+                         }
+
+                         if(!scoredTermsFromContent.isEmpty()) {
+                             for (Map m1 : scoredTermsFromContent) {
+                                 TotalTermToGroup totalTermToGroup1 = new TotalTermToGroup();
+                                 String term = null;
+                                 Double o = null;
+                                 Integer p = null;
+
+                                 if (m1.containsKey("term")) {
+                                     term = m1.get("term").toString();
+                                     totalTermToGroup1.setTerm(term);
+                                 }
+
+                                 //This gets and sets term frequency count from scoredTermsFromContent
+                                 if (m1.containsKey("score")) {
+                                     Object s = m1.get("score");
+                                     if (s instanceof Double) {
+                                         o = (Double) s;
+                                         totalTermToGroup1.setTermFrequencyScore(o);
+                                     }
+                                 }
+
+                                 //This gets and sets term count from grouped areas
+                                 if (StringUtils.isNotBlank(term)) {
+                                     if (totalTermToGroup.containsKey(term)) {
+                                         p = totalTermToGroup.get(term);
+                                         totalTermToGroup1.setTermToGroupScore(p);
+                                     }
+                                 }
+
+                                 if (o != null && p != null) {
+                                     Double t = TotalTermToGroup.calculateWeightedScore(p, o);
+                                     totalTermToGroup1.setWeightTotalScore(t);
+                                 }
+                                 totalTermToGroups.add(totalTermToGroup1);
+                             }
+                         }
+                     }
+                 }
+
+                 if(!totalTermToGroups.isEmpty()){
+                     Collections.sort(totalTermToGroups, TotalTermToGroup.totalTermToGroupComparator);
+                     response.put("totalWeightedScore", totalTermToGroups);
                  }
 
                 logger.info("Potential Color: "+ potentialColor.toString());

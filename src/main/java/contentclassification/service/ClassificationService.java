@@ -27,4 +27,6 @@ public interface ClassificationService {
     public List<String> getMultiWordedAttributes(Categories categories);
     public boolean termFoundInSentences(String[] sentences, String term);
     public Integer getTermToGroupScore(String term, String group);
+    public List<TermToGroupScore> getTermToGroupByContentAreaGroupings(List<TermToGroupScore> termToGroupScores,
+                                                                       ContentAreaGroupings contentAreaGroupings);
 }

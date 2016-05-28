@@ -218,4 +218,18 @@ public class ClassificationServiceImpl implements ClassificationService{
         }
         return score;
     }
+
+    @Override
+    public List<TermToGroupScore> getTermToGroupByContentAreaGroupings(List<TermToGroupScore> g,
+                                                                       ContentAreaGroupings contentAreaGroupings){
+        List<TermToGroupScore> t = new ArrayList<>();
+        if (g != null && !g.isEmpty()) {
+            for(TermToGroupScore t1 : g){
+                if(t1.getGroup().equals(contentAreaGroupings)){
+                    t.add(t1);
+                }
+            }
+        }
+        return t;
+    }
 }

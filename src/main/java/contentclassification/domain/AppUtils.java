@@ -128,7 +128,7 @@ public class AppUtils {
             }
         }
 
-        List<String> breakUp = breakUp(colors, new String[]{","});
+        List<String> breakUp = breakUp(colors, new String[]{",","/","AND", "and"});
         Set<String> cleanUp = new HashSet<>();
         cleanUp.addAll(colors);
         if(!breakUp.isEmpty()){
