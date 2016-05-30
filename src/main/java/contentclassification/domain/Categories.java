@@ -97,7 +97,7 @@ public class Categories {
             URL url = classLoader.getResource("fashion-categories.yml");
             if(url != null) {
                 Map<String, List<String>> ymlCategories = (Map<String, List<String>>)
-                        yaml.load(new FileInputStream(new File(url.getFile())));
+                        yaml.load(url.openStream());
 
                 if (ymlCategories != null && !ymlCategories.isEmpty()) {
                     int x = 0;
