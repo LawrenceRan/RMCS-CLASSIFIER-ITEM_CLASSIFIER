@@ -162,4 +162,16 @@ public class Color {
         URL url = classLoader.getResource("colors.yml");
         return isEqual(loadColorsByInputStream(url), c);
     }
+
+    public static boolean isBreakable(String color, String... params){
+        boolean isBreakable = false;
+        if(params != null && params.length > 0){
+            for(String p : params){
+                if(color.contains(p)){
+                    isBreakable = true;
+                }
+            }
+        }
+        return isBreakable;
+    }
 }

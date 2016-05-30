@@ -1,10 +1,12 @@
 package contentclassification.service;
 
+import contentclassification.config.TermsScoringConfig;
 import contentclassification.domain.*;
 import contentclassification.utilities.BM25;
 import opennlp.tools.cmdline.postag.POSModelLoader;
 import opennlp.tools.postag.POSModel;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -16,6 +18,9 @@ import java.util.regex.Pattern;
  */
 @Service
 public class ClassificationServiceImpl implements ClassificationService{
+
+    @Autowired
+    private TermsScoringConfig termsScoringConfig;
 
     Classification classification = null;
 
@@ -231,5 +236,12 @@ public class ClassificationServiceImpl implements ClassificationService{
             }
         }
         return t;
+    }
+
+    @Override
+    public Double getTermScoringThreshold(){
+        Double threshold = 0D;
+        threshold = Double.parseDouble(termsScoringConfig.getThreshold());
+        return threshold;
     }
 }

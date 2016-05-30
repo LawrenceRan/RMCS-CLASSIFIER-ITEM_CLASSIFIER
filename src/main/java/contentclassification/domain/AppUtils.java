@@ -138,6 +138,27 @@ public class AppUtils {
         colors.clear();
         colors.addAll(cleanUp);
 
+        /**
+         * remove items in results set that contains criteria for breaking up.
+         */
+        if(!colors.isEmpty()){
+            List<String> temp = new ArrayList<>();
+            for(String c : colors){
+                boolean isBrokenUp = Color.isBreakable(c.trim(), new String[]{",", "/", "AND", "and"});
+                if(!isBrokenUp){
+                    temp.add(c);
+                }
+            }
+
+            if(!temp.isEmpty()){
+                colors.clear();
+                colors.addAll(temp);
+            }
+        }
+
+        /**Check if color is validated or not. Validation here means that whether we have the said color in our
+         * curated color data set.
+        */
         if(!colors.isEmpty()) {
             for(String d : colors) {
                 boolean isValidated = Color.isExisting(d.trim().toLowerCase());

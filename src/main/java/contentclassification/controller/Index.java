@@ -238,6 +238,8 @@ public class Index {
                      }
                      //End of keywords and description to token list.
 
+
+
                      List<String> intersect = classificationService.getIntersection(tokensAsList, allAttributes);
 
                      if(intersect != null && !intersect.isEmpty()){
@@ -254,6 +256,19 @@ public class Index {
                              tfidfWeightedScore.setTfScore(tfScore);
                              tfIdfWeightedScores.add(tfidfWeightedScore);
                          }
+
+                         //Include multi-worded from data set to TF_IDF Weighted score
+                         if(!foundInSentences.isEmpty()){
+                             for(String s : foundInSentences){
+                                 TFIDFWeightedScore tfidfWeightedScore = new TFIDFWeightedScore();
+                                 tfidfWeightedScore.setTerm(s);
+                                 tfidfWeightedScore.setIdfScore(0D);
+                                 tfidfWeightedScore.setTfScore(0D);
+                                 tfidfWeightedScore.setScore(0D);
+                                 tfIdfWeightedScores.add(tfidfWeightedScore);
+                             }
+                         }
+
                          Collections.sort(tfIdfWeightedScores, TFIDFWeightedScore.tfidfWeightedScoreComparator);
 
                          if(!tfIdfWeightedScores.isEmpty()){
@@ -406,13 +421,24 @@ public class Index {
                      }
                  }
 
+                 //Present total scoring on all terms found.
                  if(!totalTermToGroups.isEmpty()){
                      Collections.sort(totalTermToGroups, TotalTermToGroup.totalTermToGroupComparator);
                      response.put("totalWeightedScore", totalTermToGroups);
                  }
 
-                logger.info("Potential Color: "+ potentialColor.toString());
-            }
+                 //Filter total term to group score by scoring threshold.
+                 Double termScoringThreshold = classificationService.getTermScoringThreshold();
+                 List<TotalTermToGroup> totalTermToGroupsFiltered = new ArrayList<>();
+                 if(!totalTermToGroups.isEmpty()){
+                     for(TotalTermToGroup t : totalTermToGroups){
+                         if(t.getWeightTotalScore() >= termScoringThreshold){
+                             totalTermToGroupsFiltered.add(t);
+                         }
+                     }
+                 }
+                 response.put("scoreThreshold", totalTermToGroupsFiltered);
+             }
 
 //            String content = jsoupService.bodyText(url);
 //            if (StringUtils.isNotBlank(content)) {

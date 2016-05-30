@@ -29,4 +29,5 @@ public interface ClassificationService {
     public Integer getTermToGroupScore(String term, String group);
     public List<TermToGroupScore> getTermToGroupByContentAreaGroupings(List<TermToGroupScore> termToGroupScores,
                                                                        ContentAreaGroupings contentAreaGroupings);
+    public Double getTermScoringThreshold();
 }
