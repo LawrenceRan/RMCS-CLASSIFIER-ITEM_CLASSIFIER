@@ -13,8 +13,12 @@ public class OnStartUp implements ApplicationListener<ContextRefreshedEvent> {
     @Autowired
     WordNetDictConfig wordNetDictConfig;
 
+    @Autowired
+    ClassificationConfig classificationConfig;
+
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         System.setProperty(wordNetDictConfig.getValue(), wordNetDictConfig.getDict());
+        System.setProperty("categories.add.top", classificationConfig.getAddTopLevel());
     }
 }

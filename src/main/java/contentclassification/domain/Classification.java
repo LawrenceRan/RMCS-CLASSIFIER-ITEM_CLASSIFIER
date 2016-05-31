@@ -218,6 +218,29 @@ public class Classification {
         return sentences;
     }
 
+    public double[] getSentenceProbabilities(){
+        double[] sentences = null;
+        try{
+            ClassLoader classLoader = getClass().getClassLoader();
+            URL url = classLoader.getResource("en-sent.bin");
+            if(url != null) {
+                InputStream modelStream = url.openStream();
+                if (modelStream != null) {
+                    SentenceModel sentenceModel = new SentenceModel(modelStream);
+                    SentenceDetectorME sentenceDetectorME = new SentenceDetectorME(sentenceModel);
+                    sentences = sentenceDetectorME.getSentenceProbabilities();
+                }
+            }
+        } catch (FileNotFoundException e){
+            logger.debug("File not found exception: "+ e.getMessage());
+        } catch (InvalidFormatException e){
+            logger.debug("Invalid format exception: "+ e.getMessage());
+        } catch (IOException e){
+            logger.debug("IO exception: "+ e.getMessage());
+        }
+        return sentences;
+    }
+
     private String getCategory(String attribute){
         String category = null;
         List<Categories> categories = Categories.loadCategories();

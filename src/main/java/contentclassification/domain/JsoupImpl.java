@@ -9,7 +9,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by rsl_prod_005 on 3/30/16.
@@ -60,9 +62,28 @@ public class JsoupImpl {
         try {
             Document document = getDocument();
             Elements elementLinks = document.select("a[href]");
-            if (elementLinks != null && !elementLinks.isEmpty()) {
+            if (!elementLinks.isEmpty()) {
                 for (Element link : elementLinks) {
-                    links.add(link.attr("abs:href").toString());
+                    links.add(link.attr("abs:href"));
+                }
+            }
+        } catch (Exception e){
+            logger.debug("Error in getting URLs : %s", e.getMessage());
+        }
+        return links;
+    }
+
+    public List<Map> getLinksUrlAndValue() throws IOException {
+        List<Map> links = new ArrayList<>();
+        try {
+            Document document = getDocument();
+            Elements elementLinks = document.select("a[href]");
+            if (!elementLinks.isEmpty()) {
+                for (Element link : elementLinks) {
+                    Map<String, String> m = new HashMap<>();
+                    m.put("value", link.text());
+                    m.put("link", link.attr("abs:href"));
+                    links.add(m);
                 }
             }
         } catch (Exception e){

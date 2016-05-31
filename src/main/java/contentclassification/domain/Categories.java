@@ -1,5 +1,6 @@
 package contentclassification.domain;
 
+import contentclassification.config.ClassificationConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.atteo.evo.inflector.English;
 import org.slf4j.Logger;
@@ -101,11 +102,17 @@ public class Categories {
 
                 if (ymlCategories != null && !ymlCategories.isEmpty()) {
                     int x = 0;
+                    boolean isAddTopTopLevel = Boolean.parseBoolean(System.getProperty("categories.add.top"));
                     for (Map.Entry<String, List<String>> category : ymlCategories.entrySet()) {
                         Categories c = new Categories();
                         c.category = category.getKey();
 
                         List<String> attributes = category.getValue();
+
+                        if(isAddTopTopLevel) {
+                            attributes.add(category.getKey());
+                        }
+
                         List<String> attributesPluralized = new LinkedList<>();
                         if (!attributes.isEmpty()) {
                             for (String s : attributes) {

@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by rsl_prod_005 on 5/6/16.
@@ -81,5 +82,27 @@ public class JsoupService {
             logger.debug("Error in getting text using. Message: "+ e.getMessage());
         }
         return text;
+    }
+
+    public String getContentAsString(String url){
+        String text = null;
+        try{
+            HtmlUnitImpl htmlUnit = HtmlUnitImpl.setUrl(AppUtils.getUrl(url));
+            text = htmlUnit.getContentAsString();
+        } catch (Exception e){
+            logger.debug("Error in getting content string. Message: "+ e.getMessage());
+        }
+        return text;
+    }
+
+    public List<Map> getLinksUrlAndValue(String url){
+        List<Map> links = null;
+        try{
+            JsoupImpl jsoup = JsoupImpl.setUrl(url);
+            links = jsoup.getLinksUrlAndValue();
+        } catch (Exception e){
+            logger.debug("Error in getting links. Message: "+ e.getMessage());
+        }
+        return links;
     }
 }

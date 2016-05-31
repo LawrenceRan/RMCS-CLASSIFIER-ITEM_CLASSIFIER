@@ -244,4 +244,51 @@ public class ClassificationServiceImpl implements ClassificationService{
         threshold = Double.parseDouble(termsScoringConfig.getThreshold());
         return threshold;
     }
+
+    @Override
+    public String getSentencesAsString(String... sentences){
+        String sentence = null;
+        if(sentences != null && sentences.length > 0){
+            StringBuilder stringBuilder = new StringBuilder();
+            int x = 0;
+            for(String s : sentences){
+                if(x < (sentences.length -1)) {
+                    stringBuilder.append(s+"\n");
+                } else {
+                    stringBuilder.append(s);
+                }
+                x++;
+            }
+            sentence = stringBuilder.toString();
+        }
+        return sentence;
+    }
+
+    @Override
+    public String removePossibleUrlFromText(List<Map> links, String text){
+        if(links != null && !links.isEmpty() && StringUtils.isNotBlank(text)){
+            for(Map m : links){
+                if(m.containsKey("value")){
+                    if(StringUtils.isNotBlank(m.get("value").toString())){
+                        text = text.replaceAll(m.get("value").toString(), "");
+                    }
+                }
+            }
+        }
+        return text;
+    }
+
+    @Override
+    public List<String> removeSentencesFromList(List<String> list){
+        List<String> updated = new ArrayList<>();
+        if (list != null && !list.isEmpty()) {
+            for(String s : list){
+                String[] h = sentenceDetection(s);
+                classification = new Classification(s);
+                String[] sentences = classification.getSentences();
+                System.out.println("Sentences: "+ sentences);
+            }
+        }
+        return updated;
+    }
 }
