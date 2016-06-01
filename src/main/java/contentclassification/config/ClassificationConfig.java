@@ -14,11 +14,23 @@ public class ClassificationConfig {
     @NotNull
     private String addTopLevel;
 
+    @Value("${clothing.fabric.names.uri}")
+    @NotNull
+    private String fabricNameResource;
+
     public String getAddTopLevel() {
         return addTopLevel;
     }
 
     public void setAddTopLevel(String addTopLevel) {
         this.addTopLevel = addTopLevel;
+    }
+
+    public String getFabricNameResource() {
+        return fabricNameResource;
+    }
+
+    public void setFabricNameResource(String fabricNameResource) {
+        this.fabricNameResource = fabricNameResource;
     }
 }

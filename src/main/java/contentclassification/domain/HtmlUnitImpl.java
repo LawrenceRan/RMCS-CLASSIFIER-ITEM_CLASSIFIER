@@ -26,7 +26,7 @@ public class HtmlUnitImpl {
 
     public String getText(){
         String text = null;
-        WebClient client = new WebClient(BrowserVersion.BEST_SUPPORTED);
+        WebClient client = new WebClient(BrowserVersion.FIREFOX_45);
         client.getOptions().setCssEnabled(false);
         client.getOptions().setJavaScriptEnabled(false);
         client.getCookieManager().setCookiesEnabled(true);
@@ -76,7 +76,7 @@ public class HtmlUnitImpl {
                 client.getOptions().setUseInsecureSSL(true);
                 try {
                     HtmlPage page = HTMLParser.parseHtml(stringWebResponse, client.getCurrentWindow());
-                    text = page.getWebResponse().getContentAsString();
+                    text = page.asText();
                 } catch (IOException e){
                     e.printStackTrace();
                 }

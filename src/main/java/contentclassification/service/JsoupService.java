@@ -84,6 +84,17 @@ public class JsoupService {
         return text;
     }
 
+    public String parseHtmlText(String html, String url){
+        String text = null;
+        try{
+            HtmlUnitImpl htmlUnit = HtmlUnitImpl.setUrl(AppUtils.getUrl(url));
+            text = htmlUnit.parseHTMLText(html, url);
+        } catch (Exception ex){
+            logger.debug("Error in getting text by parsing html text: "+ ex.getMessage());
+        }
+        return text;
+    }
+
     public String getContentAsString(String url){
         String text = null;
         try{

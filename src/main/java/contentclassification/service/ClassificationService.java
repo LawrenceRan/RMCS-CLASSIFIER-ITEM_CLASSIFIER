@@ -33,4 +33,6 @@ public interface ClassificationService {
     public String getSentencesAsString(String... sentences);
     public String removePossibleUrlFromText(List<Map> links, String text);
     public List<String> removeSentencesFromList(List<String> list);
+    public List<FabricName> getFabricNames();
+    public List<FabricName> getFabricsFromContent(String text);
 }

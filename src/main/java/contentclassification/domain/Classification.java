@@ -24,6 +24,8 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.*;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by rsl_prod_005 on 5/9/16.
@@ -499,5 +501,21 @@ public class Classification {
         Set<T> inter = Sets.intersection(setA, setB);
         intersect.addAll(inter);
         return intersect;
+    }
+
+    public static List<FabricName> isFabricPresent(String sentence){
+        List<FabricName> isPresent = new ArrayList<>();
+        List<FabricName> fabricNames = FabricName.getFabrics();
+        if(!fabricNames.isEmpty()){
+            for(FabricName fabricName : fabricNames){
+                String name = fabricName.getName();
+                Pattern pattern = Pattern.compile("\\b" + name + "\\b", Pattern.CASE_INSENSITIVE);
+                Matcher matcher = pattern.matcher(sentence);
+                while(matcher.find()) {
+                    isPresent.add(fabricName);
+                }
+            }
+        }
+        return isPresent;
     }
 }

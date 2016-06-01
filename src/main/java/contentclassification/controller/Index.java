@@ -102,7 +102,10 @@ public class Index {
             String contentString = jsoupService.getContentAsString(url);
 
             String text = jsoupService.bodyTextByHtmlUnit(url);
-            //List<Map> linksMap = jsoupService.getLinksUrlAndValue(url);
+            List<Map> linksMap = jsoupService.getLinksUrlAndValue(url);
+            text = jsoupService
+                    .parseHtmlText(classificationService.removePossibleUrlFromText(linksMap, contentString), url);
+            String t1 = null;
             if (StringUtils.isNotBlank(text)) {
                 /**
                  * The start of getting potential colors.
@@ -251,6 +254,7 @@ public class Index {
                     //End of keywords and description to token list.
 
 
+                    String d = tokensAsList.toString();
                     List<String> intersect = classificationService.getIntersection(tokensAsList, allAttributes);
 
                     if (intersect != null && !intersect.isEmpty()) {
@@ -452,6 +456,15 @@ public class Index {
                 //Get the top level category that an attribute belongs to and score 'em
 
 
+                //Get potential material make of the said item.
+                List<FabricName> fabricNames = classificationService.getFabricsFromContent(text);
+                if(!fabricNames.isEmpty()){
+                    List<String> materialsFound = new ArrayList<>();
+                    for(FabricName fabricName : fabricNames){
+                        materialsFound.add(fabricName.getName());
+                    }
+                    response.put("materialsFound", materialsFound);
+                }
                 response.put("scoreThreshold", totalTermToGroupsFiltered);
             }
 

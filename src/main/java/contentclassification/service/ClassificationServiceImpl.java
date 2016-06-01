@@ -3,8 +3,6 @@ package contentclassification.service;
 import contentclassification.config.TermsScoringConfig;
 import contentclassification.domain.*;
 import contentclassification.utilities.BM25;
-import opennlp.tools.cmdline.postag.POSModelLoader;
-import opennlp.tools.postag.POSModel;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -201,7 +199,7 @@ public class ClassificationServiceImpl implements ClassificationService{
         boolean answer = false;
         if(sentences != null && sentences.length > 0 && StringUtils.isNotBlank(term)){
             for(String s : sentences){
-                Pattern pattern = Pattern.compile(term, Pattern.CASE_INSENSITIVE);
+                Pattern pattern = Pattern.compile("\\b"+term+"\\b", Pattern.CASE_INSENSITIVE);
                 Matcher matcher = pattern.matcher(s);
                 while(matcher.find()){
                     answer = true;
@@ -215,7 +213,7 @@ public class ClassificationServiceImpl implements ClassificationService{
     public Integer getTermToGroupScore(String term, String group){
         Integer score = 0;
         if(StringUtils.isNotBlank(term)){
-            Pattern pattern = Pattern.compile(term, Pattern.CASE_INSENSITIVE);
+            Pattern pattern = Pattern.compile("\\b"+term+"\\b", Pattern.CASE_INSENSITIVE);
             Matcher matcher = pattern.matcher(group);
             while(matcher.find()){
                 score++;
@@ -266,12 +264,18 @@ public class ClassificationServiceImpl implements ClassificationService{
 
     @Override
     public String removePossibleUrlFromText(List<Map> links, String text){
-        if(links != null && !links.isEmpty() && StringUtils.isNotBlank(text)){
-            for(Map m : links){
-                if(m.containsKey("value")){
-                    if(StringUtils.isNotBlank(m.get("value").toString())){
-                        text = text.replaceAll(m.get("value").toString(), "");
-                    }
+        if(StringUtils.isNotBlank(text)){
+            Pattern pattern = Pattern.compile("\\<a[^\\>]*\\>([^\\<]+)\\<\\/a\\>", Pattern.CASE_INSENSITIVE);
+            Matcher matcher = pattern.matcher(text);
+            int grpCount = matcher.groupCount();
+            List<String> textToBeRemoved = new ArrayList<>();
+            while(matcher.find()){
+                textToBeRemoved.add(matcher.group());
+            }
+
+            if(!textToBeRemoved.isEmpty()){
+                for(String s : textToBeRemoved){
+                    text = text.replace(s, "");
                 }
             }
         }
@@ -290,5 +294,24 @@ public class ClassificationServiceImpl implements ClassificationService{
             }
         }
         return updated;
+    }
+
+    @Override
+    public List<FabricName> getFabricNames(){
+        return FabricName.getFabrics();
+    }
+
+    @Override
+    public List<FabricName> getFabricsFromContent(String text){
+        List<FabricName> fabricNames = new ArrayList<>();
+        if(StringUtils.isNotBlank(text)){
+            List<FabricName> isPresent = Classification.isFabricPresent(text);
+            Set<FabricName> uniqueFabricNames = new HashSet<>();
+            if(!isPresent.isEmpty()){
+                uniqueFabricNames.addAll(isPresent);
+            }
+            fabricNames.addAll(uniqueFabricNames);
+        }
+        return fabricNames;
     }
 }

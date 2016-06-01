@@ -20,5 +20,6 @@ public class OnStartUp implements ApplicationListener<ContextRefreshedEvent> {
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         System.setProperty(wordNetDictConfig.getValue(), wordNetDictConfig.getDict());
         System.setProperty("categories.add.top", classificationConfig.getAddTopLevel());
+        System.setProperty("clothing.fabric.names.uri", classificationConfig.getFabricNameResource());
     }
 }
