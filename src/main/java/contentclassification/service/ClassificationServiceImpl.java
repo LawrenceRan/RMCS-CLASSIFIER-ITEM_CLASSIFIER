@@ -138,7 +138,11 @@ public class ClassificationServiceImpl implements ClassificationService{
                             String a2 = a1.replaceAll("\"", "");
                             String[] a3 = a2.split("=");
                             if(a3.length > 0){
-                                m.put(a3[0], a3[1]);
+                                try {
+                                    m.put(a3[0], a3[1]);
+                                } catch(ArrayIndexOutOfBoundsException e){
+                                    e.printStackTrace();
+                                }
                             }
                         }
                     }
@@ -158,7 +162,9 @@ public class ClassificationServiceImpl implements ClassificationService{
                     Object v = m.get(n.toString());
                     if(v instanceof String){
                         if(((String) v).equalsIgnoreCase(webMetaName.toString())){
-                            c = m.get(NameAndContentMetaData.CONTENT.toString()).toString();
+                            if(m.get(NameAndContentMetaData.CONTENT.toString()) != null) {
+                                c = m.get(NameAndContentMetaData.CONTENT.toString()).toString();
+                            }
                         }
                     }
                 }
