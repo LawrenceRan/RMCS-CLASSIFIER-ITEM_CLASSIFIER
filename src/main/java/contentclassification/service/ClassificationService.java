@@ -32,7 +32,11 @@ public interface ClassificationService {
     public Double getTermScoringThreshold();
     public String getSentencesAsString(String... sentences);
     public String removePossibleUrlFromText(List<Map> links, String text);
+    public String removePossibleInputFieldFromText(String text);
+    public String removePossibleImagesFromText(String text);
+    public String removeNavigationAndMenuBars(String text);
     public List<String> removeSentencesFromList(List<String> list);
     public List<FabricName> getFabricNames();
     public List<FabricName> getFabricsFromContent(String text);
+    public List<String> colorsFromSelectFields(String text);
 }

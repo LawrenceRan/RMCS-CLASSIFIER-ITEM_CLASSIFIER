@@ -100,17 +100,25 @@ public class Index {
             }
 
             String contentString = jsoupService.getContentAsString(url);
-
-            String text = jsoupService.bodyTextByHtmlUnit(url);
+            //String text = jsoupService.bodyTextByHtmlUnit(url);
             List<Map> linksMap = jsoupService.getLinksUrlAndValue(url);
-            text = jsoupService
-                    .parseHtmlText(classificationService.removePossibleUrlFromText(linksMap, contentString), url);
-            String t1 = null;
+            String text = jsoupService
+                    .parseHtmlText(classificationService.removeNavigationAndMenuBars(
+                            classificationService.removePossibleImagesFromText(
+                            classificationService.removePossibleInputFieldFromText(
+                                    classificationService.removePossibleUrlFromText(linksMap, contentString)))), url);
+
             if (StringUtils.isNotBlank(text)) {
                 /**
                  * The start of getting potential colors.
                  */
                 List<String> potentialColor = AppUtils.getColorByRegEx(text);
+
+                //Second step is to get available colors from input fields;
+                List<String> colorsFromInputFields = classificationService.colorsFromSelectFields(contentString);
+                if(!colorsFromInputFields.isEmpty()){
+                    potentialColor.addAll(colorsFromInputFields);
+                }
 
                 if (!potentialColor.isEmpty()) {
                     List<String> getColorsFromRegExObj = AppUtils.getColorsFromRegEx(potentialColor);

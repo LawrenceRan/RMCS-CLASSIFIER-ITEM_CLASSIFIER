@@ -76,6 +76,7 @@ public class HtmlUnitImpl {
                 client.getOptions().setUseInsecureSSL(true);
                 try {
                     HtmlPage page = HTMLParser.parseHtml(stringWebResponse, client.getCurrentWindow());
+                    page.normalize();
                     text = page.asText();
                 } catch (IOException e){
                     e.printStackTrace();

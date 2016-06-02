@@ -125,4 +125,15 @@ public class JsoupImpl {
         }
         return body;
     }
+
+    public static Document parseHtml(String html) throws IOException {
+        Document document = null;
+        try {
+            document = Jsoup.parse(html);
+            document.normalise();
+        } catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+        return document;
+    }
 }

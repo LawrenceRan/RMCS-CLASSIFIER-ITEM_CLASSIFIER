@@ -4,6 +4,11 @@ import contentclassification.config.TermsScoringConfig;
 import contentclassification.domain.*;
 import contentclassification.utilities.BM25;
 import org.apache.commons.lang3.StringUtils;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +22,7 @@ import java.util.regex.Pattern;
 @Service
 public class ClassificationServiceImpl implements ClassificationService{
 
+    private static final Logger logger = LoggerFactory.getLogger(ClassificationServiceImpl.class);
     @Autowired
     private TermsScoringConfig termsScoringConfig;
 
@@ -320,4 +326,123 @@ public class ClassificationServiceImpl implements ClassificationService{
         }
         return fabricNames;
     }
+
+    @Override
+    public List<String> colorsFromSelectFields(String text) {
+        List<String> colors = new ArrayList<>();
+        if(StringUtils.isNotBlank(text)){
+            Pattern pattern = Pattern.compile("\\<\\bselect\\b.*\\=\\\".*?(color|colour).*(.*?)\\>",
+                    Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+            Matcher matcher = pattern.matcher(text);
+
+            List<String> inputFields = new ArrayList<>();
+            while (matcher.find()){
+                inputFields.add(matcher.group());
+            }
+
+            if(!inputFields.isEmpty()){
+                List<Map> keyValuePair = generateKeyValuePairs(inputFields);
+                System.out.println("Select statement: "+ inputFields);
+
+                //Get tag name of select element.
+                String tagName = null;
+                if(!keyValuePair.isEmpty()){
+                    for(Map<String, String> m : keyValuePair) {
+                        if (m.containsKey("name")) {
+                            tagName = m.get("name").toString();
+                        }
+                    }
+                }
+
+                if(StringUtils.isNotBlank(tagName)){
+                    try {
+                        Document document = JsoupImpl.parseHtml(text);
+                        if(document != null){
+                            Elements elements = document.getElementsByAttributeValue("name", tagName);
+                            if(!elements.isEmpty()) {
+                                Elements selectElements = elements.get(0).children();
+                                Iterator<Element> elementIterator = selectElements.iterator();
+                                while (elementIterator.hasNext()) {
+                                    Element element = elementIterator.next();
+                                    if(element.hasAttr("selected")) {
+                                        colors.add(element.text());
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception e){
+                        logger.debug("Error: "+ e.getMessage());
+                    }
+                }
+            }
+        }
+        return colors;
+    }
+
+    @Override
+    public String removePossibleInputFieldFromText(String text){
+        if(StringUtils.isNotBlank(text)){
+            List<String> textToBeRemoved = new ArrayList<>();
+            Pattern pattern = Pattern.compile("\\<\\binput\\b\\s+.*\\/\\>",
+                    Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+            Matcher matcher = pattern.matcher(text);
+
+            while (matcher.find()){
+                textToBeRemoved.add(matcher.group());
+            }
+
+            if(!textToBeRemoved.isEmpty()){
+                for(String s : textToBeRemoved){
+                    text = text.replace(s,"");
+                }
+            }
+        }
+        return text;
+    }
+
+    @Override
+    public String removePossibleImagesFromText(String text){
+        if(StringUtils.isNotBlank(text)){
+            List<String> textImagesToBeRemoved = new ArrayList<>();
+            Pattern pattern = Pattern.compile("\\<\\bimg\\b\\s+.*\\/\\>", Pattern.CASE_INSENSITIVE);
+            Matcher matcher = pattern.matcher(text);
+
+            while (matcher.find()){
+                textImagesToBeRemoved.add(matcher.group());
+            }
+
+            if(!textImagesToBeRemoved.isEmpty()){
+                for(String s : textImagesToBeRemoved){
+                    text = text.replace(s, "");
+                }
+            }
+        }
+        return text;
+    }
+
+    @Override
+    public String removeNavigationAndMenuBars(String text) {
+        if(StringUtils.isNotBlank(text)){
+            List<String> textToBeRemoved = new ArrayList<>();
+            String regEx = "\\<(\\bdiv\\b|\\bul\\b)\\s(\\bclass\\b|\\bid\\b)\\=\\\".*?(nav|menu|dropdown).*[\\S\\s]*?(\\<\\/\\bdiv\\b\\>|\\<\\/\\bul\\b\\>)";
+            //String regEx = "\\<(\\bdiv\\b|\\bul\\b)\\s\\bclass\\b\\=\\\"(nav|menu).*[\\S\\s]*?(\\<\\/\\bdiv\\b\\>|\\<\\/\\bul\\b\\>)";
+            Pattern pattern = Pattern
+                    .compile(regEx,
+                            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+            Matcher matcher = pattern.matcher(text);
+
+            while (matcher.find()){
+                textToBeRemoved.add(matcher.group());
+            }
+
+            if(!textToBeRemoved.isEmpty()){
+                for(String s : textToBeRemoved){
+                    text = text.replace(s, "");
+                }
+            }
+        }
+        return text;
+    }
+
+
 }
