@@ -7,6 +7,7 @@ import contentclassification.service.ClassificationServiceImpl;
 import contentclassification.service.JsoupService;
 import contentclassification.service.WordNetService;
 import org.apache.commons.lang3.StringUtils;
+import org.atteo.evo.inflector.English;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -468,7 +469,26 @@ public class Index {
                 }
 
                 //Get the top level category that an attribute belongs to and score 'em
+                if(!totalTermToGroupsFiltered.isEmpty()){
+                    Set<String> terms = new HashSet<>();
+                    for(TotalTermToGroup totalTermToGroup : totalTermToGroupsFiltered){
+                        String singular = English.plural(totalTermToGroup.getTerm(), 1);
+                        terms.add(singular);
+                    }
+                    logger.info("Singular terms"+ terms);
 
+                    List<ResponseCategoryToAttribute> responseCategoryToAttributeList = new ArrayList<>();
+                    if(!terms.isEmpty()){
+                        for(String s : terms){
+                            ResponseCategoryToAttribute responseCategoryToAttribute =
+                                    new ResponseCategoryToAttribute();
+                            responseCategoryToAttribute.setCategory(classificationService.getCategoryByTerm(s));
+                            responseCategoryToAttribute.setAttribute(s);
+                            responseCategoryToAttributeList.add(responseCategoryToAttribute);
+                        }
+                    }
+                    logger.info("Response to categories");
+                }
 
                 //Get potential material make of the said item.
                 List<FabricName> fabricNames = classificationService.getFabricsFromContent(text);
@@ -480,6 +500,7 @@ public class Index {
                     response.put("materialsFound", materialsFound);
                 }
                 response.put("scoreThreshold", totalTermToGroupsFiltered);
+                //End of potential material of make.
             }
 
 

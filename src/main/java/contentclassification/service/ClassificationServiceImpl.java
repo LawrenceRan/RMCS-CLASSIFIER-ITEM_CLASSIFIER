@@ -424,6 +424,10 @@ public class ClassificationServiceImpl implements ClassificationService{
                                 }
                             }
                         }
+
+                        if(sizes.isEmpty()){
+                            String btnSizeRegEx = "";
+                        }
                     } catch (Exception e){
                         logger.debug("Error: "+ e.getMessage());
                     }
@@ -431,6 +435,27 @@ public class ClassificationServiceImpl implements ClassificationService{
             }
         }
         return sizes;
+    }
+
+    @Override
+    public String getCategoryByTerm(String term) {
+        String category = null;
+        if(StringUtils.isNotBlank(term)){
+            List<Categories> categoriesList = getCategories();
+            if(!categoriesList.isEmpty()){
+                for(Categories c : categoriesList){
+                    List<String> attributes = c.getAttributes();
+                    if(!attributes.isEmpty()) {
+                        for(String s : attributes) {
+                            if (term.equalsIgnoreCase(s)) {
+                                category = c.getCategory();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return category;
     }
 
     @Override

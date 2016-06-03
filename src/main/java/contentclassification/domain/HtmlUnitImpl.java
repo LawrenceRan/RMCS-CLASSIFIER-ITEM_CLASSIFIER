@@ -45,7 +45,7 @@ public class HtmlUnitImpl {
 
     public String getContentAsString(){
         String text = null;
-        WebClient client = new WebClient(BrowserVersion.BEST_SUPPORTED);
+        WebClient client = new WebClient(BrowserVersion.FIREFOX_45);
         client.getOptions().setCssEnabled(false);
         client.getOptions().setJavaScriptEnabled(false);
         client.getCookieManager().setCookiesEnabled(true);
@@ -68,9 +68,35 @@ public class HtmlUnitImpl {
             try {
                 URL url = new URL(urlStr);
                 StringWebResponse stringWebResponse = new StringWebResponse(html, url);
-                WebClient client = new WebClient(BrowserVersion.BEST_SUPPORTED);
+                WebClient client = new WebClient(BrowserVersion.FIREFOX_45);
                 client.getOptions().setCssEnabled(false);
                 client.getOptions().setJavaScriptEnabled(false);
+                client.getCookieManager().setCookiesEnabled(true);
+                client.getOptions().setThrowExceptionOnFailingStatusCode(true);
+                client.getOptions().setUseInsecureSSL(true);
+                try {
+                    HtmlPage page = HTMLParser.parseHtml(stringWebResponse, client.getCurrentWindow());
+                    page.normalize();
+                    text = page.asText();
+                } catch (IOException e){
+                    e.printStackTrace();
+                }
+            } catch(MalformedURLException e){
+                e.printStackTrace();
+            }
+        }
+        return text;
+    }
+
+    public String parseHTMLText(String html, String urlStr, boolean enableJavascript){
+        String text = null;
+        if(StringUtils.isNotBlank(html) && StringUtils.isNotBlank(urlStr)){
+            try {
+                URL url = new URL(urlStr);
+                StringWebResponse stringWebResponse = new StringWebResponse(html, url);
+                WebClient client = new WebClient(BrowserVersion.FIREFOX_45);
+                client.getOptions().setCssEnabled(false);
+                client.getOptions().setJavaScriptEnabled(enableJavascript);
                 client.getCookieManager().setCookiesEnabled(true);
                 client.getOptions().setThrowExceptionOnFailingStatusCode(true);
                 client.getOptions().setUseInsecureSSL(true);
