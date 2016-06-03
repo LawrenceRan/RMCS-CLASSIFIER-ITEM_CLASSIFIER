@@ -39,4 +39,5 @@ public interface ClassificationService {
     public List<FabricName> getFabricNames();
     public List<FabricName> getFabricsFromContent(String text);
     public List<String> colorsFromSelectFields(String text);
+    public List<String> sizeFromSelectFields(String text);
 }

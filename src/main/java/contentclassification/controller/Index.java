@@ -157,6 +157,12 @@ public class Index {
                 }
                 //End of getting potential colors.
 
+
+                //Trying to get size of the item if exist, ideal for shoes and clothing
+                List<String> sizesFromContent = classificationService.sizeFromSelectFields(contentString);
+                response.put("availableSizes", sizesFromContent);
+                //End of getting size from content.
+
                 //Start of content analysis of content page.
                 String[] tokens = classificationService.tokenize(text);
                 String[] sentences = classificationService.sentenceDetection(text);

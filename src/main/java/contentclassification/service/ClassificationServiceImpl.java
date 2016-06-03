@@ -110,7 +110,7 @@ public class ClassificationServiceImpl implements ClassificationService{
 
     @Override
     public <T> List<Map> generateKeyValuePairs(List<T> objects){
-        String regex = "\\w+\\=\\\"[a-zA-Z0-9]+\\\"\\s\\b\\w+\\=\\\".+\\\"";
+        String regex = "\\s.*?\\=\\\"[a-zA-Z0-9]+\\\"\\s\\b\\w+\\=\\\".+\\\"";
         String keyValueRegEx = "\\w+\\=";
 
         List<Map> map = new ArrayList<>();
@@ -225,7 +225,7 @@ public class ClassificationServiceImpl implements ClassificationService{
     public Integer getTermToGroupScore(String term, String group){
         Integer score = 0;
         if(StringUtils.isNotBlank(term)){
-            Pattern pattern = Pattern.compile("\\b"+term+"\\b", Pattern.CASE_INSENSITIVE);
+            Pattern pattern = Pattern.compile("\\b"+term+"\\b", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
             Matcher matcher = pattern.matcher(group);
             while(matcher.find()){
                 score++;
@@ -329,7 +329,7 @@ public class ClassificationServiceImpl implements ClassificationService{
 
     @Override
     public List<String> colorsFromSelectFields(String text) {
-        List<String> colors = new ArrayList<>();
+        List<String> colors = new LinkedList<>();
         if(StringUtils.isNotBlank(text)){
             Pattern pattern = Pattern.compile("\\<\\bselect\\b.*\\=\\\".*?(color|colour).*(.*?)\\>",
                     Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
@@ -342,7 +342,6 @@ public class ClassificationServiceImpl implements ClassificationService{
 
             if(!inputFields.isEmpty()){
                 List<Map> keyValuePair = generateKeyValuePairs(inputFields);
-                System.out.println("Select statement: "+ inputFields);
 
                 //Get tag name of select element.
                 String tagName = null;
@@ -366,6 +365,8 @@ public class ClassificationServiceImpl implements ClassificationService{
                                     Element element = elementIterator.next();
                                     if(element.hasAttr("selected")) {
                                         colors.add(element.text());
+                                    } else {
+                                        //colors.add(element.text());
                                     }
                                 }
                             }
@@ -377,6 +378,59 @@ public class ClassificationServiceImpl implements ClassificationService{
             }
         }
         return colors;
+    }
+
+    @Override
+    public List<String> sizeFromSelectFields(String text) {
+        List<String> sizes = new LinkedList<>();
+        if(StringUtils.isNotBlank(text)){
+            String regEx = "\\<\\bselect\\b.*\\=\\\".*?(size|dimension).*(.*?)\\>";
+            Pattern pattern = Pattern.compile(regEx, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+            Matcher matcher = pattern.matcher(text);
+
+            List<String> sizeSelect = new ArrayList<>();
+            while (matcher.find()){
+                sizeSelect.add(matcher.group());
+            }
+
+            if(!sizeSelect.isEmpty()){
+                List<Map> keyAndValue = generateKeyValuePairs(sizeSelect);
+
+                //Get tag name of select element.
+                String tagName = null;
+                if(!keyAndValue.isEmpty()){
+                    for(Map<String, String> m : keyAndValue) {
+                        if (m.containsKey("name")) {
+                            tagName = m.get("name").toString();
+                        }
+                    }
+                }
+
+                if(StringUtils.isNotBlank(tagName)){
+                    try {
+                        Document document = JsoupImpl.parseHtml(text);
+                        if(document != null){
+                            Elements elements = document.getElementsByAttributeValue("name", tagName);
+                            if(!elements.isEmpty()) {
+                                Elements selectElements = elements.get(0).children();
+                                Iterator<Element> elementIterator = selectElements.iterator();
+                                while (elementIterator.hasNext()) {
+                                    Element element = elementIterator.next();
+                                    if(element.hasAttr("selected")) {
+                                        sizes.add(element.text());
+                                    } else {
+                                        sizes.add(element.text());
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception e){
+                        logger.debug("Error: "+ e.getMessage());
+                    }
+                }
+            }
+        }
+        return sizes;
     }
 
     @Override
