@@ -523,5 +523,68 @@ public class ClassificationServiceImpl implements ClassificationService{
         return text;
     }
 
+    @Override
+    public String[] getSentencesWithTerm(String[] sentences, String term){
+        String[] foundSentences = null;
+        if(sentences != null && sentences.length > 0 && StringUtils.isNotBlank(term)){
+            int x = 0;
+            List<String> f = new ArrayList<>();
+            for(String sentence : sentences) {
+                Pattern pattern = Pattern.compile("\\b"+ term +"\\b", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+                Matcher matcher = pattern.matcher(sentence);
+                while(matcher.find()) {
+                    f.add(sentence);
+                    logger.info("Sentence: " + x + " : " + sentence);
+                    x++;
+                }
+            }
 
+            if(!f.isEmpty()) {
+                Set<String> cleanUp = new HashSet<>();
+                cleanUp.addAll(f);
+                f.clear();
+                f.addAll(cleanUp);
+                foundSentences = f.toArray(new String[f.size()]);
+            }
+        }
+        return foundSentences;
+    }
+
+    @Override
+    public List<ResponseCategoryToAttribute> getCombinedMatrix(
+            List<ResponseCategoryToAttribute> responseCategoryToAttributes){
+        List<ResponseCategoryToAttribute> updated = new ArrayList<>();
+        List<CombinationMatrix> combinationMatrixList = CombinationMatrix.getCombinationMatrix();
+        if(responseCategoryToAttributes != null && !responseCategoryToAttributes.isEmpty()){
+            List<String> attributes = new ArrayList<>();
+            List<String> combinedAttributes = new ArrayList<>();
+            for(ResponseCategoryToAttribute r : responseCategoryToAttributes){
+                attributes.add(r.getCategory());
+                combinedAttributes.addAll(r.getAttributes());
+            }
+
+            boolean isRuled = false;
+            String proposeCategory = null;
+            if(!combinationMatrixList.isEmpty()){
+                for(CombinationMatrix c : combinationMatrixList) {
+                    List<String> matrixList = c.getCombinedCategories();
+                    List<String> intersection = getIntersection(attributes, matrixList);
+                    if(!intersection.isEmpty()){
+                        isRuled = true;
+                        proposeCategory = c.getCategories();
+                    }
+                }
+            }
+
+            if(isRuled && StringUtils.isNotBlank(proposeCategory)){
+                ResponseCategoryToAttribute responseCategoryToAttribute = new ResponseCategoryToAttribute();
+                responseCategoryToAttribute.setAttributes(combinedAttributes);
+                responseCategoryToAttribute.setCategory(proposeCategory);
+                updated.add(responseCategoryToAttribute);
+            }
+            logger.info("Attributes");
+            updated.addAll(responseCategoryToAttributes);
+        }
+        return updated;
+    }
 }

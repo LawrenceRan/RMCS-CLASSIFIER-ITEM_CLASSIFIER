@@ -281,9 +281,25 @@ public class Index {
 
                             TFIDFWeightedScore tfidfWeightedScore = new TFIDFWeightedScore();
                             tfidfWeightedScore.setTerm(i);
-                            tfidfWeightedScore.setScore(tfIdfWeightScore);
-                            tfidfWeightedScore.setIdfScore(idfScore);
-                            tfidfWeightedScore.setTfScore(tfScore);
+
+                            if(!Double.isNaN(tfIdfWeightScore) && !Double.isInfinite(tfIdfWeightScore)) {
+                                tfidfWeightedScore.setScore(tfIdfWeightScore);
+                            } else {
+                                tfidfWeightedScore.setScore(0d);
+                            }
+
+                            if(!Double.isNaN(idfScore) && !Double.isInfinite(idfScore)) {
+                                tfidfWeightedScore.setIdfScore(idfScore);
+                            } else {
+                                tfidfWeightedScore.setIdfScore(0d);
+                            }
+
+                            if(!Double.isNaN(tfScore) && !Double.isInfinite(tfScore)) {
+                                tfidfWeightedScore.setTfScore(tfScore);
+                            } else {
+                                tfidfWeightedScore.setTfScore(0d);
+                            }
+
                             tfIdfWeightedScores.add(tfidfWeightedScore);
                         }
 
@@ -457,6 +473,15 @@ public class Index {
                     response.put("totalWeightedScore", totalTermToGroups);
                 }
 
+                //Scored terms crossed referenced with sentences to predict the order
+                if(!totalTermToGroups.isEmpty()){
+                    for(TotalTermToGroup t : totalTermToGroups){
+                        String[] sentenceToTerm = classificationService.getSentencesWithTerm(sentences, t.getTerm());
+                        logger.info("Sentence to term: "+ sentenceToTerm);
+                    }
+                }
+                //end of sentences crossed referenced.
+
                 //Filter total term to group score by scoring threshold.
                 Double termScoringThreshold = classificationService.getTermScoringThreshold();
                 List<TotalTermToGroup> totalTermToGroupsFiltered = new ArrayList<>();
@@ -475,7 +500,6 @@ public class Index {
                         String singular = English.plural(totalTermToGroup.getTerm(), 1);
                         terms.add(singular);
                     }
-                    logger.info("Singular terms"+ terms);
 
                     List<ResponseCategoryToAttribute> responseCategoryToAttributeList = new ArrayList<>();
                     if(!terms.isEmpty()){
@@ -483,11 +507,31 @@ public class Index {
                             ResponseCategoryToAttribute responseCategoryToAttribute =
                                     new ResponseCategoryToAttribute();
                             responseCategoryToAttribute.setCategory(classificationService.getCategoryByTerm(s));
-                            responseCategoryToAttribute.setAttribute(s);
+                            List<String> attributes = new ArrayList<>();
+                            attributes.add(s);
+                            responseCategoryToAttribute.setAttributes(attributes);
                             responseCategoryToAttributeList.add(responseCategoryToAttribute);
                         }
                     }
-                    logger.info("Response to categories");
+
+                    /**
+                        Ran response to category against combination matrix, only if the list of response to category
+                        is more than one.
+                     */
+                    if(responseCategoryToAttributeList.size() > 1){
+                        List<ResponseCategoryToAttribute> updated = classificationService
+                                .getCombinedMatrix(responseCategoryToAttributeList);
+                        if(!updated.isEmpty()) {
+                            Set<ResponseCategoryToAttribute> set = new HashSet<>();
+                            responseCategoryToAttributeList.addAll(updated);
+                            set.addAll(responseCategoryToAttributeList);
+
+                            responseCategoryToAttributeList.clear();
+                            responseCategoryToAttributeList.addAll(set);
+                        }
+                    }
+
+                    response.put("responseCategoryToAttribute", responseCategoryToAttributeList);
                 }
 
                 //Get potential material make of the said item.

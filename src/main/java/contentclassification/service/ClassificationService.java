@@ -41,4 +41,7 @@ public interface ClassificationService {
     public List<String> colorsFromSelectFields(String text);
     public List<String> sizeFromSelectFields(String text);
     public String getCategoryByTerm(String term);
+    public String[] getSentencesWithTerm(String[] sentences, String term);
+    public List<ResponseCategoryToAttribute> getCombinedMatrix(
+            List<ResponseCategoryToAttribute> responseCategoryToAttributes);
 }

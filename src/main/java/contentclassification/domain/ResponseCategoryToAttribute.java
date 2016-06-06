@@ -3,6 +3,7 @@ package contentclassification.domain;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -10,14 +11,14 @@ import java.util.Set;
  */
 public class ResponseCategoryToAttribute {
     private String category;
-    private String attribute;
+    private List<String> attributes;
 
     public ResponseCategoryToAttribute() {
     }
 
-    public ResponseCategoryToAttribute(String category, String attribute){
+    public ResponseCategoryToAttribute(String category, List<String> attributes){
         this.category = category;
-        this.attribute = attribute;
+        this.attributes = attributes;
     }
 
     public String getCategory() {
@@ -28,19 +29,19 @@ public class ResponseCategoryToAttribute {
         this.category = category;
     }
 
-    public String getAttribute() {
-        return attribute;
+    public List<String> getAttributes() {
+        return attributes;
     }
 
-    public void setAttribute(String attribute) {
-        this.attribute = attribute;
+    public void setAttributes(List<String> attributes) {
+        this.attributes = attributes;
     }
 
     @Override
     public int hashCode(){
         HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
         hashCodeBuilder.append(this.category);
-        hashCodeBuilder.append(this.attribute);
+        hashCodeBuilder.append(this.attributes);
         return hashCodeBuilder.hashCode();
     }
 
@@ -50,7 +51,7 @@ public class ResponseCategoryToAttribute {
             ResponseCategoryToAttribute responseCategoryToAttribute = (ResponseCategoryToAttribute) object;
             EqualsBuilder equalsBuilder = new EqualsBuilder();
             equalsBuilder.append(this.category, responseCategoryToAttribute.getCategory());
-            equalsBuilder.append(this.attribute, responseCategoryToAttribute.getAttribute());
+            equalsBuilder.append(this.attributes, responseCategoryToAttribute.getAttributes());
             return equalsBuilder.isEquals();
         }
         return false;
