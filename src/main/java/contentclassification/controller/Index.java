@@ -114,6 +114,7 @@ public class Index {
                  * The start of getting potential colors.
                  */
                 List<String> potentialColor = AppUtils.getColorByRegEx(text);
+                List<String> itemColors = new ArrayList<>();
 
                 //Second step is to get available colors from input fields;
                 List<String> colorsFromInputFields = classificationService.colorsFromSelectFields(contentString);
@@ -125,6 +126,8 @@ public class Index {
                     List<String> getColorsFromRegExObj = AppUtils.getColorsFromRegEx(potentialColor);
                     Map<String, Object> colors = new HashMap<>();
                     colors.put("colors", getColorsFromRegExObj);
+
+                    itemColors.addAll(getColorsFromRegExObj);
 
                     List<Map> colorsValidation = new ArrayList<>();
                     if (!colors.isEmpty()) {
@@ -508,8 +511,10 @@ public class Index {
                                     new ResponseCategoryToAttribute();
                             responseCategoryToAttribute.setCategory(classificationService.getCategoryByTerm(s));
                             List<String> attributes = new ArrayList<>();
-                            attributes.add(s);
+                            attributes.add(English.plural(s, 1));
                             responseCategoryToAttribute.setAttributes(attributes);
+                            responseCategoryToAttribute.setColors(itemColors);
+
                             responseCategoryToAttributeList.add(responseCategoryToAttribute);
                         }
                     }
@@ -522,13 +527,22 @@ public class Index {
                         List<ResponseCategoryToAttribute> updated = classificationService
                                 .getCombinedMatrix(responseCategoryToAttributeList);
                         if(!updated.isEmpty()) {
-                            Set<ResponseCategoryToAttribute> set = new HashSet<>();
-                            responseCategoryToAttributeList.addAll(updated);
-                            set.addAll(responseCategoryToAttributeList);
-
-                            responseCategoryToAttributeList.clear();
-                            responseCategoryToAttributeList.addAll(set);
+//                            Set<ResponseCategoryToAttribute> set = new HashSet<>();
+//                            responseCategoryToAttributeList.addAll(updated);
+//                            set.addAll(responseCategoryToAttributeList);
+//
+//                            responseCategoryToAttributeList.clear();
+//                            responseCategoryToAttributeList.addAll(set);
                         }
+                    }
+
+                    /**
+                     * Merge all response to categories which share the same category.
+                     */
+                    List<ResponseCategoryToAttribute> mergeResponseToCategories =
+                            classificationService.groupResponseByCategory(responseCategoryToAttributeList);
+                    if(!mergeResponseToCategories.isEmpty()){
+                        response.put("mergedResponseCategoryToAttributes", mergeResponseToCategories);
                     }
 
                     response.put("responseCategoryToAttribute", responseCategoryToAttributeList);

@@ -557,33 +557,92 @@ public class ClassificationServiceImpl implements ClassificationService{
         List<CombinationMatrix> combinationMatrixList = CombinationMatrix.getCombinationMatrix();
         if(responseCategoryToAttributes != null && !responseCategoryToAttributes.isEmpty()){
             List<String> attributes = new ArrayList<>();
-            List<String> combinedAttributes = new ArrayList<>();
+
+            Map<String, List<String>> categoryToAttributes = new HashMap<>();
+
             for(ResponseCategoryToAttribute r : responseCategoryToAttributes){
                 attributes.add(r.getCategory());
-                combinedAttributes.addAll(r.getAttributes());
+
+                if(!categoryToAttributes.containsKey(r.getCategory())){
+                    categoryToAttributes.put(r.getCategory(), r.getAttributes());
+                } else {
+                    List<String> attrs = categoryToAttributes.get(r.getCategory());
+                    attrs.addAll(r.getAttributes());
+                    categoryToAttributes.put(r.getCategory(), attrs);
+                }
             }
 
             boolean isRuled = false;
             String proposeCategory = null;
+            List<String> intersection = null;
+
             if(!combinationMatrixList.isEmpty()){
                 for(CombinationMatrix c : combinationMatrixList) {
                     List<String> matrixList = c.getCombinedCategories();
-                    List<String> intersection = getIntersection(attributes, matrixList);
-                    if(!intersection.isEmpty()){
+                    intersection = getIntersection(attributes, matrixList);
+                    if(!intersection.isEmpty() && intersection.size() == matrixList.size()){
                         isRuled = true;
                         proposeCategory = c.getCategories();
+
                     }
                 }
             }
 
             if(isRuled && StringUtils.isNotBlank(proposeCategory)){
                 ResponseCategoryToAttribute responseCategoryToAttribute = new ResponseCategoryToAttribute();
-                responseCategoryToAttribute.setAttributes(combinedAttributes);
+                if(!categoryToAttributes.isEmpty()) {
+                    if(intersection != null) {
+                        List<String> combinedAttributes = new ArrayList<>();
+                        for(String i : intersection) {
+                            if (categoryToAttributes.containsKey(i)) {
+                                combinedAttributes.addAll(categoryToAttributes.get(i));
+                            }
+                        }
+                        responseCategoryToAttribute.setAttributes(combinedAttributes);
+                    }
+                }
                 responseCategoryToAttribute.setCategory(proposeCategory);
                 updated.add(responseCategoryToAttribute);
             }
-            logger.info("Attributes");
-            updated.addAll(responseCategoryToAttributes);
+        }
+        return updated;
+    }
+
+    public List<ResponseCategoryToAttribute> groupResponseByCategory(
+            List<ResponseCategoryToAttribute> responseCategoryToAttributes){
+        List<ResponseCategoryToAttribute> updated = new ArrayList<>();
+        if(responseCategoryToAttributes != null && !responseCategoryToAttributes.isEmpty()){
+            Map<String, List<String>> categoryToAttributes = new HashMap<>();
+            Map<String, List<String>> colorsMap = new HashMap<>();
+            for(ResponseCategoryToAttribute r : responseCategoryToAttributes){
+
+                if(!categoryToAttributes.containsKey(r.getCategory())){
+                    categoryToAttributes.put(r.getCategory(), r.getAttributes());
+                } else {
+                    List<String> attrs = categoryToAttributes.get(r.getCategory());
+                    attrs.addAll(r.getAttributes());
+
+                    Set<String> set = new HashSet<>();
+                    set.addAll(attrs);
+                    attrs.clear();
+                    attrs.addAll(set);
+
+                    categoryToAttributes.put(r.getCategory(), attrs);
+                }
+
+                colorsMap.put(r.getCategory(), r.getColors());
+
+            }
+
+            if(!categoryToAttributes.isEmpty()){
+                for(String ca : categoryToAttributes.keySet()){
+                    ResponseCategoryToAttribute r = new ResponseCategoryToAttribute();
+                    r.setCategory(ca);
+                    r.setAttributes(categoryToAttributes.get(ca));
+                    r.setColors(colorsMap.get(ca));
+                    updated.add(r);
+                }
+            }
         }
         return updated;
     }

@@ -44,4 +44,6 @@ public interface ClassificationService {
     public String[] getSentencesWithTerm(String[] sentences, String term);
     public List<ResponseCategoryToAttribute> getCombinedMatrix(
             List<ResponseCategoryToAttribute> responseCategoryToAttributes);
+    public List<ResponseCategoryToAttribute> groupResponseByCategory(
+            List<ResponseCategoryToAttribute> responseCategoryToAttributes);
 }

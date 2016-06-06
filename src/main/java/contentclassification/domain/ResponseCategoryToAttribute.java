@@ -12,13 +12,17 @@ import java.util.Set;
 public class ResponseCategoryToAttribute {
     private String category;
     private List<String> attributes;
+    private List<String> colors;
 
     public ResponseCategoryToAttribute() {
     }
 
-    public ResponseCategoryToAttribute(String category, List<String> attributes){
+    public ResponseCategoryToAttribute(String category,
+                                       List<String> attributes,
+                                       List<String> colors){
         this.category = category;
         this.attributes = attributes;
+        this.colors = colors;
     }
 
     public String getCategory() {
@@ -37,11 +41,20 @@ public class ResponseCategoryToAttribute {
         this.attributes = attributes;
     }
 
+    public List<String> getColors() {
+        return colors;
+    }
+
+    public void setColors(List<String> colors) {
+        this.colors = colors;
+    }
+
     @Override
     public int hashCode(){
         HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
         hashCodeBuilder.append(this.category);
         hashCodeBuilder.append(this.attributes);
+        hashCodeBuilder.append(this.colors);
         return hashCodeBuilder.hashCode();
     }
 
@@ -52,6 +65,7 @@ public class ResponseCategoryToAttribute {
             EqualsBuilder equalsBuilder = new EqualsBuilder();
             equalsBuilder.append(this.category, responseCategoryToAttribute.getCategory());
             equalsBuilder.append(this.attributes, responseCategoryToAttribute.getAttributes());
+            equalsBuilder.append(this.colors, responseCategoryToAttribute.getColors());
             return equalsBuilder.isEquals();
         }
         return false;
