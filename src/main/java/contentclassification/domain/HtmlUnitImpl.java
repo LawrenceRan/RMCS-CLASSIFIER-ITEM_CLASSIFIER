@@ -44,10 +44,13 @@ public class HtmlUnitImpl {
     }
 
     public String getContentAsString(){
+        boolean enableJavascript = Boolean.parseBoolean(System.getProperty("enable.javascript"));
+        boolean enableCss = Boolean.parseBoolean(System.getProperty("enable.css"));
+
         String text = null;
         WebClient client = new WebClient(BrowserVersion.FIREFOX_45);
-        client.getOptions().setCssEnabled(false);
-        client.getOptions().setJavaScriptEnabled(false);
+        client.getOptions().setCssEnabled(enableCss);
+        client.getOptions().setJavaScriptEnabled(enableJavascript);
         client.getCookieManager().setCookiesEnabled(true);
         client.getOptions().setThrowExceptionOnFailingStatusCode(true);
         client.getOptions().setUseInsecureSSL(true);
@@ -66,14 +69,22 @@ public class HtmlUnitImpl {
         String text = null;
         if(StringUtils.isNotBlank(html) && StringUtils.isNotBlank(urlStr)){
             try {
+                boolean enableJavascript = Boolean.parseBoolean(System.getProperty("enable.javascript"));
+                boolean enableCss = Boolean.parseBoolean(System.getProperty("enable.css"));
+
                 URL url = new URL(urlStr);
                 StringWebResponse stringWebResponse = new StringWebResponse(html, url);
                 WebClient client = new WebClient(BrowserVersion.FIREFOX_45);
                 client.getOptions().setCssEnabled(false);
-                client.getOptions().setJavaScriptEnabled(false);
-                client.getCookieManager().setCookiesEnabled(true);
+                client.getOptions().setJavaScriptEnabled(enableJavascript);
+                client.getCookieManager().setCookiesEnabled(enableCss);
                 client.getOptions().setThrowExceptionOnFailingStatusCode(true);
                 client.getOptions().setUseInsecureSSL(true);
+
+                if(enableJavascript) {
+                    client.waitForBackgroundJavaScript(30 * 1000);
+                }
+
                 try {
                     HtmlPage page = HTMLParser.parseHtml(stringWebResponse, client.getCurrentWindow());
                     page.normalize();

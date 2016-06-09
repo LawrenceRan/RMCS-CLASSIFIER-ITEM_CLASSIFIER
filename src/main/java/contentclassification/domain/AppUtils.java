@@ -196,4 +196,16 @@ public class AppUtils {
 
         return output;
     }
+
+    public static boolean regExContains(String regEx, String text){
+        boolean results = false;
+        if(StringUtils.isNotBlank(regEx) && StringUtils.isNotBlank(text)){
+            Pattern pattern = Pattern.compile(regEx, Pattern.CASE_INSENSITIVE);
+            Matcher matcher = pattern.matcher(text);
+            while (matcher.find()){
+                results = true;
+            }
+        }
+        return results;
+    }
 }

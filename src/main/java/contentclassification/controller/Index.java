@@ -527,6 +527,7 @@ public class Index {
                         List<ResponseCategoryToAttribute> updated = classificationService
                                 .getCombinedMatrix(responseCategoryToAttributeList);
                         if(!updated.isEmpty()) {
+                            response.put("combinedDecision", updated);
 //                            Set<ResponseCategoryToAttribute> set = new HashSet<>();
 //                            responseCategoryToAttributeList.addAll(updated);
 //                            set.addAll(responseCategoryToAttributeList);
@@ -542,6 +543,14 @@ public class Index {
                     List<ResponseCategoryToAttribute> mergeResponseToCategories =
                             classificationService.groupResponseByCategory(responseCategoryToAttributeList);
                     if(!mergeResponseToCategories.isEmpty()){
+                        for(ResponseCategoryToAttribute r : mergeResponseToCategories){
+                            List<String> attributes = r.getAttributes();
+                            for(String attribute : attributes) {
+                                String[] sentenceInAttribute = classificationService
+                                        .getSentencesWithTerm(sentences, attribute);
+                                logger.info("Sentences found in term: "+ sentenceInAttribute);
+                            }
+                        }
                         response.put("mergedResponseCategoryToAttributes", mergeResponseToCategories);
                     }
 

@@ -8,10 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by rsl_prod_005 on 3/30/16.
@@ -135,5 +132,23 @@ public class JsoupImpl {
             System.out.println(e.getMessage());
         }
         return document;
+    }
+
+    public List<String> getAllTags() throws IOException {
+        List<String> tags = new ArrayList<>();
+        try{
+            Document document = getDocument();
+            if(document != null){
+                Elements elements = document.body().getAllElements();
+                Iterator<Element> elementIterator = elements.iterator();
+                while (elementIterator.hasNext()){
+                    Element element = elementIterator.next();
+                    tags.add(element.html());
+                }
+            }
+        } catch (Exception e){
+            logger.debug("Error in: "+ e.getMessage());
+        }
+        return tags;
     }
 }

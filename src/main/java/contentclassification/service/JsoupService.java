@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -115,5 +116,16 @@ public class JsoupService {
             logger.debug("Error in getting links. Message: "+ e.getMessage());
         }
         return links;
+    }
+
+    public List<String> getAllTags(String url){
+        List<String> tags = new ArrayList<>();
+        try{
+            JsoupImpl jsoup = JsoupImpl.setUrl(url);
+            tags.addAll(jsoup.getAllTags());
+        } catch (Exception e){
+            logger.debug("Error in getting tags. Message: "+ e.getMessage());
+        }
+        return tags;
     }
 }

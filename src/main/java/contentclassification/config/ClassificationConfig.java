@@ -18,6 +18,14 @@ public class ClassificationConfig {
     @NotNull
     private String fabricNameResource;
 
+    @Value("${enable.javascript}")
+    @NotNull
+    private String enableJavascript;
+
+    @Value("${enable.css}")
+    @NotNull
+    private String enableCss;
+
     public String getAddTopLevel() {
         return addTopLevel;
     }
@@ -32,5 +40,21 @@ public class ClassificationConfig {
 
     public void setFabricNameResource(String fabricNameResource) {
         this.fabricNameResource = fabricNameResource;
+    }
+
+    public String getEnableJavascript() {
+        return enableJavascript;
+    }
+
+    public void setEnableJavascript(String enableJavascript) {
+        this.enableJavascript = enableJavascript;
+    }
+
+    public String getEnableCss() {
+        return enableCss;
+    }
+
+    public void setEnableCss(String enableCss) {
+        this.enableCss = enableCss;
     }
 }

@@ -4,8 +4,10 @@ import contentclassification.config.TermsScoringConfig;
 import contentclassification.domain.*;
 import contentclassification.utilities.BM25;
 import org.apache.commons.lang3.StringUtils;
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +27,9 @@ public class ClassificationServiceImpl implements ClassificationService{
     private static final Logger logger = LoggerFactory.getLogger(ClassificationServiceImpl.class);
     @Autowired
     private TermsScoringConfig termsScoringConfig;
+
+    @Autowired
+    private JsoupService jsoupService;
 
     Classification classification = null;
 
@@ -331,13 +336,29 @@ public class ClassificationServiceImpl implements ClassificationService{
     public List<String> colorsFromSelectFields(String text) {
         List<String> colors = new LinkedList<>();
         if(StringUtils.isNotBlank(text)){
-            Pattern pattern = Pattern.compile("\\<\\bselect\\b.*\\=\\\".*?(color|colour).*(.*?)\\>",
-                    Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
-            Matcher matcher = pattern.matcher(text);
+            String[] regExs = {"\\<\\bselect\\b.*\\=\\\".*?(color|colour).*(.*?)\\>",
+                    "\\<\\binput\\b.*\\=\\\".*?(color|colour).*(.*?)\\/\\>"};
 
             List<String> inputFields = new ArrayList<>();
-            while (matcher.find()){
-                inputFields.add(matcher.group());
+
+            if(regExs != null && regExs.length > 0) {
+                for(String regEx : regExs) {
+                    Pattern pattern = Pattern.compile(regEx,
+                            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+                    Matcher matcher = pattern.matcher(text);
+
+                    while (matcher.find()) {
+                        inputFields.add(matcher.group());
+                    }
+                }
+            }
+
+            //Parsing document as text for further dom queries or manipulations.
+            Document document = null;
+            try {
+                document = JsoupImpl.parseHtml(text);
+            } catch (Exception e){
+                logger.debug("Error: "+ e.getMessage());
             }
 
             if(!inputFields.isEmpty()){
@@ -355,7 +376,6 @@ public class ClassificationServiceImpl implements ClassificationService{
 
                 if(StringUtils.isNotBlank(tagName)){
                     try {
-                        Document document = JsoupImpl.parseHtml(text);
                         if(document != null){
                             Elements elements = document.getElementsByAttributeValue("name", tagName);
                             if(!elements.isEmpty()) {
@@ -376,6 +396,67 @@ public class ClassificationServiceImpl implements ClassificationService{
                     }
                 }
             }
+
+            if(!inputFields.isEmpty()){
+                try{
+                    String colorTagAttributeName = null;
+                    if(document != null){
+                        List<String> colorIds = new ArrayList<>();
+                        Elements elements = document.getElementsByTag("input");
+                        if(!elements.isEmpty()){
+                            Iterator<Element> elementIterator = elements.iterator();
+                            while(elementIterator.hasNext()){
+                                Element element = elementIterator.next();
+                                String attributeName = element.attr("name");
+                                if(AppUtils.regExContains("(color|colour)", attributeName)){
+                                    colorTagAttributeName = element.attr("name");
+                                    String colorId = element.id();
+                                    String val = element.val();
+                                    colorIds.add(colorId);
+                                }
+                            }
+                        }
+
+                        if(!colorIds.isEmpty()) {
+                            for(String c : colorIds) {
+                                Elements colorElements = document.getElementsByAttributeValue("for", c);
+                                if(!colorElements.isEmpty()) {
+                                    Iterator<Element> elementIterator = colorElements.iterator();
+                                    while(elementIterator.hasNext()) {
+                                        Element element = elementIterator.next();
+                                        String colorText = element.text();
+                                        if(StringUtils.isBlank(colorText)) {
+                                            String dataId = element.attr("data-id");
+                                            if(StringUtils.isNotBlank(dataId)){
+                                                List<String> tokenAttributeName = new ArrayList<>();
+                                                if(StringUtils.isNotBlank(colorTagAttributeName)) {
+                                                    tokenAttributeName
+                                                            .addAll(Arrays.asList(colorTagAttributeName.split("-")));
+                                                }
+                                                List<String> tokenDataId = Arrays.asList(dataId.split("-"));
+                                                List<String> intersection = getIntersection(tokenAttributeName, tokenDataId);
+                                                if(!intersection.isEmpty()){
+                                                    //remove intersected words from data id attribute's value.
+                                                    for(String i : intersection){
+                                                        dataId = dataId.replace(i, "");
+                                                    }
+                                                    colors.add(dataId.replace("-",""));
+                                                } else {
+                                                    colors.add(dataId);
+                                                }
+                                            }
+                                        } else {
+                                            colors.add(colorText);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch(Exception e){
+                    logger.debug("Error: "+ e.getMessage());
+                }
+            }
         }
         return colors;
     }
@@ -392,6 +473,8 @@ public class ClassificationServiceImpl implements ClassificationService{
             while (matcher.find()){
                 sizeSelect.add(matcher.group());
             }
+
+            //get size from text and compare it with
 
             if(!sizeSelect.isEmpty()){
                 List<Map> keyAndValue = generateKeyValuePairs(sizeSelect);

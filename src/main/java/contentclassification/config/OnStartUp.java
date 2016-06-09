@@ -21,5 +21,7 @@ public class OnStartUp implements ApplicationListener<ContextRefreshedEvent> {
         System.setProperty(wordNetDictConfig.getValue(), wordNetDictConfig.getDict());
         System.setProperty("categories.add.top", classificationConfig.getAddTopLevel());
         System.setProperty("clothing.fabric.names.uri", classificationConfig.getFabricNameResource());
+        System.setProperty("enable.javascript", classificationConfig.getEnableJavascript());
+        System.setProperty("enable.css", classificationConfig.getEnableCss());
     }
 }
