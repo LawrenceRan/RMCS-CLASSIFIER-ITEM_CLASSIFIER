@@ -474,6 +474,13 @@ public class ClassificationServiceImpl implements ClassificationService{
                 sizeSelect.add(matcher.group());
             }
 
+            Document document = null;
+            try {
+                document = JsoupImpl.parseHtml(text);
+            } catch (Exception e){
+                logger.debug("Error in getting dom document. Message: "+ e.getMessage());
+            }
+
             //get size from text and compare it with
 
             if(!sizeSelect.isEmpty()){
@@ -491,7 +498,6 @@ public class ClassificationServiceImpl implements ClassificationService{
 
                 if(StringUtils.isNotBlank(tagName)){
                     try {
-                        Document document = JsoupImpl.parseHtml(text);
                         if(document != null){
                             Elements elements = document.getElementsByAttributeValue("name", tagName);
                             if(!elements.isEmpty()) {
@@ -504,6 +510,16 @@ public class ClassificationServiceImpl implements ClassificationService{
                                     } else {
                                         sizes.add(element.text());
                                     }
+
+                                    //If element has child elements.
+                                    Elements children = element.children();
+                                    if(!children.isEmpty()){
+                                        Iterator<Element> childrenItr = children.iterator();
+                                        while(childrenItr.hasNext()){
+                                            Element child = childrenItr.next();
+                                            sizes.add(child.text());
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -513,6 +529,85 @@ public class ClassificationServiceImpl implements ClassificationService{
                         }
                     } catch (Exception e){
                         logger.debug("Error: "+ e.getMessage());
+                    }
+                }
+            }
+
+            if(sizes.isEmpty()){
+                if(document != null){
+                    Elements elements = document.getElementsByTag("select");
+                    if(!elements.isEmpty()){
+                        Iterator<Element> elementIterator = elements.iterator();
+                        while (elementIterator.hasNext()){
+                            Element element = elementIterator.next();
+                            String attributeName = element.attr("name");
+                            if(AppUtils.regExContains("(size)", attributeName)) {
+                                Elements children = element.children();
+                                if(!children.isEmpty()) {
+                                    Iterator<Element> childIterator = children.iterator();
+                                    while(childIterator.hasNext()) {
+                                        Element child = childIterator.next();
+                                        String sizeText = child.text();
+                                        if(StringUtils.isNotBlank(sizeText)) {
+                                            sizes.add(sizeText);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            if(sizes.isEmpty()){
+                List<Size> sizeList = Size.loadSizeFromYaml();
+                String[] tags = {"[^data-]"};
+                if(tags != null && tags.length > 0 && document != null){
+                    for(String t : tags){
+                        if(StringUtils.isNotBlank(t)) {
+                            Elements elements = document.select(t);
+                            if (!elements.isEmpty()) {
+                                Iterator<Element> elementsIterator = elements.iterator();
+                                while (elementsIterator.hasNext()) {
+                                    Element element = elementsIterator.next();
+                                    String outerHtml = element.outerHtml();
+                                    if (AppUtils.regExContains("(size)", outerHtml)) {
+                                        Elements children = element.children();
+                                        if (!children.isEmpty()) {
+                                            Iterator<Element> elementIterator = children.iterator();
+                                            while (elementIterator.hasNext()) {
+                                                Element child = elementIterator.next();
+                                                if (StringUtils.isNotBlank(child.text())) {
+                                                    sizes.add(child.text());
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if(sizeList != null && !sizeList.isEmpty()){
+                    for(Size size : sizeList){
+                        List<String> sizeDataSet = size.getSizes();
+                        if(!sizeDataSet.isEmpty()){
+                            for(String s : sizeDataSet) {
+                                if(document != null) {
+                                    Elements elements = document
+                                            .getElementsByAttributeValueContaining("name", "size");
+                                    if(!elements.isEmpty()){
+                                        Iterator<Element> elementIterator = elements.iterator();
+                                        while (elementIterator.hasNext()){
+                                            Element element = elementIterator.next();
+                                            sizes.add(element.text());
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

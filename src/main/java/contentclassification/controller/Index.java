@@ -101,7 +101,6 @@ public class Index {
             }
 
             String contentString = jsoupService.getContentAsString(url);
-            //String text = jsoupService.bodyTextByHtmlUnit(url);
             List<Map> linksMap = jsoupService.getLinksUrlAndValue(url);
             String text = jsoupService
                     .parseHtmlText(classificationService.removeNavigationAndMenuBars(
