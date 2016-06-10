@@ -635,7 +635,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                         sizes.addAll(intersection);
                     } else {
                         //Verify and include unknown knowledge about sizes to knowledge data set.
-                        logger.info("Unknow sizes: "+ unverified);
+                        logger.info("Unknown sizes: "+ unverified);
                     }
                 }
             }
@@ -791,6 +791,7 @@ public class ClassificationServiceImpl implements ClassificationService{
         List<CombinationMatrix> combinationMatrixList = CombinationMatrix.getCombinationMatrix();
         if(responseCategoryToAttributes != null && !responseCategoryToAttributes.isEmpty()){
             List<String> attributes = new ArrayList<>();
+            Set<String> colors = new HashSet<>();
 
             Map<String, List<String>> categoryToAttributes = new HashMap<>();
 
@@ -803,6 +804,11 @@ public class ClassificationServiceImpl implements ClassificationService{
                     List<String> attrs = categoryToAttributes.get(r.getCategory());
                     attrs.addAll(r.getAttributes());
                     categoryToAttributes.put(r.getCategory(), attrs);
+                }
+
+                List<String> exitingColors = r.getColors();
+                if(!exitingColors.isEmpty()){
+                    colors.addAll(r.getColors());
                 }
             }
 
@@ -836,6 +842,22 @@ public class ClassificationServiceImpl implements ClassificationService{
                     }
                 }
                 responseCategoryToAttribute.setCategory(proposeCategory);
+
+                List<String> updatedColors = new ArrayList<>();
+                updatedColors.addAll(colors);
+                responseCategoryToAttribute.setColors(updatedColors);
+
+                //Get category if proposed category is also found in incoming ResponseCategory
+                if(attributes.contains(proposeCategory)){
+                    for(ResponseCategoryToAttribute r : responseCategoryToAttributes) {
+                        if(r.getCategory().equalsIgnoreCase(proposeCategory)){
+                            List<String> existingAttributes = responseCategoryToAttribute.getAttributes();
+                            existingAttributes.addAll(r.getAttributes());
+                            responseCategoryToAttribute.setAttributes(existingAttributes);
+                        }
+                    }
+                }
+
                 updated.add(responseCategoryToAttribute);
             }
         }

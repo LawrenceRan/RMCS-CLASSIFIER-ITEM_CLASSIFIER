@@ -52,8 +52,6 @@ public class ColorTags {
                     Color color = new Color(c);
                     if(!Color.isEqual(exitingColors, color)) {
                         exitingColors.add(color);
-                    } else {
-                        logger.info("Existing colors: "+ c);
                     }
                 }
 
