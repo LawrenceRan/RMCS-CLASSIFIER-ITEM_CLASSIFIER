@@ -30,7 +30,7 @@ public class ColorTags {
     @Autowired
     private ColorTagsConfig colorTagsConfig;
 
-    @Scheduled(cron = "0 0 0 1/1 * ?")
+    @Scheduled(fixedRate = 14400000)
     public void updateColorTags(){
         List<String> colors = colorsFromSite();
 

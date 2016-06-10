@@ -105,7 +105,9 @@ public class Color {
 
     @Override
     public int hashCode(){
-        return new HashCodeBuilder(15, 39).append(name).toHashCode();
+        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
+        hashCodeBuilder.append(this.name);
+        return  hashCodeBuilder.hashCode();
     }
 
     @Override

@@ -16,7 +16,7 @@ import java.util.List;
 public class FabricNames {
     private static final Logger logger = LoggerFactory.getLogger(FabricNames.class);
 
-    @Scheduled(cron = "0 0 0 1/1 * ?")
+    @Scheduled(fixedRate = 14400000)
     public void getFabricNames(){
         List<FabricName> fabricNameList = FabricName.getFabricNamesFromExternalUri();
         if(!fabricNameList.isEmpty()) {

@@ -1,7 +1,10 @@
 package contentclassification.domain;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +14,8 @@ import java.util.Map;
  * Created by rsl_prod_005 on 6/9/16.
  */
 public class Size {
+    private static final Logger logger = LoggerFactory.getLogger(Size.class);
+    private static final String SIZE_EXCLUSION = "size-exclusion";
     private static final String SIZE_FILE = "sizes";
     private String category;
     private List<String> sizes;
@@ -53,5 +58,23 @@ public class Size {
             e.printStackTrace();
         }
         return sizes;
+    }
+
+    public static Map<String, List<String>> loadSizeExclusionList(){
+        Map<String, List<String>> list = null;
+        ClassLoader classLoader = Size.class.getClassLoader();
+        URL url = classLoader.getResource(SIZE_EXCLUSION);
+        if(url != null){
+            try {
+                Yaml yaml = new Yaml();
+                Map<String, List<String>> maps = (Map<String, List<String>>) yaml.load(url.openStream());
+                if(!maps.isEmpty()){
+                    list = maps;
+                }
+            } catch (IOException io){
+                logger.debug("IO Exception : "+ io.getMessage());
+            }
+        }
+        return list;
     }
 }

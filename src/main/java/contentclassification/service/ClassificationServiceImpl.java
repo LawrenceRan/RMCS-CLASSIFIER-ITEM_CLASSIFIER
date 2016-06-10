@@ -523,10 +523,6 @@ public class ClassificationServiceImpl implements ClassificationService{
                                 }
                             }
                         }
-
-                        if(sizes.isEmpty()){
-                            String btnSizeRegEx = "";
-                        }
                     } catch (Exception e){
                         logger.debug("Error: "+ e.getMessage());
                     }
@@ -562,9 +558,12 @@ public class ClassificationServiceImpl implements ClassificationService{
 
             if(sizes.isEmpty()){
                 List<Size> sizeList = Size.loadSizeFromYaml();
-                String[] tags = {"[^data-]"};
-                if(tags != null && tags.length > 0 && document != null){
-                    for(String t : tags){
+
+                List<String> unverified = new ArrayList<>();
+
+                String[] html5Data = {"[^data-]"};
+                if(html5Data != null && html5Data.length > 0 && document != null){
+                    for(String t : html5Data){
                         if(StringUtils.isNotBlank(t)) {
                             Elements elements = document.select(t);
                             if (!elements.isEmpty()) {
@@ -572,14 +571,16 @@ public class ClassificationServiceImpl implements ClassificationService{
                                 while (elementsIterator.hasNext()) {
                                     Element element = elementsIterator.next();
                                     String outerHtml = element.outerHtml();
-                                    if (AppUtils.regExContains("(size)", outerHtml)) {
+
+                                    boolean isPresent = AppUtils.regExContains("(size)", outerHtml);
+                                    if (isPresent) {
                                         Elements children = element.children();
                                         if (!children.isEmpty()) {
                                             Iterator<Element> elementIterator = children.iterator();
                                             while (elementIterator.hasNext()) {
                                                 Element child = elementIterator.next();
                                                 if (StringUtils.isNotBlank(child.text())) {
-                                                    sizes.add(child.text());
+                                                    unverified.add(child.text());
                                                 }
                                             }
                                         }
@@ -590,25 +591,80 @@ public class ClassificationServiceImpl implements ClassificationService{
                     }
                 }
 
-                if(sizeList != null && !sizeList.isEmpty()){
-                    for(Size size : sizeList){
-                        List<String> sizeDataSet = size.getSizes();
-                        if(!sizeDataSet.isEmpty()){
-                            for(String s : sizeDataSet) {
-                                if(document != null) {
-                                    Elements elements = document
-                                            .getElementsByAttributeValueContaining("name", "size");
-                                    if(!elements.isEmpty()){
-                                        Iterator<Element> elementIterator = elements.iterator();
-                                        while (elementIterator.hasNext()){
-                                            Element element = elementIterator.next();
-                                            sizes.add(element.text());
+                String[] tags = {"div","span","ul","li"};
+                if(tags != null && tags.length > 0 && document != null){
+                    for(String t : tags){
+                        if(StringUtils.isNotBlank(t)){
+                            Elements elements = document.select(t);
+                            if(!elements.isEmpty()) {
+                                Iterator<Element> elementIterator = elements.iterator();
+                                while (elementIterator.hasNext()) {
+                                    Element element = elementIterator.next();
+                                    boolean isPresent = AppUtils
+                                            .regExContains("\\<"+ element.tagName() +"\\s\\b.*?(size)+.(\\>|\\/\\>)", element.outerHtml());
+                                    if (isPresent) {
+                                        Elements children = element.children();
+                                        if(!children.isEmpty()) {
+                                            Iterator<Element> childIterator = children.iterator();
+                                            while (childIterator.hasNext()) {
+                                                Element childElement = childIterator.next();
+                                                logger.info("Elements: " + childElement.ownText());
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
+                }
+
+                //about to get curated data set on sizes of items
+                List<String> verifiedSizes = new ArrayList<>();
+                if(sizeList != null && !sizeList.isEmpty()){
+                    for(Size size : sizeList){
+                        verifiedSizes.addAll(size.getSizes());
+                    }
+                }
+
+                //Verifying sizes against curated data set
+                if(!unverified.isEmpty() && !verifiedSizes.isEmpty()){
+                    List<String> intersection = getIntersection(unverified, verifiedSizes);
+
+                    //Found an intersection between our knowledge and unverified data set.
+                    if(!intersection.isEmpty()) {
+                        sizes.addAll(intersection);
+                    } else {
+                        //Verify and include unknown knowledge about sizes to knowledge data set.
+                        logger.info("Unknow sizes: "+ unverified);
+                    }
+                }
+            }
+
+            //Remove elements of size found that have the exclusion words in them.
+            Map<String, List<String>> exclusionSizeMap = Size.loadSizeExclusionList();
+            List<String> sizeExclusionList = null;
+            if(exclusionSizeMap != null && !exclusionSizeMap.isEmpty()){
+                for(Map.Entry<String, List<String>> m : exclusionSizeMap.entrySet()){
+                    if(m.getKey().equals(SizeProperties.EXCLUSION_LIST.toString())){
+                        sizeExclusionList = m.getValue();
+                    }
+                }
+            }
+
+            if(sizeExclusionList != null && !sizes.isEmpty()){
+                List<String> updatedSizes = new ArrayList<>();
+                for(String s : sizes){
+                    int x = 0;
+                    for(String s1: sizeExclusionList){
+                        boolean isPresent = AppUtils.regExContains(s1, s);
+                        if(!isPresent){ x++; }
+                    }
+                    if(x == sizeExclusionList.size()){ updatedSizes.add(s); }
+                }
+
+                if(!updatedSizes.isEmpty()){
+                    sizes.clear();
+                    sizes.addAll(updatedSizes);
                 }
             }
         }
