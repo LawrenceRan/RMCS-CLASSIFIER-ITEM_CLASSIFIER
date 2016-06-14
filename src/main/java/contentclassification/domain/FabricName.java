@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -102,22 +103,22 @@ public class FabricName {
             try {
                 Yaml yaml = new Yaml();
                 List<Map> maps = (List<Map>) yaml.load(url.openStream());
-                if(!maps.isEmpty()){
-                    for(Map<String, String> m : maps){
+                if (!maps.isEmpty()) {
+                    for (Map<String, String> m : maps) {
                         FabricName fabricName = new FabricName();
-                        for(String keySet : m.keySet()){
-                            if(keySet.equals("link")) {
+                        for (String keySet : m.keySet()) {
+                            if (keySet.equals("link")) {
                                 fabricName.setLink(m.get(keySet));
                             }
 
-                            if(keySet.equals("name")) {
+                            if (keySet.equals("name")) {
                                 fabricName.setName(m.get(keySet));
                             }
                         }
                         fabricNames.add(fabricName);
                     }
                 }
-            } catch (IOException e){
+            } catch (Exception e){
                 logger.debug("IOException: "+ e.getMessage());
             }
         }
@@ -139,7 +140,11 @@ public class FabricName {
     public Map<String, String> toMap(){
         Map<String, String> map = new HashMap<>();
         map.put("name", this.getName());
-        map.put("link", this.getLink());
+        try {
+            map.put("link", URLEncoder.encode(this.getLink(), "UTF-8"));
+        } catch (Exception e){
+            logger.debug("Error in encoding url: "+ e.getMessage());
+        }
         return map;
     }
 
