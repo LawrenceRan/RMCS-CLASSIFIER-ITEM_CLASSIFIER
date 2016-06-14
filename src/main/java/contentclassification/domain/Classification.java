@@ -479,6 +479,8 @@ public class Classification {
                             pos.add(map);
                             x++;
                         }
+                    } else {
+                        logger.info("en-pos-maxent.bin file not found or is not readable.");
                     }
                 } catch (Exception e){
                     logger.debug("IO Exception: "+ e.getMessage());
