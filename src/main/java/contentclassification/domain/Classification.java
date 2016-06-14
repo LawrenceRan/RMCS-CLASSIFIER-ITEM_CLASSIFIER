@@ -466,16 +466,19 @@ public class Classification {
             URL url = classLoader.getResource("en-pos-maxent.bin");
             if(url != null ) {
                 try {
-                    POSModel posModel = new POSModelLoader().load(new File(url.getFile()));
-                    POSTaggerME posTaggerME = new POSTaggerME(posModel);
-                    String[] tags = posTaggerME.tag(tokens);
-                    int x = 0;
-                    for (String t : tags) {
-                        Map<String, Object> map = new HashMap<>();
-                        map.put("token", tokens[x]);
-                        map.put("pos", t);
-                        pos.add(map);
-                        x++;
+                    File file = new File("./target/classes/en-pos-maxent.bin");
+                    if(file.exists() && file.canRead()) {
+                        POSModel posModel = new POSModelLoader().load(file);
+                        POSTaggerME posTaggerME = new POSTaggerME(posModel);
+                        String[] tags = posTaggerME.tag(tokens);
+                        int x = 0;
+                        for (String t : tags) {
+                            Map<String, Object> map = new HashMap<>();
+                            map.put("token", tokens[x]);
+                            map.put("pos", t);
+                            pos.add(map);
+                            x++;
+                        }
                     }
                 } catch (Exception e){
                     logger.debug("IO Exception: "+ e.getMessage());
