@@ -468,7 +468,6 @@ public class Classification {
             if(url != null ) {
                 try {
                     String userDir = System.getProperty("user.dir");
-                    logger.info("User dir: %s", userDir);
                     File file = new File(userDir + "/classes/en-pos-maxent.bin");
                     if(file.exists() && file.canRead()) {
                         POSModel posModel = new POSModelLoader().load(file);
