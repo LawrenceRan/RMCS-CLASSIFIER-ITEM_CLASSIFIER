@@ -224,10 +224,11 @@ public class Color {
                         }
                     }
 
-                    logger.info("New list: "+ list.toString());
                     if(list != null && !list.isEmpty() && currentSize > initialSize){
                         try {
-                            FileWriter fileWriter = new FileWriter(url.getFile());
+                            String userDir = System.getProperty("user.dir");
+                            File file = new File(userDir + "/classes/color-exclusion");
+                            FileWriter fileWriter = new FileWriter(file);
                             yaml.dump(list, fileWriter);
                         } catch (IOException e){
                             logger.debug("Error in writing to exclusion list: "+ e.getMessage());
