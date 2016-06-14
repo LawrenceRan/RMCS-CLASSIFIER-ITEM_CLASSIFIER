@@ -467,6 +467,8 @@ public class Classification {
             URL url = classLoader.getResource("en-pos-maxent.bin");
             if(url != null ) {
                 try {
+                    String userDir = System.getProperty("user.dir");
+                    logger.info("User dir"+ userDir);
                     String path = Main.class.getResource("en-pos-maxent.bin").getPath();
                     logger.info("File Path: "+ path);
                     File file = new File(path);
