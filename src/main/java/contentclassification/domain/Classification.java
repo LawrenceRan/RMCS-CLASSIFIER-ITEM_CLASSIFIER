@@ -1,6 +1,7 @@
 package contentclassification.domain;
 
 import com.google.common.collect.Sets;
+import contentclassification.Main;
 import contentclassification.utilities.BM25;
 import info.debatty.java.stringsimilarity.Jaccard;
 import net.sf.javaml.core.Dataset;
@@ -466,7 +467,9 @@ public class Classification {
             URL url = classLoader.getResource("en-pos-maxent.bin");
             if(url != null ) {
                 try {
-                    File file = new File("./target/classes/en-pos-maxent.bin");
+                    String path = Main.class.getResource("en-pos-maxent.bin").getPath();
+                    logger.info("File Path: "+ path);
+                    File file = new File(path);
                     if(file.exists() && file.canRead()) {
                         POSModel posModel = new POSModelLoader().load(file);
                         POSTaggerME posTaggerME = new POSTaggerME(posModel);
