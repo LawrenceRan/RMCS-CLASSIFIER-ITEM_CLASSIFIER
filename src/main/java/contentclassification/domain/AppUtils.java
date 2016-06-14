@@ -142,6 +142,7 @@ public class AppUtils {
                 }
             }
         }
+        logger.info("Exclusion list"+ exclusionList.toString());
 
         List<String> breakUp = breakUp(colors, exclusionList);
         Set<String> cleanUp = new HashSet<>();
