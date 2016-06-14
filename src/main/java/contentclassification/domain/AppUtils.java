@@ -180,7 +180,6 @@ public class AppUtils {
             for(String color : colors){
                 Classification classification = new Classification(color);
                 String[] tokenizer = classification.getTokens();
-                logger.info("Color tokens: "+ tokenizer.toString());
                 if(tokenizer != null && tokenizer.length > 0){
                     List<Map> pos = classification.getPos(tokenizer);
                     if(pos != null && !pos.isEmpty()){
