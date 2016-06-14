@@ -503,6 +503,17 @@ public class Classification {
         return intersect;
     }
 
+    public static <T> List<T> getIntersection(List<T> a, List<T> b){
+        List<T> intersect = new ArrayList<>();
+//        b.retainAll(a);
+//        intersect.addAll(b);
+        Set<T> setA = Sets.newHashSet(a);
+        Set<T> setB = Sets.newHashSet(b);
+        Set<T> inter = Sets.intersection(setA, setB);
+        intersect.addAll(inter);
+        return intersect;
+    }
+
     public static List<FabricName> isFabricPresent(String sentence){
         List<FabricName> isPresent = new ArrayList<>();
         List<FabricName> fabricNames = FabricName.getFabrics();

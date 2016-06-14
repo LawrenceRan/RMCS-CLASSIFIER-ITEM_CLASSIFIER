@@ -519,7 +519,7 @@ public class Index {
                     }
 
                     /**
-                        Ran response to category against combination matrix, only if the list of response to category
+                        Run response to category against combination matrix, only if the list of response to category
                         is more than one.
                      */
                     if(responseCategoryToAttributeList.size() > 1){
@@ -567,9 +567,16 @@ public class Index {
                 }
                 response.put("scoreThreshold", totalTermToGroupsFiltered);
                 //End of potential material of make.
+
+                /**
+                 * About to execute the method below to retrieve price of the said item.
+                 */
+                Map<String, Object> priceMap = classificationService.getPrice(text);
+                if(priceMap != null && !priceMap.isEmpty()){
+                    response.put("price", priceMap);
+                }
+
             }
-
-
         } else {
             response.put(RestResponseKeys.MESSAGE.toString(), "empty or missing url.");
             modelAndView.addAllObjects(response);

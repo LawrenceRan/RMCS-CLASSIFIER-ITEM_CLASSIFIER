@@ -902,4 +902,53 @@ public class ClassificationServiceImpl implements ClassificationService{
         }
         return updated;
     }
+
+    /**
+     * This method in an implementation to retrieve price for a given item or content.
+     */
+    @Override
+    public Map<String, Object> getPrice(String text){
+        Map<String, Object> results = new HashMap<>();
+        if(StringUtils.isNotBlank(text)){
+            Document document = null;
+            try{
+                document = JsoupImpl.parseHtml(text);
+            } catch (Exception e){
+                logger.debug("Error in parsing document. Message: "+ e.getMessage());
+            }
+
+            String[] html5Data = {"[^data-]"};
+            if(html5Data != null && html5Data.length > 0){
+                if(document != null) {
+                    for (String s : html5Data) {
+                        if (StringUtils.isNotBlank(s)) {
+                            Elements elements = document.select(s);
+                            if (!elements.isEmpty()) {
+                                Iterator<Element> elementsIterator = elements.iterator();
+                                while (elementsIterator.hasNext()) {
+                                    Element element = elementsIterator.next();
+                                    String outerHtml = element.outerHtml();
+
+                                    boolean isPresent = AppUtils.regExContains("(price)", outerHtml);
+                                    if (isPresent) {
+                                        Elements children = element.children();
+                                        if (!children.isEmpty()) {
+                                            Iterator<Element> elementIterator = children.iterator();
+                                            while (elementIterator.hasNext()) {
+                                                Element child = elementIterator.next();
+                                                if (StringUtils.isNotBlank(child.text())) {
+//                                                    unverified.add(child.text());
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return results;
+    }
 }

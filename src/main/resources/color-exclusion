@@ -1,0 +1,5 @@
+exclusionList:
+ - ","
+ - "/"
+ - "AND"
+ - "and"

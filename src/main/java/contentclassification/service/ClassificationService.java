@@ -46,4 +46,5 @@ public interface ClassificationService {
             List<ResponseCategoryToAttribute> responseCategoryToAttributes);
     public List<ResponseCategoryToAttribute> groupResponseByCategory(
             List<ResponseCategoryToAttribute> responseCategoryToAttributes);
+    public Map<String, Object> getPrice(String text);
 }
