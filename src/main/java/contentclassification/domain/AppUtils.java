@@ -137,12 +137,12 @@ public class AppUtils {
         if(colorsExclusionList != null && !colorsExclusionList.isEmpty()){
             if(colorsExclusionList.containsKey("exclusionList")){
                 List<String> list = colorsExclusionList.get("exclusionList");
+                logger.info("Exclusion list "+ list.toString());
                 if(list != null && !list.isEmpty()) {
                     exclusionList = list.toArray(new String[list.size()]);
                 }
             }
         }
-        logger.info("Exclusion list"+ exclusionList.toString());
 
         List<String> breakUp = breakUp(colors, exclusionList);
         Set<String> cleanUp = new HashSet<>();
