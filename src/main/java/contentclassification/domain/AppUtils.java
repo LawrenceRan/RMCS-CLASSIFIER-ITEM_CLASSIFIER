@@ -182,7 +182,6 @@ public class AppUtils {
                 String[] tokenizer = classification.getTokens();
                 if(tokenizer != null && tokenizer.length > 0){
                     List<Map> pos = classification.getPos(tokenizer);
-                    logger.info("Color tokens pos : "+ pos.toString());
                     if(pos != null && !pos.isEmpty()){
                         for(Map m : pos){
                             if(m.containsKey("pos")){
@@ -230,7 +229,7 @@ public class AppUtils {
             if(!excludedBy.isEmpty()) {
                 for(String e : excludedBy) {
                     Future<String> updateExclusionList = Color.updateExclusionListAsync(e);
-                    logger.info("Results color exclusion list : "+ updateExclusionList);
+                    logger.info("Results color exclusion list : "+ updateExclusionList.toString());
                 }
             }
         }

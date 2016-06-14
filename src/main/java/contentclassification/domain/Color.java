@@ -215,7 +215,6 @@ public class Color {
                     if(list != null && !list.isEmpty()){
                         if(list.containsKey("exclusionList")){
                             List<String> exclusionList = list.get("exclusionList");
-                            logger.info("color exclusion list "+ exclusionList.toString());
                             initialSize = exclusionList.size();
                             if(exclusionList != null){
                                 exclusionList.add(exclude);
@@ -225,6 +224,7 @@ public class Color {
                         }
                     }
 
+                    logger.info("New list: "+ list.toString());
                     if(list != null && !list.isEmpty() && currentSize > initialSize){
                         try {
                             FileWriter fileWriter = new FileWriter(url.getFile());
