@@ -167,8 +167,8 @@ public class Index {
                 //End of getting size from content.
 
                 //Start of content analysis of content page.
-                String[] tokens = classificationService.tokenize(text);
-                String[] sentences = classificationService.sentenceDetection(text);
+                String[] tokens = classificationService.tokenize(text.toLowerCase().trim());
+                String[] sentences = classificationService.sentenceDetection(text.toLowerCase().trim());
 
                 String article = null;
                 if (sentences != null && sentences.length > 0) {
@@ -197,15 +197,7 @@ public class Index {
                 }
 
                 //Get possible title or item description from first list
-                String possibleTitle = null;
-                if (sentences != null && sentences.length > 0) {
-                    if (StringUtils.isNotBlank(sentences[0])) {
-                        String t = sentences[0];
-                        if (t.contains("\n")) {
-                            possibleTitle = t.substring(0, t.indexOf("\n"));
-                        }
-                    }
-                }
+                String possibleTitle = classificationService.getPossibleTitle(sentences);
                 //End of getting a possible title.
 
                 //Addition analysis of title and content meta data
@@ -271,37 +263,13 @@ public class Index {
                     //End of keywords and description to token list.
 
 
-                    String d = tokensAsList.toString();
                     List<String> intersect = classificationService.getIntersection(tokensAsList, allAttributes);
 
                     if (intersect != null && !intersect.isEmpty()) {
                         List<TFIDFWeightedScore> tfIdfWeightedScores = new ArrayList<>();
                         for (String i : intersect) {
-                            double tfScore = classificationService.getTFScore(tokens, i);
-                            double idfScore = classificationService.getIdfScore(tokens, i);
-                            double tfIdfWeightScore = classificationService.getTfIdfWeightScore(tokens, i);
-
-                            TFIDFWeightedScore tfidfWeightedScore = new TFIDFWeightedScore();
-                            tfidfWeightedScore.setTerm(i);
-
-                            if(!Double.isNaN(tfIdfWeightScore) && !Double.isInfinite(tfIdfWeightScore)) {
-                                tfidfWeightedScore.setScore(tfIdfWeightScore);
-                            } else {
-                                tfidfWeightedScore.setScore(0d);
-                            }
-
-                            if(!Double.isNaN(idfScore) && !Double.isInfinite(idfScore)) {
-                                tfidfWeightedScore.setIdfScore(idfScore);
-                            } else {
-                                tfidfWeightedScore.setIdfScore(0d);
-                            }
-
-                            if(!Double.isNaN(tfScore) && !Double.isInfinite(tfScore)) {
-                                tfidfWeightedScore.setTfScore(tfScore);
-                            } else {
-                                tfidfWeightedScore.setTfScore(0d);
-                            }
-
+                            TFIDFWeightedScore tfidfWeightedScore =
+                                    classificationService.getTfIdfWeightedScore(tokens, i);
                             tfIdfWeightedScores.add(tfidfWeightedScore);
                         }
 
@@ -576,6 +544,17 @@ public class Index {
                     response.put("price", priceMap);
                 }
 
+                //end of get price
+
+                /**
+                 * The method is to help determine whether a given content is gender specific or neutral. If former is
+                 * is found it should be surfaced and otherwise that should be surfaced as well.
+                 */
+                Map<String, Object> gender = classificationService.getGender(sentences, keywords, description);
+                if(!gender.isEmpty()){
+                    response.putAll(gender);
+                }
+                //end of get gender.
             }
         } else {
             response.put(RestResponseKeys.MESSAGE.toString(), "empty or missing url.");

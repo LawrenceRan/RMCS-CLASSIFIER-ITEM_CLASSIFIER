@@ -186,7 +186,14 @@ public class AppUtils {
                         for(Map m : pos){
                             if(m.containsKey("pos")){
                                 String p1 = m.get("pos").toString();
-                                POSRESPONSES posresponses = POSRESPONSES.valueOf(p1);
+                                POSRESPONSES posresponses = null;
+
+                                try {
+                                    posresponses = POSRESPONSES.valueOf(p1);
+                                } catch (Exception e){
+                                    logger.debug("Error in getting parts-of-speech value from enum.");
+                                }
+
                                 if(posresponses != null) {
                                     if (posresponses.equals(POSRESPONSES.CC) || posresponses.equals(POSRESPONSES.IN)) {
                                         toBeExcluded.add(color);
@@ -233,6 +240,31 @@ public class AppUtils {
                 }
             }
         }
+
+        /**
+         * Get an intersection between curated words and incoming new color definitions.
+         * This is to isolate unknown incoming color or colors.
+         */
+        List<Color> incomingColorsNotValidated = new ArrayList<>();
+        if(!colors.isEmpty()){
+            for(String c : colors){
+                boolean isValidated = Color.isExisting(c.trim().toLowerCase());
+                if(!isValidated) {
+                    Color color = new Color();
+                    color.setName(c);
+                    incomingColorsNotValidated.add(color);
+                }
+            }
+        }
+
+        if(!incomingColorsNotValidated.isEmpty()){
+            List<Color> colorList = Color.loadColors();
+            for(Color c : incomingColorsNotValidated) {
+                double similarityScore = Color.similarityAgainstCuratedColors(colorList, c);
+                logger.info("Score: "+ c.getName() +" : "+ similarityScore);
+            }
+        }
+
 
         /**Check if color is validated or not. Validation here means that whether we have the said color in our
          * curated color data set.

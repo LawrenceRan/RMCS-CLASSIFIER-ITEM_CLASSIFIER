@@ -47,4 +47,9 @@ public interface ClassificationService {
     public List<ResponseCategoryToAttribute> groupResponseByCategory(
             List<ResponseCategoryToAttribute> responseCategoryToAttributes);
     public Map<String, Object> getPrice(String text);
+    public Map<String, Object> getGender(String[] sentences, String keywords, String description);
+    public String getPossibleTitle(String[] sentences);
+    public TFIDFWeightedScore getTfIdfWeightedScore(String[] tokens, String term);
+    public TermToGroupScore getTermToGroupScore(ContentAreaGroupings contentAreaGroupings,
+                                                String term, String description, String title, String keywords);
 }

@@ -397,65 +397,64 @@ public class ClassificationServiceImpl implements ClassificationService{
                 }
             }
 
-            if(!inputFields.isEmpty()){
-                try{
-                    String colorTagAttributeName = null;
-                    if(document != null){
-                        List<String> colorIds = new ArrayList<>();
-                        Elements elements = document.getElementsByTag("input");
-                        if(!elements.isEmpty()){
-                            Iterator<Element> elementIterator = elements.iterator();
-                            while(elementIterator.hasNext()){
-                                Element element = elementIterator.next();
-                                String attributeName = element.attr("name");
-                                if(AppUtils.regExContains("(color|colour)", attributeName)){
-                                    colorTagAttributeName = element.attr("name");
-                                    String colorId = element.id();
-                                    String val = element.val();
-                                    colorIds.add(colorId);
-                                }
+
+            try {
+                String colorTagAttributeName = null;
+                if (document != null) {
+                    List<String> colorIds = new ArrayList<>();
+                    Elements elements = document.getElementsByTag("input");
+                    if (!elements.isEmpty()) {
+                        Iterator<Element> elementIterator = elements.iterator();
+                        while (elementIterator.hasNext()) {
+                            Element element = elementIterator.next();
+                            String attributeName = element.attr("name");
+                            if (AppUtils.regExContains("(color|colour)", attributeName)) {
+                                colorTagAttributeName = element.attr("name");
+                                String colorId = element.id();
+                                String val = element.val();
+                                colorIds.add(colorId);
                             }
                         }
+                    }
 
-                        if(!colorIds.isEmpty()) {
-                            for(String c : colorIds) {
-                                Elements colorElements = document.getElementsByAttributeValue("for", c);
-                                if(!colorElements.isEmpty()) {
-                                    Iterator<Element> elementIterator = colorElements.iterator();
-                                    while(elementIterator.hasNext()) {
-                                        Element element = elementIterator.next();
-                                        String colorText = element.text();
-                                        if(StringUtils.isBlank(colorText)) {
-                                            String dataId = element.attr("data-id");
-                                            if(StringUtils.isNotBlank(dataId)){
-                                                List<String> tokenAttributeName = new ArrayList<>();
-                                                if(StringUtils.isNotBlank(colorTagAttributeName)) {
-                                                    tokenAttributeName
-                                                            .addAll(Arrays.asList(colorTagAttributeName.split("-")));
-                                                }
-                                                List<String> tokenDataId = Arrays.asList(dataId.split("-"));
-                                                List<String> intersection = getIntersection(tokenAttributeName, tokenDataId);
-                                                if(!intersection.isEmpty()){
-                                                    //remove intersected words from data id attribute's value.
-                                                    for(String i : intersection){
-                                                        dataId = dataId.replace(i, "");
-                                                    }
-                                                    colors.add(dataId.replace("-",""));
-                                                } else {
-                                                    colors.add(dataId);
-                                                }
+                    if (!colorIds.isEmpty()) {
+                        for (String c : colorIds) {
+                            Elements colorElements = document.getElementsByAttributeValue("for", c);
+                            if (!colorElements.isEmpty()) {
+                                Iterator<Element> elementIterator = colorElements.iterator();
+                                while (elementIterator.hasNext()) {
+                                    Element element = elementIterator.next();
+                                    String colorText = element.text();
+                                    if (StringUtils.isBlank(colorText)) {
+                                        String dataId = element.attr("data-id");
+                                        if (StringUtils.isNotBlank(dataId)) {
+                                            List<String> tokenAttributeName = new ArrayList<>();
+                                            if (StringUtils.isNotBlank(colorTagAttributeName)) {
+                                                tokenAttributeName
+                                                        .addAll(Arrays.asList(colorTagAttributeName.split("-")));
                                             }
-                                        } else {
-                                            colors.add(colorText);
+                                            List<String> tokenDataId = Arrays.asList(dataId.split("-"));
+                                            List<String> intersection = getIntersection(tokenAttributeName, tokenDataId);
+                                            if (!intersection.isEmpty()) {
+                                                //remove intersected words from data id attribute's value.
+                                                for (String i : intersection) {
+                                                    dataId = dataId.replace(i, "");
+                                                }
+                                                colors.add(dataId.replace("-", ""));
+                                            } else {
+                                                colors.add(dataId);
+                                            }
                                         }
+                                    } else {
+                                        colors.add(colorText);
                                     }
                                 }
                             }
                         }
                     }
-                } catch(Exception e){
-                    logger.debug("Error: "+ e.getMessage());
                 }
+            } catch (Exception e) {
+                logger.debug("Error: " + e.getMessage());
             }
         }
         return colors;
@@ -950,5 +949,274 @@ public class ClassificationServiceImpl implements ClassificationService{
             }
         }
         return results;
+    }
+
+    /**
+     *
+     */
+    @Override
+    public Map<String, Object> getGender(String[] sentences, String keywords, String description){
+        Map<String, Object> results = new HashMap<>();
+        if(sentences != null && sentences.length > 0){
+            StringBuilder sentenceAsString = new StringBuilder();
+            int x = 0;
+            for(String sentence : sentences){
+                if(x < (sentences.length - 1)) {
+                    sentenceAsString.append(sentence.trim().toLowerCase() + "\n");
+                } else {
+                    sentenceAsString.append(sentence.trim().toLowerCase());
+                }
+                x++;
+            }
+
+            String possibleTitle = getPossibleTitle(sentences);
+
+            if(StringUtils.isNotBlank(sentenceAsString)) {
+                String[] tokens = tokenize(sentenceAsString.toString().toLowerCase());
+                List<String> listTokens = Arrays.asList(tokens);
+
+                List<Gender> genderMetrics = Gender.loadGenderMatrix();
+                List<String> strGenderMetrics = new ArrayList<>();
+                if(!genderMetrics.isEmpty()){
+                    for(Gender g : genderMetrics){
+                        strGenderMetrics.add(g.getAttribute());
+                    }
+                }
+
+                List<String> intersection = null;
+                if(!strGenderMetrics.isEmpty() && !listTokens.isEmpty()){
+                    intersection = getIntersection(strGenderMetrics, listTokens);
+                }
+
+                List<Map> scoredTermsFromContent = new ArrayList<>();
+
+                if(intersection != null){
+                    List<TFIDFWeightedScore> tfIdfWeightedScores = new ArrayList<>();
+                    for(String s : intersection){
+                        TFIDFWeightedScore tfidfWeightedScore = getTfIdfWeightedScore(tokens, s);
+                        tfIdfWeightedScores.add(tfidfWeightedScore);
+                    }
+                    Collections.sort(tfIdfWeightedScores, TFIDFWeightedScore.tfidfWeightedScoreComparator);
+
+                    List<String> scoredTerms = new LinkedList<>();
+
+                    if (!tfIdfWeightedScores.isEmpty()){
+                        for(TFIDFWeightedScore tfidfWeightedScore : tfIdfWeightedScores) {
+                            scoredTerms.add(tfidfWeightedScore.getTerm());
+                            scoredTermsFromContent.add(tfidfWeightedScore.toMap());
+                        }
+                    }
+
+                    List<TotalTermToGroup> totalTermToGroups = new ArrayList<>();
+
+                    if(!scoredTerms.isEmpty()){
+                        List<TermToGroupScore> groupScoreList = new ArrayList<>();
+                        List<ContentAreaGroupings> cList = ContentAreaGroupings.contentAreaGroupingsList();
+
+                        for (ContentAreaGroupings c : cList) {
+                            for (String s : scoredTerms) {
+                                TermToGroupScore termToGroupScore =
+                                        getTermToGroupScore(c,s, possibleTitle, keywords, description);
+                                groupScoreList.add(termToGroupScore);
+                            }
+                        }
+
+                        //Present total scoring on all terms found.
+                        if (!groupScoreList.isEmpty()) {
+                            Map<String, List<TermToGroupScore>> m = new HashMap<>();
+                            for (ContentAreaGroupings c : cList) {
+                                List<TermToGroupScore> t = getTermToGroupByContentAreaGroupings(groupScoreList, c);
+                                m.put(c.toString(), t);
+                            }
+
+                            Map<String, Integer> totalTermToGroup = new HashMap<>();
+                            for (ContentAreaGroupings c : cList) {
+                                if (m.containsKey(c.toString())) {
+                                    List<TermToGroupScore> tag = m.get(c.toString());
+                                    if (tag != null && !tag.isEmpty()) {
+                                        for (TermToGroupScore t : tag) {
+                                            if (totalTermToGroup.containsKey(t.getTerm())) {
+                                                Integer i = totalTermToGroup.get(t.getTerm());
+                                                Integer x1 = i + t.getScore();
+                                                totalTermToGroup.put(t.getTerm(), x1);
+                                            } else {
+                                                totalTermToGroup.put(t.getTerm(), t.getScore());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (!scoredTermsFromContent.isEmpty()) {
+                                for (Map m1 : scoredTermsFromContent) {
+                                    TotalTermToGroup totalTermToGroup1 = new TotalTermToGroup();
+                                    String term = null;
+                                    Double o = null;
+                                    Integer p = null;
+
+                                    if (m1.containsKey("term")) {
+                                        term = m1.get("term").toString();
+                                        totalTermToGroup1.setTerm(term);
+                                    }
+
+                                    //This gets and sets term frequency count from scoredTermsFromContent
+                                    if (m1.containsKey("score")) {
+                                        Object s = m1.get("score");
+                                        if (s instanceof Double) {
+                                            o = (Double) s;
+                                            totalTermToGroup1.setTermFrequencyScore(o);
+                                        }
+                                    }
+
+                                    //This gets and sets term count from grouped areas
+                                    if (StringUtils.isNotBlank(term)) {
+                                        if (totalTermToGroup.containsKey(term)) {
+                                            p = totalTermToGroup.get(term);
+                                            totalTermToGroup1.setTermToGroupScore(p);
+                                        }
+                                    }
+
+                                    if (o != null && p != null) {
+                                        Double t = TotalTermToGroup.calculateWeightedScore(p, o);
+                                        totalTermToGroup1.setWeightTotalScore(t);
+                                    }
+                                    totalTermToGroups.add(totalTermToGroup1);
+                                }
+                            }
+
+                            //Present total scoring on all terms found.
+                            if (!totalTermToGroups.isEmpty()) {
+                                Collections.sort(totalTermToGroups, TotalTermToGroup.totalTermToGroupComparator);
+                            }
+
+                            if(!totalTermToGroups.isEmpty()) {
+                                TotalTermToGroup toGroup = totalTermToGroups.get(0);
+                                results.put("gender", toGroup.getTerm());
+                            }
+                        }
+                    }
+                }
+
+                //get all possessive nouns
+//                List<Map> posMap = getPos(tokenize(possibleTitle));
+//                if(!posMap.isEmpty()){
+//                    for(Map m : posMap){
+//                        if(m.containsKey("pos")){
+//                            String pos = m.get("pos").toString();
+//                            //logger.info("POS: "+ pos);
+//                        }
+//                    }
+//                }
+
+            }
+        }
+        return results;
+    }
+
+
+    /**
+     * Get possible title from content.
+     * @param sentences
+     * @return
+     */
+    @Override
+    public String getPossibleTitle(String[] sentences){
+        //Get possible title or item description from first list
+        String possibleTitle = null;
+        if (sentences != null && sentences.length > 0) {
+            if (StringUtils.isNotBlank(sentences[0])) {
+                String t = sentences[0];
+                if (t.contains("\n")) {
+                    possibleTitle = t.substring(0, t.indexOf("\n"));
+                }
+            }
+        }
+        //End of getting a possible title.
+        return possibleTitle;
+    }
+
+
+    /**
+     * Get TFIDFWeightedScore score for a term and it's tokens
+     * @param tokens
+     * @param term
+     * @return
+     */
+    @Override
+    public TFIDFWeightedScore getTfIdfWeightedScore(String[] tokens, String term){
+        if(tokens != null && tokens.length > 0 && StringUtils.isNotBlank(term)){
+            double tfScore = getTFScore(tokens, term);
+            double idfScore = getIdfScore(tokens, term);
+            double tfIdfWeightScore = getTfIdfWeightScore(tokens, term);
+
+            TFIDFWeightedScore tfidfWeightedScore = new TFIDFWeightedScore();
+            tfidfWeightedScore.setTerm(term);
+
+            if(!Double.isNaN(tfIdfWeightScore) && !Double.isInfinite(tfIdfWeightScore)) {
+                tfidfWeightedScore.setScore(tfIdfWeightScore);
+            } else {
+                tfidfWeightedScore.setScore(0d);
+            }
+
+            if(!Double.isNaN(idfScore) && !Double.isInfinite(idfScore)) {
+                tfidfWeightedScore.setIdfScore(idfScore);
+            } else {
+                tfidfWeightedScore.setIdfScore(0d);
+            }
+
+            if(!Double.isNaN(tfScore) && !Double.isInfinite(tfScore)) {
+                tfidfWeightedScore.setTfScore(tfScore);
+            } else {
+                tfidfWeightedScore.setTfScore(0d);
+            }
+            return tfidfWeightedScore;
+        }
+        return null;
+    }
+
+    @Override
+    public TermToGroupScore getTermToGroupScore(ContentAreaGroupings contentAreaGroupings,
+                                                String term, String description, String title, String keywords){
+        if(contentAreaGroupings != null) {
+            TermToGroupScore termToGroupScore = new TermToGroupScore();
+            termToGroupScore.setGroup(contentAreaGroupings);
+            termToGroupScore.setTerm(term);
+
+            switch (contentAreaGroupings) {
+                case BODY:
+                    termToGroupScore.setScore(1);
+                    break;
+                case TITLE:
+                    if (StringUtils.isNotBlank(title)) {
+                        Integer tScore = getTermToGroupScore(term, title);
+                        termToGroupScore.setScore(tScore);
+                    } else {
+                        termToGroupScore.setScore(0);
+                    }
+                    break;
+                case DESCRIPTION:
+                    if (StringUtils.isNotBlank(description)) {
+                        Integer tDesc = getTermToGroupScore(term, description);
+                        termToGroupScore.setScore(tDesc);
+                    } else {
+                        termToGroupScore.setScore(0);
+                    }
+                    break;
+                case KEYWORDS:
+                    if (StringUtils.isNotBlank(keywords)) {
+                        Integer tKeywords = getTermToGroupScore(term, keywords);
+                        termToGroupScore.setScore(tKeywords);
+                    } else {
+                        termToGroupScore.setScore(0);
+                    }
+                    break;
+                default:
+                    termToGroupScore.setScore(0);
+                    break;
+            }
+            return termToGroupScore;
+        }
+
+        return null;
     }
 }

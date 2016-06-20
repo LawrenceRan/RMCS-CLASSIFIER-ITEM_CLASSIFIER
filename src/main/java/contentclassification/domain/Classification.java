@@ -469,6 +469,11 @@ public class Classification {
                 try {
                     String userDir = System.getProperty("user.dir");
                     File file = new File(userDir + "/classes/en-pos-maxent.bin");
+
+                    if(!file.exists() && !file.canRead()){
+                        file = new File(url.getFile());
+                    }
+
                     if(file.exists() && file.canRead()) {
                         POSModel posModel = new POSModelLoader().load(file);
                         POSTaggerME posTaggerME = new POSTaggerME(posModel);
