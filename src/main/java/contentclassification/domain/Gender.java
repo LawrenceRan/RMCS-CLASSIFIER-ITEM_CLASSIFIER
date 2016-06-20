@@ -41,7 +41,7 @@ public class Gender {
                 Yaml yaml = new Yaml();
                 try{
                     String userDir = System.getProperty("user.dir");
-                    File file = new File(userDir + "/classes/colors.yml");
+                    File file = new File(userDir + "/classes/en-gender-attributes");
 
                     if(!file.exists() && !file.canRead()){
                         file = new File(url.getFile());
