@@ -1,4 +1,6 @@
-html { 
+@import url('//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css');
+
+html {
   background: url(../img/ballons-bg.jpg) no-repeat center center fixed;
   -webkit-background-size: cover;
   -moz-background-size: cover;
@@ -18,10 +20,20 @@ html {
 
 ul li ul {
   padding-left: 20px;
+  font-size: 12px;
+}
+
+.loaderDiv{
+}
+
+h2
+{
+  font-size: 12px;
 }
 
 #page-wrap { 
-	width: 400px; 
+	width: 400px;
+    height: 800px;
 	margin: 50px auto; 
 	padding: 20px; 
 	background: white; 
@@ -202,3 +214,29 @@ p {
     margin-left: 0;
     float: none;
     top: -0.1em; }
+
+.isa_info, .isa_success, .isa_warning, .isa_error {
+  margin: 10px 0px;
+  padding:12px;
+}
+.isa_info {
+  color: #00529B;
+  background-color: #BDE5F8;
+}
+.isa_success {
+  color: #4F8A10;
+  background-color: #DFF2BF;
+}
+.isa_warning {
+  color: #9F6000;
+  background-color: #FEEFB3;
+}
+.isa_error {
+  color: #D8000C;
+  background-color: #FFBABA;
+}
+.isa_info i, .isa_success i, .isa_warning i, .isa_error i {
+  margin:10px 22px;
+  font-size:2em;
+  vertical-align:middle;
+}

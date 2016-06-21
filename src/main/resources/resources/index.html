@@ -3,8 +3,15 @@
     <meta charset="UTF-8">
     <title>Rendezvous Shopping Content Classification Demo.</title>
     <link href="css/demo.css" rel="stylesheet" type="text/css" />
+    <link href="http://visjs.org/dist/vis.css" rel="stylesheet" type="text/css" />
+    <script src="http://visjs.org/dist/vis.js"></script>
     <style>
         * { margin: 0; padding: 0; }
+        #mynetwork {
+            width: 400px;
+            height: 300px;
+            border: 1px solid lightgray;
+        }
     </style>
 </head>
 <body>
@@ -17,26 +24,189 @@
             <input type="submit" class="button" id="btn_analyze" value="Classify">
         </div>
     </div>
-    <div id="response-div" class="responseDiv">
-        <!--<img id="id-loader" src="img/ajax-loader.gif" />-->
+    <div id="" class="loaderDiv">
+        <img id="id-loader" src="img/ajax-loader.gif"/>
     </div>
+    <div id="response-div" class="responseDiv" align="center">
+    </div>
+    <div>&nbsp;</div>
+    <div id="mynetwork"></div>
 </div>
 </body>
 <script src="js/vendor/jquery.min.js"></script>
+
+<script type="text/javascript">
+    function graph(categories, directions) {
+        // create an array with nodes
+        var nodes = new vis.DataSet(categories);
+
+        // create an array with edges
+        var edges = new vis.DataSet(directions);
+
+        // create a network
+        var container = document.getElementById('mynetwork');
+        var data = {
+            nodes: nodes,
+            edges: edges
+        };
+        var options = {};
+        var network = new vis.Network(container, data, options);
+    }
+</script>
+
 <script>
     $(document).ready(function(){
         $('#id-text').focus();
+        $('#id-loader').hide();
     });
     $('#btn_analyze').on('click', function(){
+        $('#id-loader').show();
         var text = $('#id-text').val();
         if(text.length !== 0){
-            //$('#id-loader').show();
+            var htmlStr = [];
+            $('#response-div').html(htmlStr.join(" "));
+            $('#mynetwork').html(" ");
             //Todo: find a proper way to assign base url
 //            var url = "http://sandbox.rancardmobility.com:9090/text?text="+ encodeURIComponent(text);
-            var url = "http://localhost:9090/text?text="+ encodeURIComponent(text);
+            var url = "/v1/url?url="+ encodeURIComponent(text);
             $.getJSON(url, null, function(response){
                 if(response) {
-                    console.log("Response: " + JSON.stringify(response));
+                    $('#id-loader').hide();
+
+                    var responseHtml = [];
+
+                    var colorsHtml = [];
+                    colorsHtml.push("<div id='colorsId'>");
+                    colorsHtml.push("<h2>Color(s):</h2>");
+                    colorsHtml.push("<ul style='list-style: none'>");
+                    if(response.hasOwnProperty('colors')){
+                        var colors = response['colors'];
+                        $.each(colors, function(k, v){
+                            colorsHtml.push("<li>"+ v + "</li>");
+                        });
+                    }
+                    colorsHtml.push("</ul>");
+                    colorsHtml.push("</div>");
+
+                    responseHtml.push(colorsHtml.join(" "));
+
+
+                    var sizesAvailable = [];
+                    sizesAvailable.push("<div id='colorsId'>");
+                    sizesAvailable.push("<h2>Size(s):</h2>");
+                    sizesAvailable.push("<ul style='list-style: none'>");
+                    if(response.hasOwnProperty('availableSizes')){
+                        var sizes = response['availableSizes'];
+                        $.each(sizes, function(k, v){
+                            sizesAvailable.push("<li>"+ v + "</li>");
+                        });
+                    }
+                    sizesAvailable.push("</ul>");
+                    sizesAvailable.push("</div>");
+
+                    responseHtml.push(sizesAvailable.join(" "));
+
+
+                    var genderHtml = [];
+                    genderHtml.push("<div id='genderId'>");
+                    genderHtml.push("<h2>Gender</h2>");
+                    genderHtml.push("<ul style='list-style: none'>");
+                    if(response.hasOwnProperty("gender")){
+                        var gender = response['gender'];
+                        genderHtml.push("<li>"+ gender +"</li>");
+                    }
+                    genderHtml.push("</ul>");
+                    genderHtml.push("</div>");
+
+                    responseHtml.push(genderHtml.join(" "));
+
+
+
+                    $('#response-div').html(responseHtml.join(" "));
+
+
+                    var categories = [];
+                    var directions = [];
+                    if(response.hasOwnProperty("mergedResponseCategoryToAttributes")){
+                        var mergedResponseCategoryToAttributes = response['mergedResponseCategoryToAttributes'];
+                        console.log("M: "+ JSON.stringify(mergedResponseCategoryToAttributes));
+
+                        if(mergedResponseCategoryToAttributes){
+                            var c = 0;
+                            $.each(mergedResponseCategoryToAttributes, function(k, v){
+                                var e = {};
+                                if(v['category']){
+                                    e['id'] = c;
+                                    e['label'] = v['category'];
+                                    categories.push(e);
+                                    c++;
+                                }
+
+                                if(v['attributes']){
+                                    var catLen = categories.length;
+                                    $.each(v['attributes'], function(k1, v1) {
+                                        var e1 = {};
+                                        var d1 = {};
+                                        e1['id'] = c;
+                                        e1['label'] = v1;
+                                        categories.push(e1);
+                                        c++;
+
+
+                                        d1['from'] = catLen;
+                                        d1['to'] = k;
+                                        d1['arrows'] = 'to';
+                                        directions.push(d1);
+
+                                        catLen++;
+                                    });
+                                }
+                                console.log("C: "+ c);
+                            });
+
+                        }
+                    }
+
+                    if(response.hasOwnProperty("combinedDecision")){
+                        var combinedDecision = response['combinedDecision'];
+                        if(combinedDecision){
+                            categories = [];
+                            directions = [];
+                            var d = 0;
+                            $.each(combinedDecision, function(k, v){
+                                var e = {};
+                                if(v['category']){
+                                    e['id'] = d;
+                                    e['label'] = v['category'];
+                                    categories.push(e);
+                                    d++;
+                                }
+
+                                if(v['attributes']){
+                                    var catLen = categories.length;
+                                    $.each(v['attributes'], function(k1, v1) {
+                                        var e1 = {};
+                                        var d1 = {};
+                                        e1['id'] = d;
+                                        e1['label'] = v1;
+                                        categories.push(e1);
+                                        d++;
+
+
+                                        d1['from'] = catLen;
+                                        d1['to'] = k;
+                                        d1['arrows'] = 'to';
+                                        directions.push(d1);
+
+                                        catLen++;
+                                    });
+                                }
+                            });
+                        }
+                    }
+                    console.log("Categories: "+ JSON.stringify(categories) +" Directions: "+ JSON.stringify(directions));
+                    graph(categories, directions);
+
                     if(response.hasOwnProperty("data")) {
                         var data = response['data'];
                         if (data.hasOwnProperty("classification")) {
@@ -90,7 +260,12 @@
                         }
                     }
                 }
-            });
+            }).done();
+        } else {
+            $('#id-loader').hide();
+            var htmlStr = [];
+            htmlStr.push("<span style='color:#D8000C; font-size: 12px;'>URL or text is required.</span>");
+            $('#response-div').html(htmlStr.join(" "));
         }
     });
 </script>
