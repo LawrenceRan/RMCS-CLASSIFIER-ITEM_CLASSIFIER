@@ -1309,7 +1309,12 @@ public class ClassificationServiceImpl implements ClassificationService{
                                             }
                                         }
                                         Collections.sort(responseToAttributeClusterScoreList, ResponseToAttributeClusterScore.responseToAttributeClusterScoreComparator);
-                                        logger.info("BIC score: "+ rScore.toString());
+                                        Collections.reverse(responseToAttributeClusterScoreList);
+
+                                        if(!responseCategoryToAttributeList.isEmpty()) {
+                                            responseCategoryToAttribute = responseToAttributeClusterScoreList.get(0)
+                                                    .getResponseCategoryToAttribute();
+                                        }
                                         break;
                                     default:
 
@@ -1320,8 +1325,6 @@ public class ClassificationServiceImpl implements ClassificationService{
                     }
                 }
             }
-
-            logger.debug("Rules");
         }
         return responseCategoryToAttribute;
     }
@@ -1352,7 +1355,8 @@ public class ClassificationServiceImpl implements ClassificationService{
 
             List<String> dataSetList = new ArrayList<>();
             if (dataSetValue instanceof String){
-                dataSetList.addAll(Arrays.asList(tokenize(dataSetValue.toString())));
+                String a = dataSetValue.toString();
+                dataSetList.addAll(Arrays.asList(tokenize(a)));
             }
 
             List<String> inputDataSet = new ArrayList<>();
@@ -1365,13 +1369,13 @@ public class ClassificationServiceImpl implements ClassificationService{
                 double[] iD = new double[unionDataSet.size()];
                 double[] dD = new double[unionDataSet.size()];
 
-                int x = 0;
                 if(!unionDataSet.isEmpty()){
+                    int x = 0;
                     for(String s : unionDataSet){
                         if(dataSetKey.contains(s)){ iD[x] = 1d; } else { iD[x] = 0d; }
                         if (inputDataSet.contains(s)){ dD[x] = 1d; } else { dD[x] = 0d; }
+                        x++;
                     }
-                    x++;
                 }
 
                 Instance a = new DenseInstance(iD);

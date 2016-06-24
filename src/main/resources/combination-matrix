@@ -1,1 +1,2 @@
 - {'category': 'dress', matrix: ['top','skirt']}
+- {'category': 'dress', matrix:['top', 'skirt', 'dress']}

@@ -552,6 +552,9 @@ public class Index {
 
                         ResponseCategoryToAttribute responseCategoryToAttribute =
                                 classificationService.refineResultSet(mergeResponseToCategories, rulesEngineDataSet);
+                        if(responseCategoryToAttribute != null) {
+                            response.put("mergedResponseCategoryToAttributes", responseCategoryToAttribute.toMap());
+                        }
                         logger.info("Merged responses is greater than 1:"+ responseMatrixThreshold);
                     }
 
