@@ -26,6 +26,10 @@ public class ClassificationConfig {
     @NotNull
     private String enableCss;
 
+    @Value("${response.matrix.threshold}")
+    @NotNull
+    private String responseMatrixThreshold;
+
     public String getAddTopLevel() {
         return addTopLevel;
     }
@@ -56,5 +60,13 @@ public class ClassificationConfig {
 
     public void setEnableCss(String enableCss) {
         this.enableCss = enableCss;
+    }
+
+    public String getResponseMatrixThreshold() {
+        return responseMatrixThreshold;
+    }
+
+    public void setResponseMatrixThreshold(String responseMatrixThreshold) {
+        this.responseMatrixThreshold = responseMatrixThreshold;
     }
 }

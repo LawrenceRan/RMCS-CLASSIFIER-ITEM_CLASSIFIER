@@ -3,7 +3,9 @@ package contentclassification.domain;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -13,6 +15,7 @@ public class ResponseCategoryToAttribute {
     private String category;
     private List<String> attributes;
     private List<String> colors;
+    private String gender;
 
     public ResponseCategoryToAttribute() {
     }
@@ -49,12 +52,21 @@ public class ResponseCategoryToAttribute {
         this.colors = colors;
     }
 
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
     @Override
     public int hashCode(){
         HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
         hashCodeBuilder.append(this.category);
         hashCodeBuilder.append(this.attributes);
         hashCodeBuilder.append(this.colors);
+        hashCodeBuilder.append(this.gender);
         return hashCodeBuilder.hashCode();
     }
 
@@ -66,8 +78,18 @@ public class ResponseCategoryToAttribute {
             equalsBuilder.append(this.category, responseCategoryToAttribute.getCategory());
             equalsBuilder.append(this.attributes, responseCategoryToAttribute.getAttributes());
             equalsBuilder.append(this.colors, responseCategoryToAttribute.getColors());
+            equalsBuilder.append(this.gender, responseCategoryToAttribute.getGender());
             return equalsBuilder.isEquals();
         }
         return false;
+    }
+
+    public Map<String, Object> toMap(){
+        Map<String, Object> map = new HashMap<>();
+        map.put("category", this.category);
+        map.put("colors", this.colors);
+        map.put("gender", this.gender);
+        map.put("attributes", this.attributes);
+        return map;
     }
 }

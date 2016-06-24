@@ -1,0 +1,3 @@
+### this rule checks for the occurance words from the attributes to the possible title. #####
+1:
+  - {'task' : 'occurrence', 'input' : 'attributes', 'dataset' : 'title'}

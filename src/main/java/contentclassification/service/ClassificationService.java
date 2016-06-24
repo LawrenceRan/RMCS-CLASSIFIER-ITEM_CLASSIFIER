@@ -52,4 +52,10 @@ public interface ClassificationService {
     public TFIDFWeightedScore getTfIdfWeightedScore(String[] tokens, String term);
     public TermToGroupScore getTermToGroupScore(ContentAreaGroupings contentAreaGroupings,
                                                 String term, String description, String title, String keywords);
+    public ResponseCategoryToAttribute refineResultSet(List<ResponseCategoryToAttribute> responseCategoryToAttributeList,
+                                                       RulesEngineDataSet rulesEngineDataSet);
+    public double applyRulesEngineOccurrence(ResponseCategoryToAttribute responseCategoryToAttribute,
+                                                                  RulesEngineDataSet rulesEngineDataSet,
+                                                                  RuleEngineInput ruleEngineInput,
+                                                                  RuleEngineDataSet ruleEngineDataset);
 }

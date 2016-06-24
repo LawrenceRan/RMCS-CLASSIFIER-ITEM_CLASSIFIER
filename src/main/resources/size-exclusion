@@ -1,3 +1,4 @@
 exclusionList:
   - "(option)"
   - "(select)"
+  - "(choose)"

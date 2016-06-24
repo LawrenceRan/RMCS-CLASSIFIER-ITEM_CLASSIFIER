@@ -1,8 +1,18 @@
 package contentclassification.service;
 
+import com.google.common.collect.Sets;
 import contentclassification.config.TermsScoringConfig;
 import contentclassification.domain.*;
+import contentclassification.model.RulesEngineModel;
 import contentclassification.utilities.BM25;
+import net.sf.javaml.clustering.Clusterer;
+import net.sf.javaml.clustering.KMeans;
+import net.sf.javaml.clustering.evaluation.*;
+import net.sf.javaml.core.Dataset;
+import net.sf.javaml.core.DefaultDataset;
+import net.sf.javaml.core.DenseInstance;
+import net.sf.javaml.core.Instance;
+import net.sf.javaml.tools.weka.WekaClusterer;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -13,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import weka.clusterers.XMeans;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -30,6 +41,9 @@ public class ClassificationServiceImpl implements ClassificationService{
 
     @Autowired
     private JsoupService jsoupService;
+
+    @Autowired
+    private RulesEngineModelServiceImpl rulesEngineModelService;
 
     Classification classification = null;
 
@@ -791,6 +805,7 @@ public class ClassificationServiceImpl implements ClassificationService{
         if(responseCategoryToAttributes != null && !responseCategoryToAttributes.isEmpty()){
             List<String> attributes = new ArrayList<>();
             Set<String> colors = new HashSet<>();
+            Map<String, Object> genderMap = new HashMap<>();
 
             Map<String, List<String>> categoryToAttributes = new HashMap<>();
 
@@ -809,15 +824,26 @@ public class ClassificationServiceImpl implements ClassificationService{
                 if(!exitingColors.isEmpty()){
                     colors.addAll(r.getColors());
                 }
+
+                String gender = r.getGender();
+                if(StringUtils.isNotBlank(gender)){
+                    genderMap.put(r.getCategory(), gender);
+                }
             }
 
             boolean isRuled = false;
             String proposeCategory = null;
             List<String> intersection = null;
+            String includedCategory = null;
 
             if(!combinationMatrixList.isEmpty()){
                 for(CombinationMatrix c : combinationMatrixList) {
                     List<String> matrixList = c.getCombinedCategories();
+
+                    if(!matrixList.isEmpty()) {
+                        includedCategory = matrixList.get(0);
+                    }
+
                     intersection = getIntersection(attributes, matrixList);
                     if(!intersection.isEmpty() && intersection.size() == matrixList.size()){
                         isRuled = true;
@@ -846,6 +872,10 @@ public class ClassificationServiceImpl implements ClassificationService{
                 updatedColors.addAll(colors);
                 responseCategoryToAttribute.setColors(updatedColors);
 
+                if(!genderMap.isEmpty()){
+                    responseCategoryToAttribute.setGender(genderMap.get(includedCategory).toString());
+                }
+
                 //Get category if proposed category is also found in incoming ResponseCategory
                 if(attributes.contains(proposeCategory)){
                     for(ResponseCategoryToAttribute r : responseCategoryToAttributes) {
@@ -869,6 +899,7 @@ public class ClassificationServiceImpl implements ClassificationService{
         if(responseCategoryToAttributes != null && !responseCategoryToAttributes.isEmpty()){
             Map<String, List<String>> categoryToAttributes = new HashMap<>();
             Map<String, List<String>> colorsMap = new HashMap<>();
+            Map<String, String> genderMap = new HashMap<>();
             for(ResponseCategoryToAttribute r : responseCategoryToAttributes){
 
                 if(!categoryToAttributes.containsKey(r.getCategory())){
@@ -886,6 +917,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                 }
 
                 colorsMap.put(r.getCategory(), r.getColors());
+                genderMap.put(r.getCategory(), r.getGender());
 
             }
 
@@ -895,6 +927,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                     r.setCategory(ca);
                     r.setAttributes(categoryToAttributes.get(ca));
                     r.setColors(colorsMap.get(ca));
+                    r.setGender(genderMap.get(ca));
                     updated.add(r);
                 }
             }
@@ -1218,5 +1251,153 @@ public class ClassificationServiceImpl implements ClassificationService{
         }
 
         return null;
+    }
+
+    @Override
+    public ResponseCategoryToAttribute refineResultSet(List<ResponseCategoryToAttribute> responseCategoryToAttributeList,
+                                                       RulesEngineDataSet rulesEngineDataSet){
+        ResponseCategoryToAttribute responseCategoryToAttribute = null;
+        if(!responseCategoryToAttributeList.isEmpty()){
+            Iterable<RulesEngineModel> rulesEngineModels = rulesEngineModelService.findAll();
+            Iterator<RulesEngineModel> rulesEngineModelIterator = rulesEngineModels.iterator();
+
+            List<ResponseCategoryToAttribute> occurrence = new ArrayList<>();
+
+            if(rulesEngineModelIterator != null){
+                while(rulesEngineModelIterator.hasNext()){
+                    RulesEngineModel rulesEngineModel = rulesEngineModelIterator.next();
+                    List<Map> rules = rulesEngineModel.getRules();
+                    if(rules != null && !rules.isEmpty()){
+                        for(Map<String, String> m : rules){
+                            RulesEngineTask rulesEngineTask = null;
+                            RuleEngineInput ruleEngineInput = null;
+                            RuleEngineDataSet ruleEngineDataSet = null;
+
+                            for(Map.Entry<String, String> mRules : m.entrySet()){
+                                if(mRules.getKey().equalsIgnoreCase("task")){
+                                    rulesEngineTask = RulesEngineTask.fromString(mRules.getValue());
+                                }
+
+                                if(mRules.getKey().equalsIgnoreCase("input")){
+                                    ruleEngineInput = RuleEngineInput.fromString(mRules.getValue());
+                                }
+
+                                if(mRules.getKey().equalsIgnoreCase("dataset")){
+                                    ruleEngineDataSet = RuleEngineDataSet.fromString(mRules.getValue());
+                                }
+                            }
+
+
+                            if(rulesEngineTask != null){
+                                switch (rulesEngineTask){
+                                    case OCCURRENCE:
+                                        Map<ResponseCategoryToAttribute, Double> rScore = new HashMap<>();
+
+                                        List<ResponseToAttributeClusterScore> responseToAttributeClusterScoreList = new ArrayList<>();
+
+                                        if(!responseCategoryToAttributeList.isEmpty()) {
+                                            for(ResponseCategoryToAttribute r : responseCategoryToAttributeList) {
+                                                double categoryToAttribute =
+                                                        applyRulesEngineOccurrence(r,
+                                                                rulesEngineDataSet,
+                                                                ruleEngineInput,
+                                                                ruleEngineDataSet);
+                                                ResponseToAttributeClusterScore responseToAttributeClusterScore = new ResponseToAttributeClusterScore();
+                                                responseToAttributeClusterScore.setResponseCategoryToAttribute(r);
+                                                responseToAttributeClusterScore.setScore(categoryToAttribute);
+                                                responseToAttributeClusterScoreList.add(responseToAttributeClusterScore);
+                                            }
+                                        }
+                                        Collections.sort(responseToAttributeClusterScoreList, ResponseToAttributeClusterScore.responseToAttributeClusterScoreComparator);
+                                        logger.info("BIC score: "+ rScore.toString());
+                                        break;
+                                    default:
+
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            logger.debug("Rules");
+        }
+        return responseCategoryToAttribute;
+    }
+
+    @Override
+    public double applyRulesEngineOccurrence(ResponseCategoryToAttribute responseCategoryToAttribute,
+                                                                  RulesEngineDataSet rulesEngineDataSet,
+                                                                  RuleEngineInput ruleEngineInput,
+                                                                  RuleEngineDataSet ruleEngineDataset){
+        double r = 0d;
+        if (responseCategoryToAttribute != null){
+            Map<String, Object> rMap = responseCategoryToAttribute.toMap();
+            Map<String, Object> dMap = rulesEngineDataSet.toMap();
+
+            String inputKey = ruleEngineInput.toString();
+            Object inputValue = null;
+
+            if(rMap.containsKey(inputKey)){
+                inputValue = rMap.get(inputKey);
+            }
+
+            String dataSetKey = ruleEngineDataset.toString();
+            Object dataSetValue = null;
+
+            if(dMap.containsKey(dataSetKey)){
+                dataSetValue = dMap.get(dataSetKey);
+            }
+
+            List<String> dataSetList = new ArrayList<>();
+            if (dataSetValue instanceof String){
+                dataSetList.addAll(Arrays.asList(tokenize(dataSetValue.toString())));
+            }
+
+            List<String> inputDataSet = new ArrayList<>();
+            if (inputValue instanceof List) {
+                inputDataSet.addAll((List) inputValue);
+            }
+
+            if(!dataSetList.isEmpty() && !inputDataSet.isEmpty()){
+                List<String> unionDataSet = classification.union(dataSetList, inputDataSet);
+                double[] iD = new double[unionDataSet.size()];
+                double[] dD = new double[unionDataSet.size()];
+
+                int x = 0;
+                if(!unionDataSet.isEmpty()){
+                    for(String s : unionDataSet){
+                        if(dataSetKey.contains(s)){ iD[x] = 1d; } else { iD[x] = 0d; }
+                        if (inputDataSet.contains(s)){ dD[x] = 1d; } else { dD[x] = 0d; }
+                    }
+                    x++;
+                }
+
+                Instance a = new DenseInstance(iD);
+                Instance b = new DenseInstance(dD);
+
+                Dataset dataset = new DefaultDataset();
+                dataset.add(a);
+                dataset.add(b);
+
+                XMeans xm = new XMeans();
+                Clusterer kMeans = new WekaClusterer(xm);
+                Dataset[] cluster = kMeans.cluster(dataset);
+
+                ClusterEvaluation clusterEvaluation = new SumOfAveragePairwiseSimilarities();
+                ClusterEvaluation evaluation1 = new SumOfCentroidSimilarities();
+                ClusterEvaluation evaluation2 = new AICScore();
+                ClusterEvaluation evaluation3 = new BICScore();
+
+                double sumOfAveragePairwiseSimilarities = clusterEvaluation.score(cluster);
+                double sumOfCentroidSimilarities = evaluation1.score(cluster);
+                double aicScore = evaluation2.score(cluster);
+                double bicScore = evaluation3.score(cluster);
+
+                r = bicScore;
+            }
+        }
+        return r;
     }
 }

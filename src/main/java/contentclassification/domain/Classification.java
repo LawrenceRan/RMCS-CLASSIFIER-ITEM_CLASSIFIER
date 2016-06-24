@@ -526,6 +526,15 @@ public class Classification {
         return intersect;
     }
 
+    public static <T> List<T> getUnion(List<T> a, List<T> b){
+        List<T> intersect = new ArrayList<>();
+        Set<T> setA = Sets.newHashSet(a);
+        Set<T> setB = Sets.newHashSet(b);
+        Set<T> inter = Sets.union(setA, setB);
+        intersect.addAll(inter);
+        return intersect;
+    }
+
     public static List<FabricName> isFabricPresent(String sentence){
         List<FabricName> isPresent = new ArrayList<>();
         List<FabricName> fabricNames = FabricName.getFabrics();

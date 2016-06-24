@@ -1,5 +1,6 @@
 package contentclassification.controller;
 
+import contentclassification.config.ClassificationConfig;
 import contentclassification.config.WordNetDictConfig;
 import contentclassification.domain.*;
 //import contentclassification.service.DomainGraphDBImpl;
@@ -40,6 +41,9 @@ public class Index {
 
     @Autowired
     private ClassificationServiceImpl classificationService;
+
+    @Autowired
+    private ClassificationConfig classificationConfig;
 
 //    @Autowired
 //    private DomainGraphDBImpl domainGraphDB;
@@ -463,6 +467,16 @@ public class Index {
                     }
                 }
 
+                /**
+                 * The method is to help determine whether a given content is gender specific or neutral. If former is
+                 * is found it should be surfaced and otherwise that should be surfaced as well.
+                 */
+                Map<String, Object> gender = classificationService.getGender(sentences, keywords, description);
+                if(!gender.isEmpty()){
+                    response.putAll(gender);
+                }
+                //end of get gender.
+
                 //Get the top level category that an attribute belongs to and score 'em
                 if(!totalTermToGroupsFiltered.isEmpty()){
                     Set<String> terms = new HashSet<>();
@@ -481,6 +495,12 @@ public class Index {
                             attributes.add(English.plural(s, 1));
                             responseCategoryToAttribute.setAttributes(attributes);
                             responseCategoryToAttribute.setColors(itemColors);
+
+                            if(!gender.isEmpty()) {
+                                if(gender.containsKey("gender")) {
+                                    responseCategoryToAttribute.setGender(gender.get("gender").toString());
+                                }
+                            }
 
                             responseCategoryToAttributeList.add(responseCategoryToAttribute);
                         }
@@ -521,6 +541,20 @@ public class Index {
                         response.put("mergedResponseCategoryToAttributes", mergeResponseToCategories);
                     }
 
+                    Integer responseMatrixThreshold = Integer.parseInt(classificationConfig.getResponseMatrixThreshold());
+
+                    if(!mergeResponseToCategories.isEmpty() &&
+                            mergeResponseToCategories.size() > responseMatrixThreshold){
+                        RulesEngineDataSet rulesEngineDataSet = new RulesEngineDataSet();
+                        rulesEngineDataSet.setTitle(possibleTitle);
+                        rulesEngineDataSet.setBody(text);
+                        rulesEngineDataSet.setMetas(metaKeyValuePair);
+
+                        ResponseCategoryToAttribute responseCategoryToAttribute =
+                                classificationService.refineResultSet(mergeResponseToCategories, rulesEngineDataSet);
+                        logger.info("Merged responses is greater than 1:"+ responseMatrixThreshold);
+                    }
+
                     response.put("responseCategoryToAttribute", responseCategoryToAttributeList);
                 }
 
@@ -545,16 +579,6 @@ public class Index {
                 }
 
                 //end of get price
-
-                /**
-                 * The method is to help determine whether a given content is gender specific or neutral. If former is
-                 * is found it should be surfaced and otherwise that should be surfaced as well.
-                 */
-                Map<String, Object> gender = classificationService.getGender(sentences, keywords, description);
-                if(!gender.isEmpty()){
-                    response.putAll(gender);
-                }
-                //end of get gender.
             }
         } else {
             response.put(RestResponseKeys.MESSAGE.toString(), "empty or missing url.");
