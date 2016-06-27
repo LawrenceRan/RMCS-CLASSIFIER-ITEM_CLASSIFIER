@@ -865,6 +865,13 @@ public class ClassificationServiceImpl implements ClassificationService{
                                 combinedAttributes.addAll(categoryToAttributes.get(i));
                             }
                         }
+
+                        //Clean up attributes to remove attribute duplicates
+                        Set<String> cleanUp = new HashSet<>();
+                        cleanUp.addAll(combinedAttributes);
+                        combinedAttributes.clear();
+                        combinedAttributes.addAll(cleanUp);
+
                         responseCategoryToAttribute.setAttributes(combinedAttributes);
                     }
                 }
