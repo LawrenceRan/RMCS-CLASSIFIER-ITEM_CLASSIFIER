@@ -27,6 +27,6 @@ public class RulesEngineManager {
         if(!rulesEngineModelList.isEmpty()){
             engineModelService.insertListOfRule(rulesEngineModelList);
         }
-        logger.info("Rules engine");
+        logger.info("Rules engine updated into Redis data store.");
     }
 }
