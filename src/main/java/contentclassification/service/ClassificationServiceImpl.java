@@ -808,6 +808,9 @@ public class ClassificationServiceImpl implements ClassificationService{
             List<String> attributes = new ArrayList<>();
             Set<String> colors = new HashSet<>();
             Map<String, Object> genderMap = new HashMap<>();
+            Map<String, List<String>> materialsMap = new HashMap<>();
+            Map<String, List<String>> sizesMap = new HashMap<>();
+            Map<String, Object> pricingMap = new HashMap<>();
 
             Map<String, List<String>> categoryToAttributes = new HashMap<>();
 
@@ -837,6 +840,21 @@ public class ClassificationServiceImpl implements ClassificationService{
                 String gender = r.getGender();
                 if(StringUtils.isNotBlank(gender)){
                     genderMap.put(r.getCategory(), gender);
+                }
+
+                List<String> materials = r.getMaterials();
+                if(materials != null && !materials.isEmpty()){
+                    materialsMap.put(r.getCategory(), materials);
+                }
+
+                List<String> sizes = r.getSizes();
+                if(sizes != null && !sizes.isEmpty()){
+                    sizesMap.put(r.getCategory(), sizes);
+                }
+
+                Map<String, Object> pricing = r.getPricing();
+                if (pricing != null && !pricing.isEmpty()){
+                    pricingMap.put(r.getCategory(), pricing);
                 }
             }
 
@@ -892,6 +910,16 @@ public class ClassificationServiceImpl implements ClassificationService{
                     responseCategoryToAttribute.setGender(genderMap.get(includedCategory).toString());
                 }
 
+                //Add materials found to combined response.
+                if(!materialsMap.isEmpty()){
+                    responseCategoryToAttribute.setMaterials(materialsMap.get(includedCategory));
+                }
+
+                //add sizes found found for combined response.
+                if(!sizesMap.isEmpty()){
+                   responseCategoryToAttribute.setSizes(sizesMap.get(includedCategory));
+                }
+
                 //Get category if proposed category is also found in incoming ResponseCategory
                 if(attributes.contains(proposeCategory)){
                     for(ResponseCategoryToAttribute r : responseCategoryToAttributes) {
@@ -916,6 +944,7 @@ public class ClassificationServiceImpl implements ClassificationService{
         return updated;
     }
 
+    //Used to group a collection of responses attributes by categories.
     public List<ResponseCategoryToAttribute> groupResponseByCategory(
             List<ResponseCategoryToAttribute> responseCategoryToAttributes){
         List<ResponseCategoryToAttribute> updated = new ArrayList<>();
@@ -923,6 +952,10 @@ public class ClassificationServiceImpl implements ClassificationService{
             Map<String, List<String>> categoryToAttributes = new HashMap<>();
             Map<String, List<String>> colorsMap = new HashMap<>();
             Map<String, String> genderMap = new HashMap<>();
+            Map<String, List<String>> materialsMap = new HashMap<>();
+            Map<String, List<String>> sizesMap = new HashMap<>();
+            Map<String, Map<String, Object>> pricingMap = new HashMap<>();
+
             for(ResponseCategoryToAttribute r : responseCategoryToAttributes){
 
                 if(!categoryToAttributes.containsKey(r.getCategory())){
@@ -941,7 +974,9 @@ public class ClassificationServiceImpl implements ClassificationService{
 
                 colorsMap.put(r.getCategory(), r.getColors());
                 genderMap.put(r.getCategory(), r.getGender());
-
+                materialsMap.put(r.getCategory(), r.getMaterials());
+                sizesMap.put(r.getCategory(), r.getSizes());
+                pricingMap.put(r.getCategory(), r.getPricing());
             }
 
             if(!categoryToAttributes.isEmpty()){
@@ -951,6 +986,9 @@ public class ClassificationServiceImpl implements ClassificationService{
                     r.setAttributes(categoryToAttributes.get(ca));
                     r.setColors(colorsMap.get(ca));
                     r.setGender(genderMap.get(ca));
+                    r.setMaterials(materialsMap.get(ca));
+                    r.setSizes(sizesMap.get(ca));
+                    r.setPricing(pricingMap.get(ca));
                     updated.add(r);
                 }
             }

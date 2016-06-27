@@ -16,6 +16,9 @@ public class ResponseCategoryToAttribute {
     private List<String> attributes;
     private List<String> colors;
     private String gender;
+    private List<String> materials;
+    private List<String> sizes;
+    private Map<String, Object> pricing;
 
     public ResponseCategoryToAttribute() {
     }
@@ -60,6 +63,30 @@ public class ResponseCategoryToAttribute {
         this.gender = gender;
     }
 
+    public List<String> getMaterials() {
+        return materials;
+    }
+
+    public void setMaterials(List<String> materials) {
+        this.materials = materials;
+    }
+
+    public List<String> getSizes() {
+        return sizes;
+    }
+
+    public void setSizes(List<String> sizes) {
+        this.sizes = sizes;
+    }
+
+    public Map<String, Object> getPricing() {
+        return pricing;
+    }
+
+    public void setPricing(Map<String, Object> pricing) {
+        this.pricing = pricing;
+    }
+
     @Override
     public int hashCode(){
         HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
@@ -67,6 +94,9 @@ public class ResponseCategoryToAttribute {
         hashCodeBuilder.append(this.attributes);
         hashCodeBuilder.append(this.colors);
         hashCodeBuilder.append(this.gender);
+        hashCodeBuilder.append(this.materials);
+        hashCodeBuilder.append(this.sizes);
+        hashCodeBuilder.append(this.pricing);
         return hashCodeBuilder.hashCode();
     }
 
@@ -79,6 +109,9 @@ public class ResponseCategoryToAttribute {
             equalsBuilder.append(this.attributes, responseCategoryToAttribute.getAttributes());
             equalsBuilder.append(this.colors, responseCategoryToAttribute.getColors());
             equalsBuilder.append(this.gender, responseCategoryToAttribute.getGender());
+            equalsBuilder.append(this.materials, responseCategoryToAttribute.getMaterials());
+            equalsBuilder.append(this.sizes, responseCategoryToAttribute.getSizes());
+            equalsBuilder.append(this.pricing, responseCategoryToAttribute.getPricing());
             return equalsBuilder.isEquals();
         }
         return false;
@@ -90,6 +123,21 @@ public class ResponseCategoryToAttribute {
         map.put("colors", this.colors);
         map.put("gender", this.gender);
         map.put("attributes", this.attributes);
+        map.put("materials", this.materials);
+        map.put("sizes", this.sizes);
+        map.put("pricing", this.pricing);
+        return map;
+    }
+
+    public Map<String, Object> toResponseMap(){
+        Map<String, Object> map = new HashMap<>();
+        map.put(ResponseMap.GENRE.toString(), this.category);
+        map.put(ResponseMap.COLORS.toString(), this.colors);
+        map.put(ResponseMap.GENDER.toString(), this.gender);
+        map.put(ResponseMap.SUB_GENRE.toString(), this.attributes);
+        map.put(ResponseMap.MATERIALS.toString(), this.materials);
+        map.put(ResponseMap.SIZES.toString(), this.sizes);
+        map.put(ResponseMap.PRICING.toString(),this.pricing);
         return map;
     }
 

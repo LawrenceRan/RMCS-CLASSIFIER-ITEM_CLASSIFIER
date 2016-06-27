@@ -174,8 +174,20 @@ public class Index {
 
                 //Trying to get size of the item if exist, ideal for shoes and clothing
                 List<String> sizesFromContent = classificationService.sizeFromSelectFields(contentString);
-                response.put("availableSizes", sizesFromContent);
+                if(showScore) {
+                    response.put("availableSizes", sizesFromContent);
+                }
                 //End of getting size from content.
+
+                //Get potential material make of the said item.
+                List<FabricName> fabricNames = classificationService.getFabricsFromContent(text);
+                List<String> materialsFound = new ArrayList<>();
+                if(!fabricNames.isEmpty()){
+                    for(FabricName fabricName : fabricNames){
+                        materialsFound.add(fabricName.getName());
+                    }
+                }
+                //End of potential material of make.
 
                 //Start of content analysis of content page.
                 String[] tokens = classificationService.tokenize(text.toLowerCase().trim());
@@ -514,6 +526,14 @@ public class Index {
                                 }
                             }
 
+                            if(!materialsFound.isEmpty()){
+                                responseCategoryToAttribute.setMaterials(materialsFound);
+                            }
+
+                            if(!sizesFromContent.isEmpty()){
+                                responseCategoryToAttribute.setSizes(sizesFromContent);
+                            }
+
                             responseCategoryToAttributeList.add(responseCategoryToAttribute);
                         }
                     }
@@ -553,7 +573,9 @@ public class Index {
                                 logger.info("Sentences found in term: "+ sentenceInAttribute);
                             }
                         }
-                        response.put("mergedResponseCategoryToAttributes", mergeResponseToCategories);
+                        if(showScore) {
+                            response.put("mergedResponseCategoryToAttributes", mergeResponseToCategories);
+                        }
                     }
 
                     Integer responseMatrixThreshold = Integer.parseInt(classificationConfig.getResponseMatrixThreshold());
@@ -573,26 +595,20 @@ public class Index {
                         ResponseCategoryToAttribute responseCategoryToAttribute =
                                 classificationService.refineResultSet(mergeResponseToCategories, rulesEngineDataSet);
                         if(responseCategoryToAttribute != null) {
-                            response.put("mergedResponseCategoryToAttributes", responseCategoryToAttribute.toMap());
+                            response.put(ResponseMap.CLASSIFICATION.toString(),
+                                    responseCategoryToAttribute.toResponseMap());
                         }
                         logger.info("Merged responses is greater than 1:"+ responseMatrixThreshold);
+                    } else {
+                        if(mergeResponseToCategories.size() == 1) {
+                            response.put(ResponseMap.CLASSIFICATION.toString(), mergeResponseToCategories.get(0).toResponseMap());
+                        }
                     }
 
                     if(showScore) {
                         response.put("responseCategoryToAttribute", responseCategoryToAttributeList);
                     }
                 }
-
-                //Get potential material make of the said item.
-                List<FabricName> fabricNames = classificationService.getFabricsFromContent(text);
-                if(!fabricNames.isEmpty()){
-                    List<String> materialsFound = new ArrayList<>();
-                    for(FabricName fabricName : fabricNames){
-                        materialsFound.add(fabricName.getName());
-                    }
-                    response.put("materialsFound", materialsFound);
-                }
-                //End of potential material of make.
 
                 if(showScore) {
                     response.put("scoreThreshold", totalTermToGroupsFiltered);
