@@ -898,6 +898,13 @@ public class ClassificationServiceImpl implements ClassificationService{
                         if(r.getCategory().equalsIgnoreCase(proposeCategory)){
                             List<String> existingAttributes = responseCategoryToAttribute.getAttributes();
                             existingAttributes.addAll(r.getAttributes());
+
+                            //Clean up of duplicated attributes
+                            Set<String> cleanUp = new HashSet<>();
+                            cleanUp.addAll(existingAttributes);
+                            existingAttributes.clear();
+                            existingAttributes.addAll(cleanUp);
+
                             responseCategoryToAttribute.setAttributes(existingAttributes);
                         }
                     }

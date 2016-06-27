@@ -92,4 +92,39 @@ public class ResponseCategoryToAttribute {
         map.put("attributes", this.attributes);
         return map;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder colorsStr = new StringBuilder();
+        List<String> colors = this.colors;
+        if(colors != null && !colors.isEmpty()){
+            int x = 0;
+            for(String c : colors){
+                if(x < (colors.size() - 1)) {
+                    colorsStr.append(c +",");
+                } else {
+                    colorsStr.append(c);
+                }
+                x++;
+            }
+        }
+
+        StringBuilder attrStr = new StringBuilder();
+        List<String> attributes = this.attributes;
+
+        if(attributes != null && !attributes.isEmpty()){
+            int x = 0;
+            for(String attr : attributes){
+                if(x < (attributes.size() - 1)){
+                    attrStr.append(attr + ",");
+                } else {
+                    attrStr.append(attr);
+                }
+                x++;
+            }
+        }
+
+        return "[ category : " + this.category + ", gender : "+ this.gender  +", colors : "+ colorsStr.toString() +"" +
+                ", attributes : "+ attrStr.toString() +"]";
+    }
 }
