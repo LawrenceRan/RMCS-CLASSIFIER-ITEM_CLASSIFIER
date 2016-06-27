@@ -19,6 +19,13 @@ outerwear:
 - cape
 - poncho
 - pullover
+- bell-sleeve jacket
+- open front cardigan
+- shaker sweater,
+- cable knit sweater
+- cardigan
+- light-weight cardigan
+- bolero cardigan
 
 dress:
 - shift
@@ -85,6 +92,16 @@ skirt:
 - paneled
 - bubble
 - midi
+- floral print
+- knee-length
+- jeans skirt
+- mini skirt
+- pencil skirt
+- gored skirt
+- tulip skirt
+- wrap skirt
+- tiered skirt
+- crinkle skirt
 
 bottom:
 - straight
@@ -108,6 +125,21 @@ bottom:
 - overall
 - jumpsuit
 - shorts
+- leggings
+- skinny jeans
+- tight-legged jeans
+- wide-leg
+- straight-leg
+- high-waisted pants
+- color-washed jeans
+- boot cut jeans
+- leather pants
+- cropped pants
+- stretch pants
+- banded bottom
+- cuffed legs
+- capris
+- cuffed pants
 
 top:
 - princess vest
