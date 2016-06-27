@@ -819,6 +819,13 @@ public class ClassificationServiceImpl implements ClassificationService{
                 } else {
                     List<String> attrs = categoryToAttributes.get(r.getCategory());
                     attrs.addAll(r.getAttributes());
+
+                    //Clean up of duplicated attributes.
+                    Set<String> cleanUp = new HashSet<>();
+                    cleanUp.addAll(attrs);
+                    attrs.clear();
+                    attrs.addAll(cleanUp);
+
                     categoryToAttributes.put(r.getCategory(), attrs);
                 }
 
