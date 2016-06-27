@@ -88,7 +88,9 @@ public class Index {
     }
 
     @RequestMapping(value = "/v1/url", method = RequestMethod.GET, produces = "application/json")
-    public ModelAndView generateTagsByUrl(@RequestParam(required = true, name = "url") String url) {
+    public ModelAndView generateTagsByUrl(@RequestParam(required = true, name = "url") String url,
+                                          @RequestParam(required = false, name = "showScore", defaultValue = "false")
+                                          boolean showScore )  {
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
         if (StringUtils.isNotBlank(url)) {
@@ -141,8 +143,11 @@ public class Index {
                             colorsValidation.add(map);
                         }
                     }
-                    colors.put("colorsValidation", colorsValidation);
-                    response.putAll(colors);
+
+                    if(showScore) {
+                        colors.put("colorsValidation", colorsValidation);
+                        response.putAll(colors);
+                    }
 
                     boolean displayResults = wordNetDictConfig.getDisplayResultsBool();
                     if (displayResults) {
@@ -159,7 +164,9 @@ public class Index {
                                 definitions.add(map);
                             }
                         }
-                        response.put("definitions", definitions);
+                        if(showScore) {
+                            response.put("definitions", definitions);
+                        }
                     }
                 }
                 //End of getting potential colors.
@@ -323,7 +330,9 @@ public class Index {
                     }
                 }
 
-                response.put("allKeywords", allKeywords);
+                if(showScore) {
+                    response.put("allKeywords", allKeywords);
+                }
 
 
                 /**
@@ -444,7 +453,10 @@ public class Index {
                 //Present total scoring on all terms found.
                 if (!totalTermToGroups.isEmpty()) {
                     Collections.sort(totalTermToGroups, TotalTermToGroup.totalTermToGroupComparator);
-                    response.put("totalWeightedScore", totalTermToGroups);
+
+                    if(showScore) {
+                        response.put("totalWeightedScore", totalTermToGroups);
+                    }
                 }
 
                 //Scored terms crossed referenced with sentences to predict the order
@@ -510,11 +522,14 @@ public class Index {
                         Run response to category against combination matrix, only if the list of response to category
                         is more than one.
                      */
+                    List<ResponseCategoryToAttribute> updated = null;
                     if(responseCategoryToAttributeList.size() > 1){
-                        List<ResponseCategoryToAttribute> updated = classificationService
+                        updated = classificationService
                                 .getCombinedMatrix(responseCategoryToAttributeList);
                         if(!updated.isEmpty()) {
-                            response.put("combinedDecision", updated);
+                            if(showScore) {
+                                response.put("combinedDecision", updated);
+                            }
 //                            Set<ResponseCategoryToAttribute> set = new HashSet<>();
 //                            responseCategoryToAttributeList.addAll(updated);
 //                            set.addAll(responseCategoryToAttributeList);
@@ -550,6 +565,11 @@ public class Index {
                         rulesEngineDataSet.setBody(text);
                         rulesEngineDataSet.setMetas(metaKeyValuePair);
 
+                        //Added response to attributes result from combined decision to merged responses.
+                        if(updated != null && !updated.isEmpty()){
+                            mergeResponseToCategories.addAll(updated);
+                        }
+
                         ResponseCategoryToAttribute responseCategoryToAttribute =
                                 classificationService.refineResultSet(mergeResponseToCategories, rulesEngineDataSet);
                         if(responseCategoryToAttribute != null) {
@@ -558,7 +578,9 @@ public class Index {
                         logger.info("Merged responses is greater than 1:"+ responseMatrixThreshold);
                     }
 
-                    response.put("responseCategoryToAttribute", responseCategoryToAttributeList);
+                    if(showScore) {
+                        response.put("responseCategoryToAttribute", responseCategoryToAttributeList);
+                    }
                 }
 
                 //Get potential material make of the said item.
@@ -570,8 +592,11 @@ public class Index {
                     }
                     response.put("materialsFound", materialsFound);
                 }
-                response.put("scoreThreshold", totalTermToGroupsFiltered);
                 //End of potential material of make.
+
+                if(showScore) {
+                    response.put("scoreThreshold", totalTermToGroupsFiltered);
+                }
 
                 /**
                  * About to execute the method below to retrieve price of the said item.
