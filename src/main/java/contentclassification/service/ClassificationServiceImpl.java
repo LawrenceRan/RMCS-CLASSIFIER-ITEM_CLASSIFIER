@@ -163,10 +163,12 @@ public class ClassificationServiceImpl implements ClassificationService{
                             String a2 = a1.replaceAll("\"", "");
                             String[] a3 = a2.split("=");
                             if(a3.length > 0){
-                                try {
-                                    m.put(a3[0], a3[1]);
-                                } catch(ArrayIndexOutOfBoundsException e){
-                                    e.printStackTrace();
+                                if(a3.length == 2) {
+                                    try {
+                                        m.put(a3[0], a3[1]);
+                                    } catch (ArrayIndexOutOfBoundsException e) {
+                                        e.printStackTrace();
+                                    }
                                 }
                             }
                         }
@@ -1400,6 +1402,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                 double bicScore = evaluation3.score(cluster);
 
                 r = bicScore;
+                logger.info("BIC score for: "+ responseCategoryToAttribute.toString() + " is: "+ r);
             }
         }
         return r;
