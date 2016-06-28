@@ -497,7 +497,9 @@ public class Index {
                  */
                 Map<String, Object> gender = classificationService.getGender(sentences, keywords, description);
                 if(!gender.isEmpty()){
-                    response.putAll(gender);
+                    if(showScore) {
+                        response.putAll(gender);
+                    }
                 }
                 //end of get gender.
 
