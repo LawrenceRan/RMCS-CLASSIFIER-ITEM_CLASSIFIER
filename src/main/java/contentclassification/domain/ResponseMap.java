@@ -10,7 +10,7 @@ import java.util.List;
  */
 public enum ResponseMap {
     CLASSIFICATION("classification"), GENDER("gender"), GENRE("genre"), SUB_GENRE("subGenres"), COLORS("colors"),
-    MATERIALS("materials"), SIZES("sizes"), PRICING("pricing"), BRAND("brand");
+    MATERIALS("materials"), SIZES("sizes"), PRICING("pricing"), BRAND("brand"), IS_LUXURY("isLuxury");
 
     private final String response;
 

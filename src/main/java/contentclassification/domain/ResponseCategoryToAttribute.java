@@ -19,6 +19,8 @@ public class ResponseCategoryToAttribute {
     private List<String> materials;
     private List<String> sizes;
     private Map<String, Object> pricing;
+    private String brand;
+    private String isLuxury;
 
     public ResponseCategoryToAttribute() {
     }
@@ -87,6 +89,22 @@ public class ResponseCategoryToAttribute {
         this.pricing = pricing;
     }
 
+    public String getBrand() {
+        return brand;
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
+
+    public String getIsLuxury() {
+        return isLuxury;
+    }
+
+    public void setIsLuxury(String isLuxury) {
+        this.isLuxury = isLuxury;
+    }
+
     @Override
     public int hashCode(){
         HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
@@ -97,6 +115,8 @@ public class ResponseCategoryToAttribute {
         hashCodeBuilder.append(this.materials);
         hashCodeBuilder.append(this.sizes);
         hashCodeBuilder.append(this.pricing);
+        hashCodeBuilder.append(this.brand);
+        hashCodeBuilder.append(this.isLuxury);
         return hashCodeBuilder.hashCode();
     }
 
@@ -112,6 +132,8 @@ public class ResponseCategoryToAttribute {
             equalsBuilder.append(this.materials, responseCategoryToAttribute.getMaterials());
             equalsBuilder.append(this.sizes, responseCategoryToAttribute.getSizes());
             equalsBuilder.append(this.pricing, responseCategoryToAttribute.getPricing());
+            equalsBuilder.append(this.brand, responseCategoryToAttribute.getBrand());
+            equalsBuilder.append(this.isLuxury, responseCategoryToAttribute.getIsLuxury());
             return equalsBuilder.isEquals();
         }
         return false;
@@ -126,6 +148,8 @@ public class ResponseCategoryToAttribute {
         map.put("materials", this.materials);
         map.put("sizes", this.sizes);
         map.put("pricing", this.pricing);
+        map.put("brand", this.brand);
+        map.put("isLuxury", this.isLuxury);
         return map;
     }
 
@@ -138,6 +162,8 @@ public class ResponseCategoryToAttribute {
         map.put(ResponseMap.MATERIALS.toString(), this.materials);
         map.put(ResponseMap.SIZES.toString(), this.sizes);
         map.put(ResponseMap.PRICING.toString(),this.pricing);
+        map.put(ResponseMap.BRAND.toString(),this.brand);
+        map.put(ResponseMap.IS_LUXURY.toString(),this.isLuxury);
         return map;
     }
 
@@ -173,6 +199,6 @@ public class ResponseCategoryToAttribute {
         }
 
         return "[ category : " + this.category + ", gender : "+ this.gender  +", colors : "+ colorsStr.toString() +"" +
-                ", attributes : "+ attrStr.toString() +"]";
+                ", attributes : "+ attrStr.toString() +", brand : "+ this.brand +", isLuxury : "+ this.isLuxury +"]";
     }
 }

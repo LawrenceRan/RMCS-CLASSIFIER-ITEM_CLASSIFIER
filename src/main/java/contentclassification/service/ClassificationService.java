@@ -58,4 +58,5 @@ public interface ClassificationService {
                                                                   RulesEngineDataSet rulesEngineDataSet,
                                                                   RuleEngineInput ruleEngineInput,
                                                                   RuleEngineDataSet ruleEngineDataset);
+    public List<String> colorsVerification(List<Map> colorsValidated);
 }

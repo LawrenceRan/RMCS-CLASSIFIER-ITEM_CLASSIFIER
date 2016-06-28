@@ -1466,4 +1466,55 @@ public class ClassificationServiceImpl implements ClassificationService{
         }
         return r;
     }
+
+    @Override
+    public List<String> colorsVerification(List<Map> colorsValidated){
+        List<String> colors = new ArrayList<>();
+        if(colorsValidated != null && !colorsValidated.isEmpty()){
+            List<String> nonValidated = new ArrayList<>();
+            for(Map<String, Object> m : colorsValidated){
+                String color = null;
+                if(m.containsKey("name")){
+                    color = m.get("name").toString();
+                }
+
+                boolean isValidated = false;
+                if(m.containsKey("isValidated")){
+                    isValidated = Boolean.parseBoolean(m.get("isValidated").toString());
+                }
+
+                if(!isValidated){
+                    nonValidated.add(color);
+                }
+            }
+
+            if(!nonValidated.isEmpty()){
+                List<Color> colorList = Color.loadColors();
+                Map<String, Double> colorSimilarityScores = new HashMap<>();
+                ValueComparator valueComparator = new ValueComparator(colorSimilarityScores);
+                TreeMap<String, Double> treeMap = new TreeMap<>(valueComparator);
+
+                for(String s : nonValidated){
+                    //Distance computation between an unknown color and a curated one.
+                    Color color = new Color();
+                    color.setName(s);
+
+                    double similarityRate = Color.similarityAgainstCuratedColors(colorList, color);
+                    colorSimilarityScores.put(color.toString(), similarityRate);
+                }
+
+                if(!colorSimilarityScores.isEmpty()){
+                    treeMap.putAll(colorSimilarityScores);
+                    if(!treeMap.isEmpty()){
+                        for(Map.Entry<String, Double> m : treeMap.entrySet()){
+                            if(m.getValue() > 0D){
+                                colors.add(m.getKey());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return colors;
+    }
 }

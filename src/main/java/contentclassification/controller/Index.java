@@ -168,6 +168,18 @@ public class Index {
                             response.put("definitions", definitions);
                         }
                     }
+
+                    //Learning of non-validated colors and updating outgoing colors after verification.
+                    if(!colorsValidation.isEmpty()){
+                        List<String> verifiedColors = classificationService.colorsVerification(colorsValidation);
+                        List<String> intersectionOfVerifiedWithColors =
+                                classificationService.getIntersection(verifiedColors, itemColors);
+                        if(!intersectionOfVerifiedWithColors.isEmpty()){
+                            itemColors.clear();
+                            itemColors.addAll(intersectionOfVerifiedWithColors);
+                        }
+
+                    }
                 }
                 //End of getting potential colors.
 

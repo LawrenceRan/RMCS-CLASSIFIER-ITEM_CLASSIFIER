@@ -1,0 +1,89 @@
+#source url: http://www.macmillandictionary.com/thesaurus-category/american/general-words-used-to-describe-colors
+- {"word" : "ablaze", "pos": "adjective", "literary" : "bright and full of light or color"}
+- {"word" : "bleached", "pos": "adjective", "literary" : "made very pale by chemicals or strong sunlight"}
+- {"word" : "bold", "pos": "adjective", "literary" : "very bright, clear, or strong in color and therefore easy to notice"}
+- {"word" : "brash", "pos": "adjective", "literary" : "big, bright, or colorful in a way that is not attractive"}
+- {"word" : "brash", "pos": "adjective", "literary" : "big, bright, or colorful in a way that is not attractive"}
+- {"word" : "bright", "pos": "adjective", "literary" : "bright colors are strong but not dark"}
+- {"word" : "chintzy", "pos" : "adjective", "literary" : "too colorful and in poor taste"}
+- {"word" : "clean", "pos" : "adjective", "literary" : "clean smells, tastes, and colors are light and fresh"}
+- {"word" : "cold", "pos" : "adjective", "literary" : "cold colors are colors such as white, blue, and gray that make you think of things that are cold"}
+- {"word" : "color-coded", "pos" : "adjective", "literary" : "using colors to make different things easy to recognize"}
+- {"word" : "colored", "pos" : "adjective", "literary" : "red, green, blue, etc. rather than transparent or black or white"}
+- {"word" : "colorful",  "pos" : "adjective", "literary" : "something that is colorful has bright colors or a lot of different colors"}
+- {"word" : "colorless", "pos" : "adjective", "literary" : "something that is colorless has no color"}
+- {"word" : "coloured", "pos" : "", "literary" : "the British spelling of colored"}
+- {"word" : "colourful", "pos" : "", "literary" : "the British spelling of colorful"}
+- {"word" : "colourless", "pos" : "", "literary" : "the British spelling of colorless"}
+- {"word" : "coloured", "pos" : "adjective", "literary" : "red, green, orange etc instead of black and white or transparent"}
+- {"word" : "cool", "pos" : "adjective", "literary" : "cool colors, such as white and blue, give an idea of cold instead of heat"}
+- {"word" : "dappled", "pos" : "adjective", "literary" : "covered with or forming areas of lighter and darker color or light and shadow"}
+- {"word" : "dark", "pos" : "adjective", "literary" : "strong and not pale in color"}
+- {"word" : "darkly", "pos" : "adverb", "literary" : "in a dark color"}
+- {"word" : "deep", "pos" : "adjective", "literary" : "a deep color is dark and strong"}
+- {"word" : "delicate", "pos" : "adjective", "literary" : "a delicate taste, smell, or color is pleasant and not too strong"}
+- {"word" : "delicately", "pos" : "adverb", "literary" : "in a way that is pleasant and not too strong in flavor, smell, or color"}
+- {"word" : "discolored", "pos" : "adjective", "literary" : "something that is discolored has changed in color and no longer looks new, clean, or healthy"}
+- {"word" : "discoloured", "pos" : "", "literary" : "the British spelling of discolored"}
+- {"word" : "dusty", "pos" : "adjective", "literary" : "used for describing a color that is not bright because it has some gray in it"}
+- {"word" : "fast", "pos" : "adjective", "literary": "colors that are fast will not become paler when clothes are washed"}
+- {"word" : "festive", "pos" : "adjective", "literary" : "bright and colorful in a way that makes you think of a celebration"}
+- {"word" : "fiery", "pos" : "adjective", "literary" : "mainly literary very bright in color, especially bright red, orange, or yellow"}
+- {"word" : "flamboyant", "pos" : "adjective", "literary" : "brightly colored or decorated"}
+- {"word" : "flaming", "pos" : "adjective", "literary" : "brightly colored red, orange, or yellow"}
+- {"word" : "fluorescent", "pos" : "adjective", "literary" : "a fluorescent color is very bright and seems to reflect light"}
+- {"word" : "fresh", "pos" : "adjective", "literary" : "used about colors"}
+- {"word" : "gaily", "pos" : "adverb", "literary" : "with bright attractive colors"}
+- {"word" : "gay", "pos" : "adjective", "literary" : "old-fashioned brightly-colored or attractive"}
+- {"word" : "glowing", "pos" : "adjective", "literary" : "glowing colors are bright and look warm"}
+- {"word" : "harmonious", "pos" : "adjective", "literary" : "harmonious colors or parts combine well with each other"}
+- {"word" : "harsh", "pos" : "adjective", "literary" : "harsh colors or lights are not pleasant because they are very bright"}
+- {"word" : "in", "pos" : "adjective", "literary" : "used for saying what color decorations, clothes, etc. are"}
+- {"word" : "iridescent", "pos" : "adjective", "literary" : "showing changing colors in different types of light"}
+- {"word" : "jazzy", "pos" : "adjective", "literary" : "informal bright, colorful, and attractive"}
+- {"word" : "light", "pos" : "adjective", "literary" : "pale in color, not dark"}
+- {"word" : "loud", "pos" : "adjective", "literary" : "very bright in a way that does not show good taste"}
+- {"word" : "matching", "pos" : "adjective", "literary" : "with the same color, pattern, or design"}
+- {"word" : "medium", "pos" : "adjective", "literary" : "neither light nor dark in color"}
+- {"word" : "mellow", "pos" : "adjective", "literary" : "soft and warm in color"}
+- {"word" : "monochrome", "pos" :"adjective", "literary" : "able to show or produce only black, white, and gray"}
+- {"word" : "monochrome", "pos" : "adjective", "literary" : "not brightly colored and usually gray in color"}
+- {"word" : "monotone", "pos" : "adjective", "literary" : "a monotone color is all the same shade of that color"}
+- {"word" : "multicolored", "pos" : "adjective", "literary" : "consisting of many different colors"}
+- {"word" : "multicoloured", "pos", "", "literary" : "the British spelling of multicolored"}
+- {"word" : "muted", "pos" : "adjective", "literary" : "not as bright or colorful as usual"}
+- {"word" : "neutral", "pos" : "adjective", "literary" : "neutral colors are not very strong or bright"}
+- {"word" : "neutral", "pos" : "noun", "literary" : "a neutral color"}
+- {"word" : "opalescent", "pos" : "adjective", "literary" : "something that is opalescent seems always to be changing color slightly"}
+- {"word" : "pastel", "pos" : "adjective", "literary" : "having a pale soft color"}
+- {"word" : "pastel", "pos" : "noun", "literary" : "a pale soft color"}
+- {"word" : "psychedelic", "pos" : "adjective", "literary" : "psychedelic clothes, designs, etc. are very brightly colored and have big unusual patterns"}
+- {"word" : "pure", "pos" : "adjective", "literary" : "a pure sound, color, light, etc. is very clear and beautiful"}
+- {"word" : "restrained", "pos" : "adjective", "literary" : "not too bright in color, or not decorated too much"}
+- {"word" : "rich", "pos" : "adjective", "literary" : "a rich color, sound, or smell is strong in a pleasant way"}
+- {"word" : "sepia", "pos" : "adjective", "literary" : "sepia photographs are old and are a red-brown color"}
+- {"word" : "showy", "pos" : "adjective", "literary" : "brightly colored and attractive"}
+- {"word" : "sickly", "pos" : "adjective", "literary" : "a sickly color is so pale that is looks unpleasant"}
+- {"word" : "sober", "pos" : "adjective", "literary" : "plain and not brightly colored"}
+- {"word" : "soft", "pos" : "adjective", "literary" : "a soft light or color is pale, gentle and pleasant to look at"}
+- {"word" : "somber", "pos" : "adjective", "literary" : "dark in color, especially gray or black"}
+- {"word" : "sombre", "pos" : "", "literary" : "the British spelling of somber"}
+- {"word" : "splashy", "pos" : "adjective", "literary" : "american informal brightly colored"}
+- {"word" : "tinged", "pos" : "adjective", "literary" : "something that is tinged with a color, feeling, or quality contains a small amount of it"}
+- {"word" : "tinted", "pos" : "adjective", "literary" : "containing a small amount of a particular color"}
+- {"word" : "tonal", "pos" : "adjective", "literary" : "relating to the tone of something, especially a color or sound"}
+- {"word" : "translucent", "pos" : "adjective", "literary" : "a translucent color is very pale or light"}
+- {"word" : "two-tone", "pos" : "adjective", "literary" : "informal old-fashioned two-tone shoes or clothes have two colors"}
+- {"word" : "vibrant", "pos" : "adjective", "literary" : "bright and colorful"}
+- {"word" : "violent", "pos" : "adjective", "literary" : "a violent color is very bright and almost painful to look at"}
+- {"word" : "vivid", "pos" : "adjective", "literary" : "a vivid color is strong and bright"}
+- {"word" : "warm", "pos" : "adjective", "literary" : "warm colors have red, orange, or yellow in them. Colors with blue or green in them are called cool colors"}
+- {"word" : "washed-out", "pos" : "adjective", "literary" : "washed-out clothes have lost a lot of their color because they have been washed so often"}
+- {"word" : "watery", "pos" : "adjective", "literary" : "pale, or not strong"}
+- {"word" : "colorfully", "pos" : "adverb", "literary" : ""}
+- {"word" : "faded", "pos" : "adjective", "literary" : ""}
+- {"word" : "vibrantly", "pos" : "adverb", "literary" : ""}
+- {"word" : "vividly", "pos" : "adverb", "literary" : ""}
+- {"word" : "vividness", "pos" : "noun", "literary" : ""}
+- {"word" : "a riot of something", "pos" : "", "literary" : "a lot of different bright colors together"}
+- {"word" : "pale @@color@@", "pos" : "", "literary" : "something that is pale blue/gray/pink etc. is a lighter type of /blue/gray/pink etc. than usual"}
