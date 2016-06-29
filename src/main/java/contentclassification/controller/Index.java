@@ -171,14 +171,25 @@ public class Index {
 
                     //Learning of non-validated colors and updating outgoing colors after verification.
                     if(!colorsValidation.isEmpty()){
+                        List<String> validatedColors = classificationService.colorsVerified(colorsValidation);
                         List<String> verifiedColors = classificationService.colorsVerification(colorsValidation);
-                        List<String> intersectionOfVerifiedWithColors =
-                                classificationService.getIntersection(verifiedColors, itemColors);
-                        if(!intersectionOfVerifiedWithColors.isEmpty()){
-                            itemColors.clear();
-                            itemColors.addAll(intersectionOfVerifiedWithColors);
-                        }
 
+                        if(!verifiedColors.isEmpty() && !itemColors.isEmpty()) {
+                            List<String> intersectionOfVerifiedWithColors =
+                                    classificationService.getIntersection(verifiedColors, itemColors);
+                            if (!intersectionOfVerifiedWithColors.isEmpty()) {
+                                itemColors.clear();
+                                itemColors.addAll(intersectionOfVerifiedWithColors);
+                                itemColors.addAll(validatedColors);
+                            } else {
+                                itemColors.clear();
+                                itemColors.addAll(verifiedColors);
+                                itemColors.addAll(validatedColors);
+                            }
+                        } else {
+                            itemColors.clear();
+                            itemColors.addAll(validatedColors);
+                        }
                     }
                 }
                 //End of getting potential colors.

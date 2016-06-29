@@ -1,5 +1,6 @@
 package contentclassification.domain;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.slf4j.Logger;
@@ -91,9 +92,32 @@ public class ColorsDescription {
                 List<Map> data = (List<Map>) yaml.load(new FileInputStream(file));
                 if (data != null && !data.isEmpty()){
                     for(Map<String, String> m  : data){
-                        for(Map.Entry<String, String> m1  : m.entrySet()){
-                            
+                        ColorsDescription colorsDescription = new ColorsDescription();
+                        if(m.containsKey("word")){
+                            String word = m.get("word");
+                            if(StringUtils.isNotBlank(word)) {
+                                colorsDescription.setWord(word);
+                            }
                         }
+
+                        if(m.containsKey("pos")){
+                            String posStr = m.get("pos");
+                            if(StringUtils.isNotBlank(posStr)) {
+                                POSRESPONSES pos = POSRESPONSES.fromString(posStr);
+                                if(pos != null){
+                                    colorsDescription.setPosresponses(pos);
+                                }
+                            }
+                        }
+
+                        if (m.containsKey("literary")){
+                            String literary = m.get("literary");
+                            if(StringUtils.isNotBlank(literary)){
+                                colorsDescription.setLiterary(literary);
+                            }
+                        }
+
+                        colorsDescriptionList.add(colorsDescription);
                     }
                 }
             } catch (Exception e){
@@ -101,5 +125,16 @@ public class ColorsDescription {
             }
         }
         return colorsDescriptionList;
+    }
+
+    public static List<String> colorDescriptorsWords(){
+        List<String> colors = new ArrayList<>();
+        List<ColorsDescription> colorsDescriptionList = loadColorsDescriptionList();
+        if(!colorsDescriptionList.isEmpty()){
+            for(ColorsDescription cd : colorsDescriptionList){
+                colors.add(cd.getWord());
+            }
+        }
+        return colors;
     }
 }

@@ -1497,7 +1497,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                 for(String s : nonValidated){
                     //Distance computation between an unknown color and a curated one.
                     Color color = new Color();
-                    color.setName(s);
+                    color.setName(s.trim().toLowerCase());
 
                     double similarityRate = Color.similarityAgainstCuratedColors(colorList, color);
                     colorSimilarityScores.put(color.toString(), similarityRate);
@@ -1513,8 +1513,55 @@ public class ClassificationServiceImpl implements ClassificationService{
                         }
                     }
                 }
+
+//                if(!colors.isEmpty()){
+//                    List<String> colorDescriptors = ColorsDescription.colorDescriptorsWords();
+//                    List<String> unwantedColorDescriptors = new ArrayList<>();
+//                    if(!colorDescriptors.isEmpty()){
+//                        for(String c : colors){
+//                            List<String> tokenize = Arrays.asList(tokenize(c));
+//                            if(!tokenize.isEmpty()){
+//                                List<String> intersection = getIntersection(tokenize, colorDescriptors);
+//                                if (!intersection.isEmpty()) {
+//
+//                                } else {
+//                                    unwantedColorDescriptors.add(c);
+//                                }
+//                            }
+//                        }
+//                    }
+//
+////                    if(!unwantedColorDescriptors.isEmpty()){
+////                        for(String uw : unwantedColorDescriptors){
+////                            colors.remove(uw);
+////                        }
+////                    }
+//                }
             }
         }
         return colors;
+    }
+
+    @Override
+    public List<String> colorsVerified(List<Map> colorsValidated){
+        List<String> validated = new ArrayList<>();
+        if(colorsValidated != null && !colorsValidated.isEmpty()) {
+            for (Map<String, Object> m : colorsValidated) {
+                String color = null;
+                if (m.containsKey("name")) {
+                    color = m.get("name").toString();
+                }
+
+                boolean isValidated = false;
+                if (m.containsKey("isValidated")) {
+                    isValidated = Boolean.parseBoolean(m.get("isValidated").toString());
+                }
+
+                if (isValidated) {
+                    validated.add(color);
+                }
+            }
+        }
+        return validated;
     }
 }
