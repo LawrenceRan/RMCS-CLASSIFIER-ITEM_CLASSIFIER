@@ -238,6 +238,12 @@
             <systemPath>${pom.basedir}/libs/jaws-bin.jar</systemPath>
             <type>jar</type>
         </dependency>
+        <!--<dependency>-->
+            <!--<groupId>jFuzzyLogic</groupId>-->
+            <!--<artifactId>jFuzzyLogic</artifactId>-->
+            <!--<scope>system</scope>-->
+            <!--<systemPath>${pom.basedir}/libs/jFuzzyLogic.jar</systemPath>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>edu.mit</groupId>
             <artifactId>jwi</artifactId>

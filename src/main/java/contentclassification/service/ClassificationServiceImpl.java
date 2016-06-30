@@ -364,7 +364,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                     Matcher matcher = pattern.matcher(text);
 
                     while (matcher.find()) {
-                        inputFields.add(matcher.group());
+                        inputFields.add(matcher.group().toLowerCase().trim());
                     }
                 }
             }
@@ -400,7 +400,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                                 while (elementIterator.hasNext()) {
                                     Element element = elementIterator.next();
                                     if(element.hasAttr("selected")) {
-                                        colors.add(element.text());
+                                        colors.add(element.text().trim().toLowerCase());
                                     } else {
                                         //colors.add(element.text());
                                     }
@@ -462,7 +462,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                                             }
                                         }
                                     } else {
-                                        colors.add(colorText);
+                                        colors.add(colorText.trim().toLowerCase());
                                     }
                                 }
                             }
@@ -1490,9 +1490,14 @@ public class ClassificationServiceImpl implements ClassificationService{
 
             if(!nonValidated.isEmpty()){
                 List<Color> colorList = Color.loadColors();
+                List<String> colorDescriptorsAndColors = ColorsDescription.colorDescriptorsWords();
+                colorDescriptorsAndColors.addAll(Color.colorsAsString(colorList));
+
                 Map<String, Double> colorSimilarityScores = new HashMap<>();
                 ValueComparator valueComparator = new ValueComparator(colorSimilarityScores);
                 TreeMap<String, Double> treeMap = new TreeMap<>(valueComparator);
+
+                List<Map> intersectionOfTokens = new ArrayList<>();
 
                 for(String s : nonValidated){
                     //Distance computation between an unknown color and a curated one.
@@ -1501,42 +1506,81 @@ public class ClassificationServiceImpl implements ClassificationService{
 
                     double similarityRate = Color.similarityAgainstCuratedColors(colorList, color);
                     colorSimilarityScores.put(color.toString(), similarityRate);
+
+                    //Tokenzination
+                    String[] tokens = tokenize(s.toLowerCase().trim());
+                    List<String> listTokens = Arrays.asList(tokens);
+
+                    if (!listTokens.isEmpty()) {
+                        Map<String, Object> intersectMap = new HashMap<>();
+                        List<String> intersect = getIntersection(listTokens, colorDescriptorsAndColors);
+                        if (!intersect.isEmpty()) {
+                            intersectMap.put("term", s);
+                            intersectMap.put("intersection", intersect);
+                            intersectMap.put("similarityScore", similarityRate);
+                        } else {
+                            intersectMap.put("term", s);
+                            intersectMap.put("intersection", intersect);
+                            intersectMap.put("similarityScore", similarityRate);
+                        }
+                        intersectionOfTokens.add(intersectMap);
+                    }
                 }
 
-                if(!colorSimilarityScores.isEmpty()){
-                    treeMap.putAll(colorSimilarityScores);
-                    if(!treeMap.isEmpty()){
-                        for(Map.Entry<String, Double> m : treeMap.entrySet()){
-                            if(m.getValue() > 0D){
-                                colors.add(m.getKey());
+                List<Map> termsWithSimilarityGtZero = new ArrayList<>();
+                List<Map> termsWithSimilarityZero = new ArrayList<>();
+
+                if(!intersectionOfTokens.isEmpty()){
+                    for(Map m : intersectionOfTokens){
+                        if(m.containsKey("similarityScore")){
+                            Object similarityScoreObj = m.get("similarityScore");
+                            if(similarityScoreObj instanceof Double) {
+                                Double similarityScore = Double.parseDouble(similarityScoreObj.toString());
+                                if (similarityScore > 0D) {
+                                    termsWithSimilarityGtZero.add(m);
+                                } else {
+                                    termsWithSimilarityZero.add(m);
+                                }
                             }
                         }
                     }
                 }
 
-//                if(!colors.isEmpty()){
-//                    List<String> colorDescriptors = ColorsDescription.colorDescriptorsWords();
-//                    List<String> unwantedColorDescriptors = new ArrayList<>();
-//                    if(!colorDescriptors.isEmpty()){
-//                        for(String c : colors){
-//                            List<String> tokenize = Arrays.asList(tokenize(c));
-//                            if(!tokenize.isEmpty()){
-//                                List<String> intersection = getIntersection(tokenize, colorDescriptors);
-//                                if (!intersection.isEmpty()) {
-//
-//                                } else {
-//                                    unwantedColorDescriptors.add(c);
-//                                }
-//                            }
-//                        }
-//                    }
-//
-////                    if(!unwantedColorDescriptors.isEmpty()){
-////                        for(String uw : unwantedColorDescriptors){
-////                            colors.remove(uw);
-////                        }
-////                    }
-//                }
+                if(!termsWithSimilarityZero.isEmpty()){
+                    for(Map m : termsWithSimilarityZero){
+                        if(m.containsKey("term")){
+                            List<String> intersections = null;
+                            if(m.containsKey("intersection")){
+                                Object intersect = m.get("intersection");
+                                if(intersect instanceof List){
+                                    intersections = (List) intersect;
+                                }
+                            }
+
+                            String term = m.get("term").toString();
+                            if(intersections != null && !intersections.isEmpty()){
+                                if (StringUtils.isNotBlank(term)){
+                                    colors.add(term);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if(!termsWithSimilarityGtZero.isEmpty()){
+                    for(Map m : termsWithSimilarityGtZero){
+                        if(m.containsKey("intersection")){
+                            Object intersection = m.get("intersection");
+                            if(intersection instanceof List){
+                                List<String> intersect = (List) intersection;
+                                if(!intersect.isEmpty()){
+                                    colors.add(m.get("term").toString());
+                                }
+                            }
+                        }
+                    }
+                }
+
             }
         }
         return colors;

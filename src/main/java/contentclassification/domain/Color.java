@@ -306,4 +306,25 @@ public class Color {
         }
         return answer;
     }
+
+    public static List<String> colorsAsString(){
+        List<String> colors = new ArrayList<>();
+        List<Color> colorList = loadColors();
+        if(!colorList.isEmpty()){
+            for(Color c : colorList){
+                colors.add(c.getName());
+            }
+        }
+        return colors;
+    }
+
+    public static List<String> colorsAsString(List<Color> colors) {
+        List<String> colorList = new ArrayList<>();
+        if(colors != null && !colors.isEmpty()){
+            for(Color c : colors){
+                colorList.add(c.getName());
+            }
+        }
+        return colorList;
+    }
 }

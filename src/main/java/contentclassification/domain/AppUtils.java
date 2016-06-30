@@ -69,7 +69,7 @@ public class AppUtils {
             Pattern pattern = Pattern.compile(COLOR_EXP, flag);
             Matcher matcher = pattern.matcher(content);
             while(matcher.find()){
-                text.add(matcher.group());
+                text.add(matcher.group().toLowerCase().trim());
             }
         }
 
@@ -128,7 +128,7 @@ public class AppUtils {
         if (potentialColors != null && !potentialColors.isEmpty()) {
             for(String s : potentialColors){
                 String d = s.replaceAll("\\b(Color|Colour|COLOR|COLOUR|color|colour)\\b(\\s|\\:|\\s\\:\\s|\\:\\s||)\\b(\\:|)","");
-                colors.add(d.trim().toUpperCase());
+                colors.add(d.trim().toLowerCase());
             }
         }
 
