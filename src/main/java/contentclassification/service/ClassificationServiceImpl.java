@@ -1134,14 +1134,39 @@ public class ClassificationServiceImpl implements ClassificationService{
                     }
                 }
 
-                List<String> values = new ArrayList<>();
+                Set<String> values = new HashSet<>();
                 if(!priceElements.isEmpty()){
                     for(Element e : priceElements){
                         if(e != null){
-                            if(StringUtils.isNotBlank(e.ownText())) {
-                                values.add(e.ownText());
+                            if(StringUtils.isNotBlank(e.text())) {
+                                values.add(e.text());
                             }
                         }
+                    }
+                }
+
+                if(!values.isEmpty()) {
+                    if (values.size() == 1) {
+                        Double dPrice = 0d;
+                        for(String s : values){
+                            for(String r : possiblePriceValue) {
+                                if(StringUtils.isNotBlank(r)) {
+                                    Pattern pattern = Pattern.compile(r, Pattern.CASE_INSENSITIVE);
+                                    Matcher matcher = pattern.matcher(s);
+                                    while (matcher.find()) {
+                                        String d = matcher.group();
+                                        if (StringUtils.isNotBlank(d)) {
+                                            dPrice = Double.parseDouble(d);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if(dPrice > 0){
+                            results.put("price", dPrice);
+                        }
+
                     }
                 }
                 logger.info("testing..");
