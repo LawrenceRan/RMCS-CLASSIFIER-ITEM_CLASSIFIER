@@ -106,6 +106,10 @@ public class Index {
                 modelAndView.addAllObjects(response);
             }
 
+            //Get domain name from url
+            String domain = classificationService.getDomainName(url);
+            //end of getting domain from url.
+
             String contentString = jsoupService.getContentAsString(url);
             List<Map> linksMap = jsoupService.getLinksUrlAndValue(url);
             String text = jsoupService
@@ -134,7 +138,7 @@ public class Index {
 
                     itemColors.addAll(getColorsFromRegExObj);
 
-                    List<Map> colorsValidation = new ArrayList<>();
+                    List<Map<String, Object>> colorsValidation = new ArrayList<>();
                     if (!colors.isEmpty()) {
                         for (String s : getColorsFromRegExObj) {
                             Map<String, Object> map = new HashMap<>();
@@ -274,6 +278,20 @@ public class Index {
                 }
                 //end of content meta data
 
+                /**
+                 * About to execute the method below to retrieve price of the said item.
+                 */
+                Map<String, Object> priceMap = classificationService.getPrice(contentString, metaKeyValuePair);
+                if(priceMap != null && !priceMap.isEmpty()){
+                    //response.put("price", priceMap);
+                }
+                //end of get price
+
+                /**
+                 * About to retrieve brand of a given url or item.
+                 */
+                String brand = classificationService.getBrand(contentString, possibleTitle);
+                //end of retrieving brand of a given url.
 
                 //Sentences from content, description and keywords from meta all merged into a holistic data set.
                 List<String> doubleWordedFoundInContent = new ArrayList<>();
@@ -559,6 +577,14 @@ public class Index {
                                 responseCategoryToAttribute.setSizes(sizesFromContent);
                             }
 
+                            if(!priceMap.isEmpty()){
+                                responseCategoryToAttribute.setPricing(priceMap);
+                            }
+
+                            if(StringUtils.isNotBlank(brand)){
+                                responseCategoryToAttribute.setBrand(brand);
+                            }
+
                             responseCategoryToAttributeList.add(responseCategoryToAttribute);
                         }
                     }
@@ -638,16 +664,6 @@ public class Index {
                 if(showScore) {
                     response.put("scoreThreshold", totalTermToGroupsFiltered);
                 }
-
-                /**
-                 * About to execute the method below to retrieve price of the said item.
-                 */
-                Map<String, Object> priceMap = classificationService.getPrice(text);
-                if(priceMap != null && !priceMap.isEmpty()){
-                    response.put("price", priceMap);
-                }
-
-                //end of get price
             }
         } else {
             response.put(RestResponseKeys.MESSAGE.toString(), "empty or missing url.");

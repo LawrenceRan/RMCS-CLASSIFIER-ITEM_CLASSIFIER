@@ -46,7 +46,7 @@ public interface ClassificationService {
             List<ResponseCategoryToAttribute> responseCategoryToAttributes);
     public List<ResponseCategoryToAttribute> groupResponseByCategory(
             List<ResponseCategoryToAttribute> responseCategoryToAttributes);
-    public Map<String, Object> getPrice(String text);
+    public Map<String, Object> getPrice(String text, List<Map> metaKeyValuePair);
     public Map<String, Object> getGender(String[] sentences, String keywords, String description);
     public String getPossibleTitle(String[] sentences);
     public TFIDFWeightedScore getTfIdfWeightedScore(String[] tokens, String term);
@@ -58,6 +58,8 @@ public interface ClassificationService {
                                                                   RulesEngineDataSet rulesEngineDataSet,
                                                                   RuleEngineInput ruleEngineInput,
                                                                   RuleEngineDataSet ruleEngineDataset);
-    public List<String> colorsVerification(List<Map> colorsValidated);
-    public List<String> colorsVerified(List<Map> colorsValidated);
+    public List<String> colorsVerification(List<Map<String, Object>> colorsValidated);
+    public List<String> colorsVerified(List<Map<String, Object>> colorsValidated);
+    public String getDomainName(String url);
+    public String getBrand(String text, String possibleTitle);
 }

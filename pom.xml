@@ -94,6 +94,33 @@
                 <!--</executions>-->
             <!--</plugin>-->
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>application.properties</include>
+                    <include>application-nana.properties</include>
+                    <include>application-sandbox.properties</include>
+                    <include>color-exclusion</include>
+                    <include>colors.yml</include>
+                    <include>combination-matrix</include>
+                    <include>en-color-descriptors</include>
+                    <include>en-descriptive-words-colors</include>
+                    <include>en-gender-attributes</include>
+                    <include>en-pos-maxent.bin</include>
+                    <include>en-sent.bin</include>
+                    <include>en-token.bin</include>
+                    <include>fabric-names.yml</include>
+                    <include>fashion-categories.yml</include>
+                    <include>RulesEngine</include>
+                    <include>size-exclusion</include>
+                    <include>sizes</include>
+                    <include>wordnet.properties</include>
+                    <include>regex-brands</include>
+                    <include>regex-price</include>
+                </includes>
+            </resource>
+        </resources>
     </build>
     <properties>
         <spring.data.redis>1.7.2.RELEASE</spring.data.redis>

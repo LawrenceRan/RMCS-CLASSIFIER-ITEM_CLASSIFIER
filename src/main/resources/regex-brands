@@ -1,0 +1,7 @@
+text:
+  - "\\bBy\\b\\:.+[:]"
+html:
+  - "brand"
+htmlAttributes:
+  - "id"
+  - "class"

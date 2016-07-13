@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import weka.clusterers.XMeans;
 
+import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -128,7 +129,8 @@ public class ClassificationServiceImpl implements ClassificationService{
     }
 
     @Override
-    public <T> List<Map> generateKeyValuePairs(List<T> objects){
+    public <T> List<Map>
+    generateKeyValuePairs(List<T> objects){
         String regex = "\\s.*?\\=\\\"[a-zA-Z0-9]+\\\"\\s\\b\\w+\\=\\\".+\\\"";
         String keyValueRegEx = "\\w+\\=";
 
@@ -811,6 +813,7 @@ public class ClassificationServiceImpl implements ClassificationService{
             Map<String, List<String>> materialsMap = new HashMap<>();
             Map<String, List<String>> sizesMap = new HashMap<>();
             Map<String, Object> pricingMap = new HashMap<>();
+            Map<String, Object> brandMap = new HashMap<>();
 
             Map<String, List<String>> categoryToAttributes = new HashMap<>();
 
@@ -855,6 +858,11 @@ public class ClassificationServiceImpl implements ClassificationService{
                 Map<String, Object> pricing = r.getPricing();
                 if (pricing != null && !pricing.isEmpty()){
                     pricingMap.put(r.getCategory(), pricing);
+                }
+
+                String brand = r.getBrand();
+                if(StringUtils.isNotBlank(brand)){
+                    brandMap.put(r.getCategory(), brand);
                 }
             }
 
@@ -920,6 +928,11 @@ public class ClassificationServiceImpl implements ClassificationService{
                    responseCategoryToAttribute.setSizes(sizesMap.get(includedCategory));
                 }
 
+                //add brand found for combined response.
+                if(!brandMap.isEmpty()){
+                    responseCategoryToAttribute.setBrand(brandMap.get(includedCategory).toString());
+                }
+
                 //Get category if proposed category is also found in incoming ResponseCategory
                 if(attributes.contains(proposeCategory)){
                     for(ResponseCategoryToAttribute r : responseCategoryToAttributes) {
@@ -955,6 +968,7 @@ public class ClassificationServiceImpl implements ClassificationService{
             Map<String, List<String>> materialsMap = new HashMap<>();
             Map<String, List<String>> sizesMap = new HashMap<>();
             Map<String, Map<String, Object>> pricingMap = new HashMap<>();
+            Map<String, String> brandMap = new HashMap<>();
 
             for(ResponseCategoryToAttribute r : responseCategoryToAttributes){
 
@@ -977,6 +991,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                 materialsMap.put(r.getCategory(), r.getMaterials());
                 sizesMap.put(r.getCategory(), r.getSizes());
                 pricingMap.put(r.getCategory(), r.getPricing());
+                brandMap.put(r.getCategory(), r.getBrand());
             }
 
             if(!categoryToAttributes.isEmpty()){
@@ -989,6 +1004,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                     r.setMaterials(materialsMap.get(ca));
                     r.setSizes(sizesMap.get(ca));
                     r.setPricing(pricingMap.get(ca));
+                    r.setBrand(brandMap.get(ca));
                     updated.add(r);
                 }
             }
@@ -1000,7 +1016,14 @@ public class ClassificationServiceImpl implements ClassificationService{
      * This method in an implementation to retrieve price for a given item or content.
      */
     @Override
-    public Map<String, Object> getPrice(String text){
+    public Map<String, Object> getPrice(String text, List<Map> metaKeyValuePair){
+        String[] idRegEx = RegExManager.loadRegEx("regex-price", "htmlId");
+        String[] idValue = RegExManager.loadRegEx("regex-price","htmlValue");
+        String[] priceReg = RegExManager.loadRegEx("regex-price", "priceReg");
+        String[] possiblePriceValue = RegExManager.loadRegEx("regex-price", "possiblePriceValue");
+        String[] priceHtmlAttrs = RegExManager.loadRegEx("regex-price", "htmlAttributes");
+
+        String metaKeyForContent = "content";
         Map<String, Object> results = new HashMap<>();
         if(StringUtils.isNotBlank(text)){
             Document document = null;
@@ -1010,37 +1033,168 @@ public class ClassificationServiceImpl implements ClassificationService{
                 logger.debug("Error in parsing document. Message: "+ e.getMessage());
             }
 
-            String[] html5Data = {"[^data-]"};
-            if(html5Data != null && html5Data.length > 0){
-                if(document != null) {
-                    for (String s : html5Data) {
-                        if (StringUtils.isNotBlank(s)) {
-                            Elements elements = document.select(s);
-                            if (!elements.isEmpty()) {
-                                Iterator<Element> elementsIterator = elements.iterator();
-                                while (elementsIterator.hasNext()) {
-                                    Element element = elementsIterator.next();
-                                    String outerHtml = element.outerHtml();
+            //look for product id from meta data of web resource.
+//            String proposedItemId = null;
+//            if(metaKeyValuePair != null && !metaKeyValuePair.isEmpty()){
+//                List<Map> itemPropMaps = new ArrayList<>();
+//
+//                for(Map<String, String> m : metaKeyValuePair){
+//                    for(String keySet : m.keySet()) {
+//                        for(String regEx : idRegEx) {
+//                            if(StringUtils.isNotBlank(regEx)) {
+//                                if (keySet.equalsIgnoreCase(regEx)) {
+//                                    itemPropMaps.add(m);
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//
+//                if(!itemPropMaps.isEmpty()){
+//                    for(Map<String, String> m : itemPropMaps){
+//                        if(idValue.length > 0) {
+//                            for(String s : idValue) {
+//                                if(StringUtils.isNotBlank(s)) {
+//                                    if (m.containsValue(s)) {
+//                                        if (m.containsKey(metaKeyForContent)) {
+//                                            proposedItemId = m.get(metaKeyForContent);
+//                                            logger.info("Item Prop m: " + m.toString());
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
 
-                                    boolean isPresent = AppUtils.regExContains("(price)", outerHtml);
-                                    if (isPresent) {
-                                        Elements children = element.children();
-                                        if (!children.isEmpty()) {
-                                            Iterator<Element> elementIterator = children.iterator();
-                                            while (elementIterator.hasNext()) {
-                                                Element child = elementIterator.next();
-                                                if (StringUtils.isNotBlank(child.text())) {
-//                                                    unverified.add(child.text());
-                                                }
-                                            }
-                                        }
+            if(document != null){
+                String toText = document.text();
+                String[] sentenceDetection = sentenceDetection(toText);
+                List<String> ps = new ArrayList<>();
+                List<Double> psv = new ArrayList<>();
+
+                if(sentenceDetection != null && sentenceDetection.length > 0){
+                    for(String s : sentenceDetection){
+                        for(String p : priceReg) {
+                            if(StringUtils.isNotBlank(p)) {
+                                Pattern pattern = Pattern.compile(p, Pattern.CASE_INSENSITIVE);
+                                Matcher matcher = pattern.matcher(s);
+                                while (matcher.find()) {
+                                    ps.add(matcher.group());
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if(!ps.isEmpty()){
+                    for(String s  : ps){
+                        for(String priceRegEx : possiblePriceValue) {
+                            if(StringUtils.isNotBlank(priceRegEx)) {
+                                Pattern pattern = Pattern.compile(priceRegEx, Pattern.CASE_INSENSITIVE);
+                                Matcher matcher = pattern.matcher(s);
+                                while (matcher.find()) {
+                                    String n = matcher.group();
+                                    if (StringUtils.isNotBlank(n)) {
+                                        psv.add(Double.parseDouble(n));
                                     }
                                 }
                             }
                         }
                     }
                 }
+
+                if(!psv.isEmpty()){
+                    Collections.sort(psv);
+                    if(psv.size() > 1) {
+                        results.put("priceRange", psv);
+                    }
+
+                    if(psv.size() == 1){
+                        results.put("price", psv.get(0));
+                    }
+                }
             }
+
+
+            if(document != null) {
+                Set<Element> priceElements = new HashSet<>();
+                Elements elements = document.select("div");
+                if (!elements.isEmpty()){
+                    for(Element element : elements){
+                        for(String a : priceHtmlAttrs){
+                            if(StringUtils.isNotBlank(a)){
+                                Element e = element.getElementsByAttributeValueContaining(a, "price").first();
+                                if(e != null){
+                                    priceElements.add(e);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                List<String> values = new ArrayList<>();
+                if(!priceElements.isEmpty()){
+                    for(Element e : priceElements){
+                        if(e != null){
+                            if(StringUtils.isNotBlank(e.ownText())) {
+                                values.add(e.ownText());
+                            }
+                        }
+                    }
+                }
+                logger.info("testing..");
+//                String[] productIdDomSearch = {"[^data-product]"};
+//                if (productIdDomSearch != null && productIdDomSearch.length > 0) {
+//                    for (String s : productIdDomSearch) {
+//                        Elements elements = document.select(s);
+//                        if (!elements.isEmpty()) {
+//                            Iterator<Element> elementsIterator = elements.iterator();
+//                            while (elementsIterator.hasNext()) {
+//                                Element element = elementsIterator.next();
+//                                logger.info("Element: " + element.getAllElements().attr("data-product-id"));
+//                            }
+//                        }
+//                    }
+//                }
+            }
+
+
+//            String[] html5Data = {"[^data-product-id]"};
+//            if(html5Data != null && html5Data.length > 0){
+//                if(document != null) {
+//                    String plainText = document.text();
+//                    String[] sentences = sentenceDetection(plainText);
+//
+//                    for (String s : html5Data) {
+//                        if (StringUtils.isNotBlank(s)) {
+//                            Elements elements = document.select(s);
+//                            if (!elements.isEmpty()) {
+//                                Iterator<Element> elementsIterator = elements.iterator();
+//                                while (elementsIterator.hasNext()) {
+//                                    Element element = elementsIterator.next();
+//                                    String outerHtml = element.outerHtml();
+//
+//                                    boolean isPresent = AppUtils.regExContains("(price)", outerHtml);
+//                                    if (isPresent) {
+//                                        Elements children = element.children();
+//                                        if (!children.isEmpty()) {
+//                                            Iterator<Element> elementIterator = children.iterator();
+//                                            while (elementIterator.hasNext()) {
+//                                                Element child = elementIterator.next();
+//                                                if (StringUtils.isNotBlank(child.text())) {
+////                                                    unverified.add(child.text());
+//                                                }
+//                                            }
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
         }
         return results;
     }
@@ -1468,7 +1622,7 @@ public class ClassificationServiceImpl implements ClassificationService{
     }
 
     @Override
-    public List<String> colorsVerification(List<Map> colorsValidated){
+    public List<String> colorsVerification(List<Map<String, Object>> colorsValidated){
         List<String> colors = new ArrayList<>();
         if(colorsValidated != null && !colorsValidated.isEmpty()){
             List<String> nonValidated = new ArrayList<>();
@@ -1587,7 +1741,7 @@ public class ClassificationServiceImpl implements ClassificationService{
     }
 
     @Override
-    public List<String> colorsVerified(List<Map> colorsValidated){
+    public List<String> colorsVerified(List<Map<String, Object>> colorsValidated){
         List<String> validated = new ArrayList<>();
         if(colorsValidated != null && !colorsValidated.isEmpty()) {
             for (Map<String, Object> m : colorsValidated) {
@@ -1607,5 +1761,135 @@ public class ClassificationServiceImpl implements ClassificationService{
             }
         }
         return validated;
+    }
+
+    @Override
+    public String getDomainName(String url){
+        String domain = null;
+        if(StringUtils.isNotBlank(url)){
+            try {
+                URL urlObj = new URL(url);
+                domain = urlObj.getHost();
+            } catch (Exception e){
+                logger.debug("Error in getting domain name. Message: "+ e.getMessage());
+            }
+        }
+        return domain;
+    }
+
+    @Override
+    public String getBrand(String text, String possibleTitle){
+        String brand = null;
+        if(StringUtils.isNotBlank(text)){
+            String[] regExText = RegExManager.loadBrandTextRegEx();
+            String[] regExHtml = RegExManager.loadBrandHtmlRegEx();
+            String[] regHtmlAttributes = RegExManager.loadBrandHtmlAttrRegEx();
+
+            List<String> l2 = null;
+
+            if(StringUtils.isNotBlank(possibleTitle)) {
+                 l2 = Arrays.asList(tokenize(possibleTitle));
+            }
+
+            Document document = null;
+            try{
+                document = JsoupImpl.parseHtml(text);
+            } catch (Exception e){
+                logger.debug("Error in parsing document. Message: "+ e.getMessage());
+            }
+
+            if (document != null){
+                String plainText = document.text();
+                if(StringUtils.isNotBlank(plainText)){
+                    List<String> foundPossibleSentences = new ArrayList<>();
+
+                    String[] sentences = sentenceDetection(plainText);
+                    if(sentences != null && sentences.length > 0) {
+                        for(String s : sentences) {
+                            for (String r : regExText){
+                                if(StringUtils.isNotBlank(r)) {
+                                    Pattern pattern = Pattern.compile(r, Pattern.CASE_INSENSITIVE);
+                                    Matcher matcher = pattern.matcher(s);
+                                    while (matcher.find()) {
+                                        foundPossibleSentences.add(matcher.group());
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if(!foundPossibleSentences.isEmpty()){
+                        for(String s : foundPossibleSentences){
+                            List<String> l1 = Arrays.asList(tokenize(s.toLowerCase().trim()));
+                            if(l2 != null && !l1.isEmpty()) {
+                                List<String> intersection = getIntersection(l1, l2);
+                                if (!intersection.isEmpty()) {
+                                    StringBuilder builder = new StringBuilder();
+                                    int x = 0;
+                                    for (String b : intersection) {
+                                        if (x < (intersection.size() - 1)) {
+                                            builder.append(b + " ");
+                                        } else {
+                                            builder.append(b);
+                                        }
+                                        x++;
+                                    }
+
+                                    brand = builder.toString();
+                                }
+                            }
+                        }
+                    }
+
+                    if(StringUtils.isBlank(brand)) {
+                        //Using the dom of the document
+                        Elements aElements = document.select("a[href]");
+                        List<Element> brandElements = new ArrayList<>();
+                        if (!aElements.isEmpty()) {
+                            for (Element e : aElements) {
+                                for (String r : regExHtml) {
+                                    if (StringUtils.isNotBlank(r)) {
+                                        for (String htmlAttr : regHtmlAttributes) {
+                                            if (StringUtils.isNotBlank(htmlAttr)) {
+                                                Element v = e.getElementsByAttributeValueContaining(htmlAttr, r).first();
+                                                if (v != null) {
+                                                    brandElements.add(v);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Set<String> possibleBrands = new HashSet<>();
+
+                        if (!brandElements.isEmpty()) {
+                            StringBuilder builder = new StringBuilder();
+                            for (Element s : brandElements) {
+                                possibleBrands.add(s.ownText());
+                            }
+                        }
+
+
+                        if (!possibleBrands.isEmpty()) {
+                            StringBuilder builder = new StringBuilder();
+                            int x = 0;
+                            for (String s : possibleBrands) {
+                                if (x < (possibleBrands.size() - 1)) {
+                                    builder.append(s + "");
+                                } else {
+                                    builder.append(s);
+                                }
+                                x++;
+                            }
+                            brand = builder.toString();
+                        }
+                        //end of using dom
+                    }
+                }
+            }
+        }
+        return brand;
     }
 }
