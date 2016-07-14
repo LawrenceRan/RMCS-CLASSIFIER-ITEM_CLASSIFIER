@@ -21,6 +21,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <finalName>${project.artifactId}-${project.version}-${lane}</finalName>
                     <mainClass>contentclassification.Main</mainClass>
                     <executable>true</executable>
                     <jvmArguments>
@@ -118,6 +119,8 @@
                     <include>wordnet.properties</include>
                     <include>regex-brands</include>
                     <include>regex-price</include>
+                    <include>application-production1.properties</include>
+                    <include>application-production2.properties</include>
                 </includes>
             </resource>
         </resources>
