@@ -57,7 +57,7 @@ public interface ClassificationService {
     public double applyRulesEngineOccurrence(ResponseCategoryToAttribute responseCategoryToAttribute,
                                                                   RulesEngineDataSet rulesEngineDataSet,
                                                                   RuleEngineInput ruleEngineInput,
-                                                                  RuleEngineDataSet ruleEngineDataset);
+                                                                  RuleEngineDataSetEnum ruleEngineDatasetEnum);
     public List<String> colorsVerification(List<Map<String, Object>> colorsValidated);
     public List<String> colorsVerified(List<Map<String, Object>> colorsValidated);
     public String getDomainName(String url);

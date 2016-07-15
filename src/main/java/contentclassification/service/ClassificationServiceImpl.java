@@ -1,12 +1,10 @@
 package contentclassification.service;
 
-import com.google.common.collect.Sets;
 import contentclassification.config.TermsScoringConfig;
 import contentclassification.domain.*;
 import contentclassification.model.RulesEngineModel;
 import contentclassification.utilities.BM25;
 import net.sf.javaml.clustering.Clusterer;
-import net.sf.javaml.clustering.KMeans;
 import net.sf.javaml.clustering.evaluation.*;
 import net.sf.javaml.core.Dataset;
 import net.sf.javaml.core.DefaultDataset;
@@ -14,10 +12,8 @@ import net.sf.javaml.core.DenseInstance;
 import net.sf.javaml.core.Instance;
 import net.sf.javaml.tools.weka.WekaClusterer;
 import org.apache.commons.lang3.StringUtils;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1511,7 +1507,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                         for(Map<String, String> m : rules){
                             RulesEngineTask rulesEngineTask = null;
                             RuleEngineInput ruleEngineInput = null;
-                            RuleEngineDataSet ruleEngineDataSet = null;
+                            RuleEngineDataSetEnum ruleEngineDataSetEnum = null;
 
                             for(Map.Entry<String, String> mRules : m.entrySet()){
                                 if(mRules.getKey().equalsIgnoreCase("task")){
@@ -1523,7 +1519,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                                 }
 
                                 if(mRules.getKey().equalsIgnoreCase("dataset")){
-                                    ruleEngineDataSet = RuleEngineDataSet.fromString(mRules.getValue());
+                                    ruleEngineDataSetEnum = RuleEngineDataSetEnum.fromString(mRules.getValue());
                                 }
                             }
 
@@ -1541,7 +1537,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                                                         applyRulesEngineOccurrence(r,
                                                                 rulesEngineDataSet,
                                                                 ruleEngineInput,
-                                                                ruleEngineDataSet);
+                                                                ruleEngineDataSetEnum);
                                                 ResponseToAttributeClusterScore responseToAttributeClusterScore = new ResponseToAttributeClusterScore();
                                                 responseToAttributeClusterScore.setResponseCategoryToAttribute(r);
                                                 responseToAttributeClusterScore.setScore(categoryToAttribute);
@@ -1573,7 +1569,7 @@ public class ClassificationServiceImpl implements ClassificationService{
     public double applyRulesEngineOccurrence(ResponseCategoryToAttribute responseCategoryToAttribute,
                                                                   RulesEngineDataSet rulesEngineDataSet,
                                                                   RuleEngineInput ruleEngineInput,
-                                                                  RuleEngineDataSet ruleEngineDataset){
+                                                                  RuleEngineDataSetEnum ruleEngineDatasetEnum){
         double r = 0d;
         if (responseCategoryToAttribute != null){
             Map<String, Object> rMap = responseCategoryToAttribute.toMap();
@@ -1586,7 +1582,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                 inputValue = rMap.get(inputKey);
             }
 
-            String dataSetKey = ruleEngineDataset.toString();
+            String dataSetKey = ruleEngineDatasetEnum.toString();
             Object dataSetValue = null;
 
             if(dMap.containsKey(dataSetKey)){

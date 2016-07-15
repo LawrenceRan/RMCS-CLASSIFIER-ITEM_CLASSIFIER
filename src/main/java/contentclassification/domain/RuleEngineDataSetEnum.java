@@ -8,12 +8,12 @@ import java.util.List;
 /**
  * Created by rsl_prod_005 on 6/24/16.
  */
-public enum RuleEngineDataSet {
+public enum RuleEngineDataSetEnum {
     TITLE("title");
 
     private final String data;
 
-    RuleEngineDataSet(String data){
+    RuleEngineDataSetEnum(String data){
         this.data = data;
     }
 
@@ -22,18 +22,18 @@ public enum RuleEngineDataSet {
         return this.data;
     }
 
-    public static RuleEngineDataSet fromString(String dataset){
-        RuleEngineDataSet ruleEngineDataSet = null;
+    public static RuleEngineDataSetEnum fromString(String dataset){
+        RuleEngineDataSetEnum ruleEngineDataSetEnum = null;
         if(StringUtils.isNotBlank(dataset)){
-            List<RuleEngineDataSet> rulesEngineDataSetList = Arrays.asList(RuleEngineDataSet.values());
+            List<RuleEngineDataSetEnum> rulesEngineDataSetList = Arrays.asList(RuleEngineDataSetEnum.values());
             if(!rulesEngineDataSetList.isEmpty()){
-                for(RuleEngineDataSet r : rulesEngineDataSetList) {
+                for(RuleEngineDataSetEnum r : rulesEngineDataSetList) {
                     if (dataset.equalsIgnoreCase(r.toString())) {
-                        ruleEngineDataSet = r;
+                        ruleEngineDataSetEnum = r;
                     }
                 }
             }
         }
-        return ruleEngineDataSet;
+        return ruleEngineDataSetEnum;
     }
 }
