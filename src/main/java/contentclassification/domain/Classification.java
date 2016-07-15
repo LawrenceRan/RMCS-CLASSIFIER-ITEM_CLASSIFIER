@@ -1,7 +1,6 @@
 package contentclassification.domain;
 
 import com.google.common.collect.Sets;
-import contentclassification.Main;
 import contentclassification.utilities.BM25;
 import info.debatty.java.stringsimilarity.Jaccard;
 import net.sf.javaml.core.Dataset;

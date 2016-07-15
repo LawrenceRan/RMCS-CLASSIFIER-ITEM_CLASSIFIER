@@ -11,8 +11,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableAsync
 @EnableScheduling
-public class Main {
+public class ContentClassifierMain {
     public static void main(String[] args){
-        SpringApplication.run(Main.class, args);
+        SpringApplication.run(ContentClassifierMain.class, args);
     }
 }

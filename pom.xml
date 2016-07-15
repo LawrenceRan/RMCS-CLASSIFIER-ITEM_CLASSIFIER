@@ -22,7 +22,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <finalName>${project.artifactId}-${project.version}-${lane}</finalName>
-                    <mainClass>contentclassification.Main</mainClass>
+                    <mainClass>contentclassification.ContentClassifierMain</mainClass>
                     <executable>true</executable>
                     <jvmArguments>
                         -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005
