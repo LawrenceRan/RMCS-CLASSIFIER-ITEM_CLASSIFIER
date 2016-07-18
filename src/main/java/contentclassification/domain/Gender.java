@@ -11,6 +11,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +48,8 @@ public class Gender {
                         file = new File(url.getFile());
                     }
 
-                    List<String> genders = (List<String>) yaml.load(new FileInputStream(file));
+                    InputStream inputStream = classLoader.getResourceAsStream(GENDER_METRICS);
+                    List<String> genders = (List<String>) yaml.load(inputStream);
 
                     if(!genders.isEmpty()){
                         //Get the plural forms of words

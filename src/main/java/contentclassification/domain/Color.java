@@ -17,10 +17,7 @@ import org.springframework.scheduling.annotation.AsyncResult;
 import org.yaml.snakeyaml.Yaml;
 import weka.core.converters.ConverterUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Future;
@@ -210,12 +207,12 @@ public class Color {
     public static Map<String, List<String>> colorExclusionList(){
         Map<String, List<String>> exclude = new HashMap<>();
         ClassLoader classLoader = Color.class.getClassLoader();
-        URL url = classLoader.getResource("color-exclusion");
+        InputStream url = classLoader.getResourceAsStream("color-exclusion");
         if(url != null){
             try{
                 Yaml yaml = new Yaml();
-                exclude = (Map<String, List<String>>) yaml.load(url.openStream());
-            } catch(IOException ex){
+                exclude = (Map<String, List<String>>) yaml.load(url);
+            } catch(Exception ex){
                 logger.debug("Error in getting colors exclusion list. Message: "+ ex.getMessage());
             }
         }
@@ -231,7 +228,8 @@ public class Color {
                     int initialSize = 0;
                     int currentSize = 0;
                     Yaml yaml = new Yaml();
-                    Map<String, List<String>> list = (Map<String, List<String>>) yaml.load(url.openStream());
+                    InputStream inputStream = classLoader.getResourceAsStream("color-exclusion");
+                    Map<String, List<String>> list = (Map<String, List<String>>) yaml.load(inputStream);
                     if(list != null && !list.isEmpty()){
                         if(list.containsKey("exclusionList")){
                             List<String> exclusionList = list.get("exclusionList");
