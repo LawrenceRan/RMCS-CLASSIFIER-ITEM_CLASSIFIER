@@ -21,4 +21,10 @@ public class AdminController {
 
         return "admin/index";
     }
+
+    @RequestMapping(value = "/signin", method = RequestMethod.GET)
+    public String getSignIn(ModelMap modelMap){
+
+        return "admin/signin";
+    }
 }

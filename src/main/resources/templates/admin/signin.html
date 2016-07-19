@@ -3,8 +3,51 @@
 <head lang="en">
     <meta charset="UTF-8" />
     <title></title>
+    <link rel="stylesheet" type="text/css" th:href="${'templates/admin/css/foundation.css'}" />
+    <link rel="stylesheet" type="text/css" th:href="${'templates/admin/css/app.css'}" />
 </head>
 <body>
+<div class="row">
+    <div class="medium-6 medium-centered large-4 large-centered columns">
 
+        <form id="actual_form">
+            <div class="row column log-in-form" id="form">
+                <h4 class="text-center">Log in with your email account</h4>
+                <label>Email
+                    <input type="text" placeholder="somebody@rancardsolutions.com" name="field1" />
+                </label>
+                <label>Password
+                    <input type="text" placeholder="Password" name="field2" />
+                </label>
+                <p><input type="submit" class="button expanded" value="Log in" /></p>
+                <p class="text-center"><a href="#">Forgot your password?</a></p>
+            </div>
+        </form>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.15.0/jquery.validate.min.js"></script>
+    <script>
+        $(document).ready(function () {
+
+            $('#actual_form').validate({ // initialize the plugin
+                rules: {
+                    field1: {
+                        required: true,
+                        email: true
+                    },
+                    field2: {
+                        required: true,
+                        minlength: 5
+                    }
+                },
+                messages : {
+                    field1 : "E-mail is required.",
+                    field2 : "Password is required."
+                }
+            });
+
+        });
+    </script>
+</div>
 </body>
 </html>
