@@ -14,7 +14,7 @@ import java.util.*;
  * Created by rsl_prod_005 on 3/30/16.
  */
 public class JsoupImpl {
-    private Logger logger = LoggerFactory.getLogger(JsoupImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(JsoupImpl.class);
 
     private static final String USER_AGENT_VALUE ="Mozilla/5.0 (X11; Linux i586; rv:31.0) Gecko/20100101 Firefox/31.0";
     private static final String USER_AGENT_KEY = "User-Agent";
@@ -129,7 +129,7 @@ public class JsoupImpl {
             document = Jsoup.parse(html);
             document.normalise();
         } catch (Exception e){
-            System.out.println(e.getMessage());
+            logger.debug("Error in parsing html. Message: "+ e.getMessage());
         }
         return document;
     }
