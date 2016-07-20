@@ -929,6 +929,11 @@ public class ClassificationServiceImpl implements ClassificationService{
                     responseCategoryToAttribute.setBrand(brandMap.get(includedCategory).toString());
                 }
 
+                //Add price found for combined response.
+                if(!pricingMap.isEmpty()){
+                    responseCategoryToAttribute.setPricing((Map<String, Object>) pricingMap.get(includedCategory));
+                }
+
                 //Get category if proposed category is also found in incoming ResponseCategory
                 if(attributes.contains(proposeCategory)){
                     for(ResponseCategoryToAttribute r : responseCategoryToAttributes) {
