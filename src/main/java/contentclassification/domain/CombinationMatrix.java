@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,10 +61,10 @@ public class CombinationMatrix {
         List<CombinationMatrix> combinationMatrixList = new ArrayList<>();
         try {
             ClassLoader classLoader = CombinationMatrix.class.getClassLoader();
-            URL url = classLoader.getResource("combination-matrix");
-            if(url != null) {
+            InputStream inputStream = classLoader.getResourceAsStream("combination-matrix");
+            if(inputStream != null) {
                 Yaml yaml = new Yaml();
-                Object object = yaml.load(url.openStream());
+                Object object = yaml.load(inputStream);
                 if(object instanceof List){
                     List<Map> rules = (List<Map>) object;
                     if(!rules.isEmpty()){

@@ -16,8 +16,12 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -98,11 +102,11 @@ public class FabricName {
     public static List<FabricName> getFabrics(){
         List<FabricName> fabricNames = new ArrayList<>();
         ClassLoader classLoader = FabricName.class.getClassLoader();
-        URL url = classLoader.getResource("fabric-names.yml");
-        if(url != null){
+        InputStream inputStream = classLoader.getResourceAsStream("fabric-names.yml");
+        if(inputStream != null){
             try {
                 Yaml yaml = new Yaml();
-                List<Map> maps = (List<Map>) yaml.load(url.openStream());
+                List<Map> maps = (List<Map>) yaml.load(inputStream);
                 if (!maps.isEmpty()) {
                     for (Map<String, String> m : maps) {
                         FabricName fabricName = new FabricName();
@@ -148,7 +152,7 @@ public class FabricName {
         return map;
     }
 
-    public static void writeFabricNames(List<FabricName> fabricNames, URL resource){
+    public static void writeFabricNames(List<FabricName> fabricNames, InputStream resource){
         if(!fabricNames.isEmpty() && resource != null){
             List<Map> maps = new ArrayList<>();
             for(FabricName fabricName : fabricNames){
@@ -158,7 +162,9 @@ public class FabricName {
             if(!maps.isEmpty()){
                 try {
                     Yaml yaml = new Yaml();
-                    yaml.dump(maps, new FileWriter(new File(resource.getFile())));
+                    Path temp = Files.createTempFile("fabric-names", "yml");
+                    Files.copy(resource, temp, StandardCopyOption.REPLACE_EXISTING);
+                    yaml.dump(maps, new FileWriter(temp.toFile()));
                 } catch (IOException io){
                     logger.debug("IOException: "+ io.getMessage());
                 }

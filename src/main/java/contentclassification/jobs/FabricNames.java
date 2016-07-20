@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 
@@ -21,9 +22,9 @@ public class FabricNames {
         List<FabricName> fabricNameList = FabricName.getFabricNamesFromExternalUri();
         if(!fabricNameList.isEmpty()) {
             ClassLoader classLoader = getClass().getClassLoader();
-            URL url = classLoader.getResource("fabric-names.yml");
-            if(url != null) {
-                FabricName.writeFabricNames(fabricNameList, url);
+            InputStream inputStream = classLoader.getResourceAsStream("fabric-names.yml");
+            if(inputStream != null) {
+                FabricName.writeFabricNames(fabricNameList, inputStream);
                 logger.info("Fabrics: " + fabricNameList.size());
             }
         }

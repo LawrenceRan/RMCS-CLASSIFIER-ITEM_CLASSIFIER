@@ -10,6 +10,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
 
@@ -50,9 +51,10 @@ public class Categories {
         List<Categories> categories = new ArrayList<Categories>();
 
         try {
+            ClassLoader classLoader = Categories.class.getClassLoader();
+            InputStream inputStream = classLoader.getResourceAsStream("fashion-categories.yml");
             Yaml yaml = new Yaml();
-            Map<String, List<String>> ymlCategories = (Map<String, List<String>>)
-                    yaml.load(new FileInputStream(new File("fashion-categories.yml")));
+            Map<String, List<String>> ymlCategories = (Map<String, List<String>>) yaml.load(inputStream);
 
             if (ymlCategories != null && !ymlCategories.isEmpty()) {
                 int x = 0;
@@ -95,10 +97,9 @@ public class Categories {
         try {
             Yaml yaml = new Yaml();
             ClassLoader classLoader = getClass().getClassLoader();
-            URL url = classLoader.getResource("fashion-categories.yml");
+            InputStream url = classLoader.getResourceAsStream("fashion-categories.yml");
             if(url != null) {
-                Map<String, List<String>> ymlCategories = (Map<String, List<String>>)
-                        yaml.load(url.openStream());
+                Map<String, List<String>> ymlCategories = (Map<String, List<String>>) yaml.load(url);
 
                 if (ymlCategories != null && !ymlCategories.isEmpty()) {
                     int x = 0;
@@ -147,10 +148,10 @@ public class Categories {
         Categories categories = null;
         if(StringUtils.isNotBlank(name)){
             try {
+                ClassLoader classLoader = Categories.class.getClassLoader();
+                InputStream inputStream = classLoader.getResourceAsStream("fashion-categories.yml");
                 Yaml yaml = new Yaml();
-                Map<String, List<String>> ymlCategories = (Map<String, List<String>>)
-                        yaml.load(new FileInputStream(new File("fashion-categories.yml")));
-
+                Map<String, List<String>> ymlCategories = (Map<String, List<String>>) yaml.load(inputStream);
                 if (ymlCategories != null && !ymlCategories.isEmpty()) {
                     int x = 0;
                     if(ymlCategories.containsKey(name)){

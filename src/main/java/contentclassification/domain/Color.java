@@ -19,6 +19,9 @@ import weka.core.converters.ConverterUtils;
 
 import java.io.*;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.Future;
 
@@ -67,18 +70,11 @@ public class Color {
     public static List<Color> loadColors(){
         List<Color> colors = new ArrayList<Color>();
         ClassLoader classLoader = Color.class.getClassLoader();
-        URL url = classLoader.getResource(COLORS);
-        if(url != null) {
+        InputStream inputStream = classLoader.getResourceAsStream(COLORS);
+        if(inputStream != null) {
             Yaml yaml = new Yaml();
             try {
-                String userDir = System.getProperty("user.dir");
-                File file = new File(userDir + "/classes/colors.yml");
-
-                if(!file.exists() && !file.canRead()){
-                    file = new File(url.getFile());
-                }
-
-                List<String> yamlContent = (List<String>) yaml.load(new FileInputStream(file));
+                List<String> yamlContent = (List<String>) yaml.load(inputStream);
                 if (!yamlContent.isEmpty()) {
                     for (String c : yamlContent) {
                         Color color = new Color(c);
@@ -111,12 +107,14 @@ public class Color {
         return colors;
     }
 
-    public static List<Color> loadColorsByInputStream(URL filePath){
+    public static List<Color> loadColorsByInputStream(){
         List<Color> colors = new ArrayList<Color>();
         Yaml yaml = new Yaml();
         try {
-            if(filePath != null) {
-                List<String> ymlContent = (List<String>) yaml.load(filePath.openStream());
+            ClassLoader classLoader = Color.class.getClassLoader();
+            InputStream inputStream = classLoader.getResourceAsStream(COLORS);
+            if (inputStream != null) {
+                List<String> ymlContent = (List<String>) yaml.load(inputStream);
                 if (!ymlContent.isEmpty()) {
                     for (String c : ymlContent) {
                         Color color = new Color(c);
@@ -180,16 +178,12 @@ public class Color {
 
     public static boolean isValid(String color){
         Color c = new Color(color);
-        ClassLoader classLoader = c.getClass().getClassLoader();
-        URL url = classLoader.getResource("colors.yml");
-        return containInstance(loadColorsByInputStream(url), c.getClass());
+        return containInstance(loadColorsByInputStream(), c.getClass());
     }
 
     public static boolean isExisting(String color){
         Color c = new Color(color);
-        ClassLoader classLoader = c.getClass().getClassLoader();
-        URL url = classLoader.getResource("colors.yml");
-        return isEqual(loadColorsByInputStream(url), c);
+        return isEqual(loadColorsByInputStream(), c);
     }
 
     public static boolean isBreakable(String color, String... params){
@@ -207,11 +201,11 @@ public class Color {
     public static Map<String, List<String>> colorExclusionList(){
         Map<String, List<String>> exclude = new HashMap<>();
         ClassLoader classLoader = Color.class.getClassLoader();
-        InputStream url = classLoader.getResourceAsStream("color-exclusion");
-        if(url != null){
+        InputStream inputStream = classLoader.getResourceAsStream("color-exclusion");
+        if(inputStream != null){
             try{
                 Yaml yaml = new Yaml();
-                exclude = (Map<String, List<String>>) yaml.load(url);
+                exclude = (Map<String, List<String>>) yaml.load(inputStream);
             } catch(Exception ex){
                 logger.debug("Error in getting colors exclusion list. Message: "+ ex.getMessage());
             }
@@ -222,13 +216,12 @@ public class Color {
     public static void updateExclusionList(String exclude){
         if(StringUtils.isNotBlank(exclude)){
             ClassLoader classLoader = Color.class.getClassLoader();
-            URL url = classLoader.getResource("color-exclusion");
-            if(url != null){
+            InputStream inputStream = classLoader.getResourceAsStream("color-exclusion");
+            if(inputStream != null){
                 try {
                     int initialSize = 0;
                     int currentSize = 0;
                     Yaml yaml = new Yaml();
-                    InputStream inputStream = classLoader.getResourceAsStream("color-exclusion");
                     Map<String, List<String>> list = (Map<String, List<String>>) yaml.load(inputStream);
                     if(list != null && !list.isEmpty()){
                         if(list.containsKey("exclusionList")){
@@ -244,12 +237,9 @@ public class Color {
 
                     if(list != null && !list.isEmpty() && currentSize > initialSize){
                         try {
-                            String userDir = System.getProperty("user.dir");
-                            File file = new File(userDir + "/classes/color-exclusion");
-
-                            if(!file.exists() && !file.canWrite()){
-                                file = new File(url.getFile());
-                            }
+                            Path temp = Files.createTempFile("color-exclusion", null);
+                            Files.copy(inputStream, temp, StandardCopyOption.REPLACE_EXISTING);
+                            File file = temp.toFile();
 
                             FileWriter fileWriter = new FileWriter(file);
                             yaml.dump(list, fileWriter);

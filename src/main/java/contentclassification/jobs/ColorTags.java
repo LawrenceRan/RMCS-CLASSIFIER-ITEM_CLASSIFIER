@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileWriter;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.net.URL;
 import java.util.*;
@@ -35,15 +36,15 @@ public class ColorTags {
         List<String> colors = colorsFromSite();
 
         ClassLoader classLoader = getClass().getClassLoader();
-        URL colorYmlFile = null;
+        InputStream colorYmlFile = null;
         try {
-            colorYmlFile = classLoader.getResource("colors.yml");
+            colorYmlFile = classLoader.getResourceAsStream("colors.yml");
         } catch (Exception e){
             logger.debug("Resource colors yml file not found. Message: " + e.getMessage());
         }
 
         if(colorYmlFile != null) {
-            List<Color> exitingColors = Color.loadColorsByInputStream(colorYmlFile);
+            List<Color> exitingColors = Color.loadColorsByInputStream();
             int p = exitingColors.size();
             logger.info("Existing colors size: " + exitingColors.size());
 

@@ -23,6 +23,9 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -178,9 +181,8 @@ public class Classification {
         String[] tokens = new String[]{};
         try{
             ClassLoader classLoader = getClass().getClassLoader();
-            URL url = classLoader.getResource("en-token.bin");
-            if(url != null) {
-                InputStream modelStream = url.openStream();
+            InputStream modelStream = classLoader.getResourceAsStream("en-token.bin");
+            if(modelStream != null) {
                 if (modelStream != null) {
                     TokenizerModel tokenizerModel = new TokenizerModel(modelStream);
                     Tokenizer tokenizer = new TokenizerME(tokenizerModel);
@@ -201,9 +203,8 @@ public class Classification {
         String[] sentences = new String[]{};
         try{
             ClassLoader classLoader = getClass().getClassLoader();
-            URL url = classLoader.getResource("en-sent.bin");
-            if(url != null) {
-                InputStream modelStream = url.openStream();
+            InputStream modelStream = classLoader.getResourceAsStream("en-sent.bin");
+            if(modelStream != null) {
                 if (modelStream != null) {
                     SentenceModel sentenceModel = new SentenceModel(modelStream);
                     SentenceDetectorME sentenceDetectorME = new SentenceDetectorME(sentenceModel);
@@ -224,9 +225,8 @@ public class Classification {
         double[] sentences = null;
         try{
             ClassLoader classLoader = getClass().getClassLoader();
-            URL url = classLoader.getResource("en-sent.bin");
-            if(url != null) {
-                InputStream modelStream = url.openStream();
+            InputStream modelStream = classLoader.getResourceAsStream("en-sent.bin");
+            if(modelStream != null) {
                 if (modelStream != null) {
                     SentenceModel sentenceModel = new SentenceModel(modelStream);
                     SentenceDetectorME sentenceDetectorME = new SentenceDetectorME(sentenceModel);
@@ -463,15 +463,12 @@ public class Classification {
         List<Map> pos = new ArrayList<>();
         if(tokens != null && tokens.length > 0){
             ClassLoader classLoader = getClass().getClassLoader();
-            URL url = classLoader.getResource("en-pos-maxent.bin");
-            if(url != null ) {
+            InputStream inputStream = classLoader.getResourceAsStream("en-pos-maxent.bin");
+            if(inputStream != null ) {
                 try {
-                    String userDir = System.getProperty("user.dir");
-                    File file = new File(userDir + "/classes/en-pos-maxent.bin");
-
-                    if(!file.exists() && !file.canRead()){
-                        file = new File(url.getFile());
-                    }
+                    Path temp = Files.createTempFile("en-pos-maxent", ".bin");
+                    Files.copy(inputStream, temp);
+                    File file = temp.toFile();
 
                     if(file.exists() && file.canRead()) {
                         POSModel posModel = new POSModelLoader().load(file);

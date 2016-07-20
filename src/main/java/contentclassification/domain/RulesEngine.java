@@ -9,6 +9,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,18 +65,11 @@ public class RulesEngine {
         List<RulesEngineModel> rulesEngineModels = new ArrayList<>();
         try {
             ClassLoader classLoader = RulesEngine.class.getClassLoader();
-            URL url = classLoader.getResource("RulesEngine");
-            if(url != null){
+            InputStream inputStream = classLoader.getResourceAsStream("RulesEngine");
+            if(inputStream != null){
                 try{
-                    String userDir = System.getProperty("user.dir");
-                    File file = new File(userDir + "/classes/RulesEngine");
-
-                    if(!file.exists() && !file.canRead()){
-                        file = new File(url.getFile());
-                    }
-
                     Yaml yaml = new Yaml();
-                    Map<Integer, Object> rules = (Map<Integer, Object>) yaml.load(new FileInputStream(file));
+                    Map<Integer, Object> rules = (Map<Integer, Object>) yaml.load(inputStream);
                     if(!rules.isEmpty()){
                         for(Map.Entry<Integer, Object> entry : rules.entrySet()) {
                             RulesEngineModel rulesEngineModel = new RulesEngineModel();

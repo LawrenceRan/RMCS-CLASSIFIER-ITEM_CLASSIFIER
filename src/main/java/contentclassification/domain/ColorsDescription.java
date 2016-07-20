@@ -9,6 +9,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,18 +79,11 @@ public class ColorsDescription {
     public static List<ColorsDescription> loadColorsDescriptionList(){
         List<ColorsDescription> colorsDescriptionList = new ArrayList<>();
         ClassLoader classLoader = ColorsDescription.class.getClassLoader();
-        URL url = classLoader.getResource(RESOURCE);
-        if(url != null){
-            String userDir = System.getProperty("user.dir");
-            File file = new File(userDir + "/classes/"+ RESOURCE);
-
-            if(!file.exists() && !file.canRead()){
-                file = new File(url.getFile());
-            }
-
+        InputStream inputStream = classLoader.getResourceAsStream(RESOURCE);
+        if(inputStream != null){
             try{
                 Yaml yaml = new Yaml();
-                List<Map> data = (List<Map>) yaml.load(new FileInputStream(file));
+                List<Map> data = (List<Map>) yaml.load(inputStream);
                 if (data != null && !data.isEmpty()){
                     for(Map<String, String> m  : data){
                         ColorsDescription colorsDescription = new ColorsDescription();

@@ -44,7 +44,7 @@ public class LearningImpl {
         List<String> words = words();
         InputStream inputStream = null;
         try {
-            inputStream = new FileInputStream("en-pos-maxent.bin");
+            inputStream = getClass().getResourceAsStream("en-pos-maxent.bin");
             //inputStream = new FileInputStream("en-token.bin");
             POSModel posModel = new POSModel(inputStream);
             POSTaggerME taggerME = new POSTaggerME(posModel);
@@ -169,7 +169,8 @@ public class LearningImpl {
         if(collection != null && !collection.isEmpty()){
             InputStream inputStream = null;
             try {
-                inputStream = new FileInputStream("en-pos-maxent.bin");
+                ClassLoader classLoader = LearningImpl.class.getClassLoader();
+                inputStream = classLoader.getResourceAsStream("en-pos-maxent.bin");
                 POSModel posModel = new POSModel(inputStream);
                 POSTaggerME taggerME = new POSTaggerME(posModel);
 

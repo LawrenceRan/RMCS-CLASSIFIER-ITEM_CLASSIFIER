@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,15 +64,15 @@ public class Size {
     public static Map<String, List<String>> loadSizeExclusionList(){
         Map<String, List<String>> list = null;
         ClassLoader classLoader = Size.class.getClassLoader();
-        URL url = classLoader.getResource(SIZE_EXCLUSION);
-        if(url != null){
+        InputStream inputStream = classLoader.getResourceAsStream(SIZE_EXCLUSION);
+        if(inputStream != null){
             try {
                 Yaml yaml = new Yaml();
-                Map<String, List<String>> maps = (Map<String, List<String>>) yaml.load(url.openStream());
+                Map<String, List<String>> maps = (Map<String, List<String>>) yaml.load(inputStream);
                 if(!maps.isEmpty()){
                     list = maps;
                 }
-            } catch (IOException io){
+            } catch (Exception io){
                 logger.debug("IO Exception : "+ io.getMessage());
             }
         }
