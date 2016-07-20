@@ -1,5 +1,6 @@
 package contentclassification.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import contentclassification.config.ClassificationConfig;
 import contentclassification.config.WordNetDictConfig;
 import contentclassification.domain.*;
@@ -13,10 +14,8 @@ import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 import weka.core.ClassloaderUtil;
@@ -26,7 +25,7 @@ import java.util.*;
 /**
  * Created by rsl_prod_005 on 5/6/16.
  */
-@RestController
+@Controller
 public class Index {
     private static final Logger logger = LoggerFactory.getLogger(Index.class);
 
@@ -88,7 +87,8 @@ public class Index {
     }
 
     @RequestMapping(value = "/v1/url", method = RequestMethod.GET, produces = "application/json")
-    public ModelAndView generateTagsByUrl(@RequestParam(required = true, name = "url") String url,
+    @ResponseBody
+    public String generateTagsByUrl(@RequestParam(required = true, name = "url") String url,
                                           @RequestParam(required = false, name = "showScore", defaultValue = "false")
                                           boolean showScore )  {
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
@@ -667,9 +667,16 @@ public class Index {
             }
         } else {
             response.put(RestResponseKeys.MESSAGE.toString(), "empty or missing url.");
-            modelAndView.addAllObjects(response);
         }
-        modelAndView.addAllObjects(response);
-        return modelAndView;
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String outputString = null;
+        try {
+            outputString = objectMapper.writeValueAsString(response);
+        } catch (Exception e){
+            logger.debug("Error in parsing response as string. Message: "+ e.getMessage());
+        }
+
+        return outputString;
     }
 }
