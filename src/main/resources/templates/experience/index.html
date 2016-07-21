@@ -3,8 +3,47 @@
 <head lang="en">
     <meta charset="UTF-8" />
     <title></title>
+    <link rel="stylesheet" type="text/css" th:href="${'templates/admin/css/foundation.css'}" />
+    <link rel="stylesheet" type="text/css" th:href="${'templates/experience/scratchpad.css'}" />
 </head>
 <body>
+<div class="row" id = "top_row">
+    <div class="small-8 large-8 columns large-centered small-centered"  id="query_area">
+        <div class="large-12 columns">
+            <div class="row collapse">
+                <form id="actual_form">
+                    <div class="small-10 columns" >
+                        <input type="text" placeholder="Please Enter Query." id="query_box" name="query" />
+                    </div>
+                    <div class="small-2 columns">
+                        <a href="#" class="button postfix" id="query_button">Ask</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row" id="bottom_row">
+    <div class="small-8 large-8 columns large-centered small-centered" id="response_box"></div>
 
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.15.0/jquery.validate.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#query_button').on('click', function(){
+            $('#actual_form').validate({ // initialize the plugin
+                rules: {
+                    query: {
+                        required: true
+                    }
+                },
+                messages : {
+                    query : "Query required"
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>

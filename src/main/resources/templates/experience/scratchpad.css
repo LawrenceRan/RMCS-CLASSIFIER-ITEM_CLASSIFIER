@@ -1,0 +1,46 @@
+body{
+    background-image: url("/classifier/templates/img/experience_bg.jpg");
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center center;
+}
+#top_row{
+    height:50%;
+}
+
+#bottom_row{
+    height: 50%;
+}
+
+#query_area{
+    margin-top: 220px;
+}
+
+#response_box{
+    margin-top: 50px;
+    height: 70%;
+}
+
+#query_box
+{
+    height: 50px;
+    padding-right: none;
+}
+
+#query_button {
+    height: 50px;
+    padding-top: 15px;
+    padding-left: none;
+
+}
+
+#text_box{
+    height: 100%;
+}
+
+
+.column, .columns {
+    padding-left: 0rem;
+    padding-right: 0rem;
+}
