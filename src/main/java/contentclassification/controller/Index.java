@@ -650,6 +650,7 @@ public class Index {
 
                     Integer responseMatrixThreshold = Integer.parseInt(classificationConfig.getResponseMatrixThreshold());
 
+                    logger.info("About to merge response to category based on rules engine data set.");
                     if(!mergeResponseToCategories.isEmpty() &&
                             mergeResponseToCategories.size() > responseMatrixThreshold){
                         RulesEngineDataSet rulesEngineDataSet = new RulesEngineDataSet();
@@ -664,6 +665,10 @@ public class Index {
 
                         ResponseCategoryToAttribute responseCategoryToAttribute =
                                 classificationService.refineResultSet(mergeResponseToCategories, rulesEngineDataSet);
+
+                        logger.info("Response to category based on rules engine. Results: "+
+                                responseCategoryToAttribute.toString());
+
                         if(responseCategoryToAttribute != null) {
                             response.put(ResponseMap.CLASSIFICATION.toString(),
                                     responseCategoryToAttribute.toResponseMap());
