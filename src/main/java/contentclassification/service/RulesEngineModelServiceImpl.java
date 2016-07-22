@@ -115,12 +115,18 @@ public class RulesEngineModelServiceImpl extends RulesEngineModelService<RulesEn
     }
 
     public void insertListOfRule(List<RulesEngineModel> rulesEngineModelList){
+        logger.info("About to load rules from file to redis.");
         if(!rulesEngineModelList.isEmpty()){
             for(RulesEngineModel rulesEngineModel : rulesEngineModelList){
-                ValueOperations<String, String> valueOperations  = redisTemplate.opsForValue();
-                valueOperations.set(rulesEngineModel.getId(), rulesEngineModel.toJson());
+                try {
+                    ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
+                    valueOperations.set(rulesEngineModel.getId(), rulesEngineModel.toJson());
+                } catch (Exception e){
+                    logger.debug("Exception occurred while loading rules to redis. Message: "+ e.getMessage());
+                }
             }
         }
+        logger.info("Done loading rules from file to redis. Rules: "+ rulesEngineModelList.toString());
     }
 
     @Override

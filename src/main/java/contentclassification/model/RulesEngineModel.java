@@ -60,4 +60,12 @@ public class RulesEngineModel {
 
         return rulesEngineModel;
     }
+
+    @Override
+    public String toString() {
+        return "RulesEngineModel{" +
+                "id='" + id + '\'' +
+                ", rules=" + rules +
+                '}';
+    }
 }
