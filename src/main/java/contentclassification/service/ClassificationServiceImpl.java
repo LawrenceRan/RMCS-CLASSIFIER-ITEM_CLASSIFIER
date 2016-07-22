@@ -780,8 +780,8 @@ public class ClassificationServiceImpl implements ClassificationService{
                 Pattern pattern = Pattern.compile("\\b"+ term +"\\b", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
                 Matcher matcher = pattern.matcher(sentence);
                 while(matcher.find()) {
-                    f.add(sentence);
-                    logger.info("Sentence: " + x + " : " + sentence);
+                    logger.info("Found sentence which contains term: " + term + " using regEx : \b"+ term +"\b");
+                            f.add(sentence);
                     x++;
                 }
             }
