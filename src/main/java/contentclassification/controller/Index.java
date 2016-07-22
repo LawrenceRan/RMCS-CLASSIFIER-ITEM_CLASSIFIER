@@ -205,13 +205,16 @@ public class Index {
                 //End of getting potential colors.
 
 
+                logger.info("About to get sizes from url.");
                 //Trying to get size of the item if exist, ideal for shoes and clothing
                 List<String> sizesFromContent = classificationService.sizeFromSelectFields(contentString);
                 if(showScore) {
                     response.put("availableSizes", sizesFromContent);
                 }
                 //End of getting size from content.
+                logger.info("Done getting sizes for url. Size: "+ sizesFromContent.toString());
 
+                logger.info("About to get fabric name from URL");
                 //Get potential material make of the said item.
                 List<FabricName> fabricNames = classificationService.getFabricsFromContent(text);
                 List<String> materialsFound = new ArrayList<>();
@@ -221,10 +224,16 @@ public class Index {
                     }
                 }
                 //End of potential material of make.
+                logger.info("Done getting fabric names from URL. Fabrics: "+ fabricNames.toString());
 
                 //Start of content analysis of content page.
+                logger.info("About to tokenize content .");
                 String[] tokens = classificationService.tokenize(text.toLowerCase().trim());
+                logger.info("Done generating tokens. Length: "+ tokens.length);
+
+                logger.info("About to detect sentences.");
                 String[] sentences = classificationService.sentenceDetection(text.toLowerCase().trim());
+                logger.info("Done detecting sentences. Length: "+ sentences.length);
 
                 String article = null;
                 if (sentences != null && sentences.length > 0) {
@@ -542,12 +551,14 @@ public class Index {
                  * The method is to help determine whether a given content is gender specific or neutral. If former is
                  * is found it should be surfaced and otherwise that should be surfaced as well.
                  */
+                logger.info("About to get gender for a given URL.");
                 Map<String, Object> gender = classificationService.getGender(sentences, keywords, description);
                 if(!gender.isEmpty()){
                     if(showScore) {
                         response.putAll(gender);
                     }
                 }
+                logger.info("Done getting gender. Gender: "+ gender.toString());
                 //end of get gender.
 
                 //Get the top level category that an attribute belongs to and score 'em
