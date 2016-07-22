@@ -1,6 +1,7 @@
 package contentclassification.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import contentclassification.domain.RulesEngine;
 import contentclassification.model.RulesEngineModel;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -102,6 +103,12 @@ public class RulesEngineModelServiceImpl extends RulesEngineModelService<RulesEn
             }
         } else {
             logger.info("Unable to load rules engine data set from redis.");
+        }
+
+        if(rulesEngineModelList.isEmpty()){
+            logger.info("Defaulting to load rules from rules engine file.");
+            rulesEngineModelList = RulesEngine.loadRules();
+            logger.info("Done rules engine loaded from file.");
         }
         return rulesEngineModelList;
     }
