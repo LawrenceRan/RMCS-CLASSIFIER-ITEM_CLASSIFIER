@@ -99,6 +99,14 @@ public class FabricName {
         return fabricNames;
     }
 
+    @Override
+    public String toString() {
+        return "FabricName{" +
+                "name='" + name + '\'' +
+                ", link='" + link + '\'' +
+                '}';
+    }
+
     public static List<FabricName> getFabrics(){
         List<FabricName> fabricNames = new ArrayList<>();
         ClassLoader classLoader = FabricName.class.getClassLoader();
