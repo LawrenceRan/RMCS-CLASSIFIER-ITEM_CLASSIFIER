@@ -651,7 +651,9 @@ public class Index {
                     logger.info("Done merging responses by categories. Response to category: "
                             + mergeResponseToCategories.toString());
 
+                    logger.info("About to get response matrix threshold.");
                     Integer responseMatrixThreshold = Integer.parseInt(classificationConfig.getResponseMatrixThreshold());
+                    logger.info("Done getting response matrix threshold. Value: "+ responseMatrixThreshold);
 
                     logger.info("About to merge response to category based on rules engine data set.");
                     if(!mergeResponseToCategories.isEmpty() &&

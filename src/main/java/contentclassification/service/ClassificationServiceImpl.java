@@ -1497,6 +1497,9 @@ public class ClassificationServiceImpl implements ClassificationService{
     @Override
     public ResponseCategoryToAttribute refineResultSet(List<ResponseCategoryToAttribute> responseCategoryToAttributeList,
                                                        RulesEngineDataSet rulesEngineDataSet){
+        logger.info("About to use refine result set for these parameters. ResponseCategoryToAttribute "+
+        responseCategoryToAttributeList.toString() + " Title: "+ rulesEngineDataSet.toString());
+
         ResponseCategoryToAttribute responseCategoryToAttribute = null;
         if(!responseCategoryToAttributeList.isEmpty()){
             Iterable<RulesEngineModel> rulesEngineModels = rulesEngineModelService.findAll();
@@ -1543,13 +1546,15 @@ public class ClassificationServiceImpl implements ClassificationService{
                                                                 rulesEngineDataSet,
                                                                 ruleEngineInput,
                                                                 ruleEngineDataSetEnum);
-                                                ResponseToAttributeClusterScore responseToAttributeClusterScore = new ResponseToAttributeClusterScore();
+                                                ResponseToAttributeClusterScore responseToAttributeClusterScore =
+                                                        new ResponseToAttributeClusterScore();
                                                 responseToAttributeClusterScore.setResponseCategoryToAttribute(r);
                                                 responseToAttributeClusterScore.setScore(categoryToAttribute);
                                                 responseToAttributeClusterScoreList.add(responseToAttributeClusterScore);
                                             }
                                         }
-                                        Collections.sort(responseToAttributeClusterScoreList, ResponseToAttributeClusterScore.responseToAttributeClusterScoreComparator);
+                                        Collections.sort(responseToAttributeClusterScoreList,
+                                                ResponseToAttributeClusterScore.responseToAttributeClusterScoreComparator);
                                         Collections.reverse(responseToAttributeClusterScoreList);
 
                                         if(!responseCategoryToAttributeList.isEmpty()) {
@@ -1567,6 +1572,8 @@ public class ClassificationServiceImpl implements ClassificationService{
                 }
             }
         }
+
+        logger.info("Results for using rules engine : "+ responseCategoryToAttribute.toString());
         return responseCategoryToAttribute;
     }
 
