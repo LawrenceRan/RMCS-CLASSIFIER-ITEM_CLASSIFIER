@@ -4,6 +4,7 @@ import contentclassification.config.TermsScoringConfig;
 import contentclassification.domain.*;
 import contentclassification.model.RulesEngineModel;
 import contentclassification.utilities.BM25;
+import contentclassification.utilities.HelperUtility;
 import net.sf.javaml.clustering.Clusterer;
 import net.sf.javaml.clustering.evaluation.*;
 import net.sf.javaml.core.Dataset;
@@ -1502,8 +1503,11 @@ public class ClassificationServiceImpl implements ClassificationService{
 
         ResponseCategoryToAttribute responseCategoryToAttribute = null;
         if(!responseCategoryToAttributeList.isEmpty()){
+            logger.info("About to get all rules from rulesEngineModelService.");
             Iterable<RulesEngineModel> rulesEngineModels = rulesEngineModelService.findAll();
             Iterator<RulesEngineModel> rulesEngineModelIterator = rulesEngineModels.iterator();
+            logger.info("Done getting all rules from rulesEngineModelService. Results: "+
+                    HelperUtility.iterableToList(rulesEngineModels).toString());
 
             List<ResponseCategoryToAttribute> occurrence = new ArrayList<>();
 
