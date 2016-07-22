@@ -106,14 +106,15 @@ public class Index {
             }
 
             //Get domain name from url
-            logger.info("About to perform domain name retrival.");
+            logger.info("About to perform domain name retrieval.");
             String domain = classificationService.getDomainName(url);
             logger.info("Domain name: "+ domain);
             //end of getting domain from url.
 
             logger.info("About to get content string for URL.");
             String contentString = jsoupService.getContentAsString(url);
-            logger.info("Content string : "+ contentString);
+            logger.info("Content string  retrieved : Length : "+ contentString.length());
+
             List<Map> linksMap = jsoupService.getLinksUrlAndValue(url);
             String text = jsoupService
                     .parseHtmlText(classificationService.removeNavigationAndMenuBars(
@@ -122,6 +123,7 @@ public class Index {
                                     classificationService.removePossibleUrlFromText(linksMap, contentString)))), url);
 
             if (StringUtils.isNotBlank(text)) {
+                logger.info("Text for analysis ready. Length: "+ text.length());
                 /**
                  * The start of getting potential colors.
                  */
