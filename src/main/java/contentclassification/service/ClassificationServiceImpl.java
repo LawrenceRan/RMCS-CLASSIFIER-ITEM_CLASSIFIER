@@ -1573,7 +1573,11 @@ public class ClassificationServiceImpl implements ClassificationService{
             }
         }
 
-        logger.info("Results for using rules engine : "+ responseCategoryToAttribute.toString());
+        if(StringUtils.isNotBlank(responseCategoryToAttribute.toString())) {
+            logger.info("Results for using rules engine : " + responseCategoryToAttribute.toString());
+        } else {
+            logger.info("Results for using rules engine : None");
+        }
         return responseCategoryToAttribute;
     }
 

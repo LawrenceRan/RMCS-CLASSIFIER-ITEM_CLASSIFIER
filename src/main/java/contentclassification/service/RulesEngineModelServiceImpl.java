@@ -100,6 +100,8 @@ public class RulesEngineModelServiceImpl extends RulesEngineModelService<RulesEn
             } catch (Exception e){
                 logger.debug("Error in getting rules from redis. Message: "+ e.getMessage());
             }
+        } else {
+            logger.info("Unable to load rules engine data set from redis.");
         }
         return rulesEngineModelList;
     }
