@@ -630,6 +630,7 @@ public class Index {
                     /**
                      * Merge all response to categories which share the same category.
                      */
+                    logger.info("About to merge responses based on categories.");
                     List<ResponseCategoryToAttribute> mergeResponseToCategories =
                             classificationService.groupResponseByCategory(responseCategoryToAttributeList);
                     if(!mergeResponseToCategories.isEmpty()){
@@ -638,13 +639,14 @@ public class Index {
                             for(String attribute : attributes) {
                                 String[] sentenceInAttribute = classificationService
                                         .getSentencesWithTerm(sentences, attribute);
-                                logger.info("Sentences found in term: "+ sentenceInAttribute);
                             }
                         }
                         if(showScore) {
                             response.put("mergedResponseCategoryToAttributes", mergeResponseToCategories);
                         }
                     }
+                    logger.info("Done merging responses by categories. Response to category: "
+                            + mergeResponseToCategories.toString());
 
                     Integer responseMatrixThreshold = Integer.parseInt(classificationConfig.getResponseMatrixThreshold());
 
