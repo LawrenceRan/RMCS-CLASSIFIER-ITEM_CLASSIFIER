@@ -531,7 +531,6 @@ public class Index {
                 if(!totalTermToGroups.isEmpty()){
                     for(TotalTermToGroup t : totalTermToGroups){
                         String[] sentenceToTerm = classificationService.getSentencesWithTerm(sentences, t.getTerm());
-                        logger.info("Sentence to term: "+ sentenceToTerm);
                     }
                 }
                 //end of sentences crossed referenced.
@@ -610,6 +609,8 @@ public class Index {
                         Run response to category against combination matrix, only if the list of response to category
                         is more than one.
                      */
+                    logger.info("About to get combination matrix. Using Response Category to attributes list. "+
+                            responseCategoryToAttributeList.toString());
                     List<ResponseCategoryToAttribute> updated = null;
                     if(responseCategoryToAttributeList.size() > 1){
                         updated = classificationService
@@ -626,6 +627,8 @@ public class Index {
 //                            responseCategoryToAttributeList.addAll(set);
                         }
                     }
+                    logger.info("Done with getting combination matrix. Combined response to category : "
+                            + updated.toString());
 
                     /**
                      * Merge all response to categories which share the same category.
@@ -666,10 +669,10 @@ public class Index {
                         ResponseCategoryToAttribute responseCategoryToAttribute =
                                 classificationService.refineResultSet(mergeResponseToCategories, rulesEngineDataSet);
 
-                        logger.info("Response to category based on rules engine. Results: "+
-                                responseCategoryToAttribute.toString());
-
                         if(responseCategoryToAttribute != null) {
+                            logger.info("Response to category based on rules engine. Results: "+
+                                    responseCategoryToAttribute.toString());
+
                             response.put(ResponseMap.CLASSIFICATION.toString(),
                                     responseCategoryToAttribute.toResponseMap());
                         }
