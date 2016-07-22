@@ -91,7 +91,7 @@ public class Index {
     public String generateTagsByUrl(@RequestParam(required = true, name = "url") String url,
                                           @RequestParam(required = false, name = "showScore", defaultValue = "false")
                                           boolean showScore )  {
-        ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
+        logger.info("About to process request for URL: "+ url);
         Map<String, Object> response = new HashMap<>();
         if (StringUtils.isNotBlank(url)) {
             String title = jsoupService.getTitle(url);
@@ -103,14 +103,17 @@ public class Index {
                         .prepareTokens(Arrays.asList(classificationService.tokenize(title))));
             } else {
                 response.put(RestResponseKeys.MESSAGE.toString(), "empty title from document from url.");
-                modelAndView.addAllObjects(response);
             }
 
             //Get domain name from url
+            logger.info("About to perform domain name retrival.");
             String domain = classificationService.getDomainName(url);
+            logger.info("Domain name: "+ domain);
             //end of getting domain from url.
 
+            logger.info("About to get content string for URL.");
             String contentString = jsoupService.getContentAsString(url);
+            logger.info("Content string : "+ contentString);
             List<Map> linksMap = jsoupService.getLinksUrlAndValue(url);
             String text = jsoupService
                     .parseHtmlText(classificationService.removeNavigationAndMenuBars(
