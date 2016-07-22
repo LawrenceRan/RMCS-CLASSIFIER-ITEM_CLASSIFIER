@@ -127,14 +127,15 @@ public class Index {
                 /**
                  * The start of getting potential colors.
                  */
+                logger.info("About to get potential colors by regex.");
                 List<String> potentialColor = AppUtils.getColorByRegEx(text);
                 List<String> itemColors = new ArrayList<>();
-
                 //Second step is to get available colors from input fields;
                 List<String> colorsFromInputFields = classificationService.colorsFromSelectFields(contentString);
                 if(!colorsFromInputFields.isEmpty()){
                     potentialColor.addAll(colorsFromInputFields);
                 }
+                logger.info("Done getting potential colors. "+ potentialColor.toString());
 
                 if (!potentialColor.isEmpty()) {
                     List<String> getColorsFromRegExObj = AppUtils.getColorsFromRegEx(potentialColor);
