@@ -17,6 +17,14 @@ body{
     margin-top: 220px;
 }
 
+.shadow{
+    -webkit-box-shadow:0 2px 4px rgba(0,0,0,.12);
+    -moz-box-shadow:0 2px 4px rgba(0,0,0,.12);
+    -ms-box-shadow:0 2px 4px rgba(0,0,0,.12);
+    -o-box-shadow:0 2px 4px rgba(0,0,0,.12);
+    box-shadow:0 2px 4px rgba(0,0,0,.12)
+}
+
 #response_box{
     margin-top: 50px;
     height: 70%;
