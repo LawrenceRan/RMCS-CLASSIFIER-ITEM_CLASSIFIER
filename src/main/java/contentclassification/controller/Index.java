@@ -627,8 +627,12 @@ public class Index {
 //                            responseCategoryToAttributeList.addAll(set);
                         }
                     }
-                    logger.info("Done with getting combination matrix. Combined response to category : "
-                            + updated.toString());
+                    if(updated != null) {
+                        logger.info("Done with getting combination matrix. Combined response to category : "
+                                + updated.toString());
+                    } else {
+                        logger.info("Done with getting combination matrix. Combined response to category : None");
+                    }
 
                     /**
                      * Merge all response to categories which share the same category.

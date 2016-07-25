@@ -24,7 +24,12 @@
     </div>
 </div>
 <div class="row" id="bottom_row">
-    <div class="small-8 large-8 columns large-centered small-centered" id="response_box"></div>
+    <div class="small-8 large-8 columns large-centered small-centered" id="response_box">
+        <div class="panel bg-white" id="response-panel" style="margin-top: 15px;">
+            <h5>This is a regular panel.</h5>
+            <p>It has an easy to override visual style, and is appropriately subdued.</p>
+        </div>
+    </div>
 
 </div>
 <script th:src="${'templates/admin/js/vendor/jquery.js'}"></script>
@@ -35,6 +40,7 @@
 </script>
 <script>
     $(document).ready(function () {
+        $('#response-panel').hide();
     });
 
     $('#query_button').on('click', function(){
@@ -49,6 +55,7 @@
                 query : "A valid URL is required."
             },
             submitHandler : function(form){
+                $('#response-panel').show();
                 var queryUrl = $('#query_box').val();
                 var url = "v1/url";
                 if(queryUrl){

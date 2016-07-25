@@ -25,6 +25,9 @@ body{
     box-shadow:0 2px 4px rgba(0,0,0,.12)
 }
 
+.bg-white{
+    background-color: #ffffff;
+}
 #response_box{
     margin-top: 50px;
     height: 70%;

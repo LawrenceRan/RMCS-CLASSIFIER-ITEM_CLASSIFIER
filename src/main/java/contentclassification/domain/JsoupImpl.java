@@ -1,5 +1,6 @@
 package contentclassification.domain;
 
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -33,9 +34,13 @@ public class JsoupImpl {
     public Document getDocument() throws IOException {
         Document document = null;
         try {
+            Connection.Response response = Jsoup.connect(this.url).method(Connection.Method.GET).execute();
+            Map<String, String> cookies = response.cookies();
+
             document = Jsoup.connect(this.url)
                     .header(USER_AGENT_KEY, USER_AGENT_VALUE)
                     .timeout(5 * 1000)
+                    .cookies(cookies)
                     .get();
         } catch (Exception e){
             logger.debug("Error in document for this url: "+ this.url +", Message: "+ e.getMessage());
