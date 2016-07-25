@@ -25,9 +25,8 @@
 </div>
 <div class="row" id="bottom_row">
     <div class="small-8 large-8 columns large-centered small-centered" id="response_box">
-        <div class="panel bg-white" id="response-panel" style="margin-top: 15px;">
-            <h5>This is a regular panel.</h5>
-            <p>It has an easy to override visual style, and is appropriately subdued.</p>
+        <div class="panel bg-white response-panel-css" id="response-panel">
+            <div id="loader" class="loader"><img th:src="${'templates/img/squares.gif'}" th:width="32px" th:height="32px" /></div>
         </div>
     </div>
 
@@ -41,6 +40,7 @@
 <script>
     $(document).ready(function () {
         $('#response-panel').hide();
+        $('#loader').hide();
     });
 
     $('#query_button').on('click', function(){
@@ -55,13 +55,90 @@
                 query : "A valid URL is required."
             },
             submitHandler : function(form){
+                $('#response_box').css("text-align", "center");
                 $('#response-panel').show();
+                $('#loader').show();
                 var queryUrl = $('#query_box').val();
                 var url = "v1/url";
                 if(queryUrl){
                     var data = {'url' : queryUrl};
                     $.getJSON(url, data, function(response){
-                        console.log("Response: "+ JSON.stringify(response));
+                        $('#response_box').css("text-align", "left");
+                        $('#loader').hide();
+                        var responseHtmlStr = [];
+                        if(response.hasOwnProperty("classification")){
+                            var classification = response['classification'];
+                            if(classification){
+                                responseHtmlStr.push("<div>");
+                                responseHtmlStr.push("<ul>");
+                                var html = [];
+                                if(classification.hasOwnProperty("genre")){
+                                    var genre = classification['genre'];
+                                    html.push("<li>Genre : "+ genre +"</li>");
+                                }
+
+                                if(classification.hasOwnProperty("subGenres")){
+                                    var subGenres = classification['subGenres'];
+                                    html.push("<li>Sub Genres : <ul>");
+                                    $.each(subGenres, function(k, v){
+                                        html.push("<li>"+ v + "</li>");
+                                    });
+                                    html.push("</ul></li>");
+                                }
+
+                                if(classification.hasOwnProperty('sizes')){
+                                    var sizes = classification['sizes'];
+                                    html.push("<li>Available Size(s) : ");
+                                    if(sizes){
+                                        html.push("<ul>");
+                                        $.each(sizes, function(k, v){
+                                             html.push("<li>"+ v +"</li>");
+                                        });
+                                        html.push("</ul>")
+                                    } else {
+                                        html.push("</li>");
+                                    }
+                                }
+
+                                if(classification.hasOwnProperty('materials')){
+                                    var materials = classification['materials'];
+                                    html.push("<li> Material(s) : ");
+                                    if(materials){
+                                        html.push("<ul>");
+                                        $.each(materials, function(k, v){
+                                            html.push("<li>"+ v + "</li>");
+                                        });
+                                        html.push("</ul>")
+                                    } else{
+                                        html.push("</li>");
+                                    }
+                                }
+
+                                if(classification.hasOwnProperty('gender')){
+                                    var gender = classification['gender'];
+                                    html.push("<li>Gender : "+ gender +"</li>");
+                                }
+
+                                if(classification.hasOwnProperty("pricing")){
+
+                                }
+
+                                if(classification.hasOwnProperty('brand')){
+                                    var brand = classification['brand'];
+                                    html.push("<li>Brand : "+ brand +"</li>");
+                                }
+
+                                if(classification.hasOwnProperty("isLuxury")){
+                                    var isLuxury = classification['isLuxury'];
+                                    html.push("<li>Luxury : "+ isLuxury +"</li>");
+                                }
+
+                                responseHtmlStr.push(html.join(" "));
+                                responseHtmlStr.push("</ul>");
+                                responseHtmlStr.push("</div>");
+                            }
+                        }
+                        $('#response-panel').html(responseHtmlStr.join(" "));
                     });
                 }
             }

@@ -55,3 +55,12 @@ body{
     padding-left: 0rem;
     padding-right: 0rem;
 }
+
+.response-panel-css{
+    margin-top: 70px;
+    width: 720px;
+}
+
+.loader{
+    display: inline-block;
+}
