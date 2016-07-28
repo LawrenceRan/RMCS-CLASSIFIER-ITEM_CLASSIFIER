@@ -2,6 +2,7 @@ package contentclassification.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import contentclassification.config.ClassificationConfig;
+import contentclassification.config.RequestProxy;
 import contentclassification.config.WordNetDictConfig;
 import contentclassification.domain.*;
 //import contentclassification.service.DomainGraphDBImpl;
@@ -16,7 +17,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.support.RequestContext;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 import weka.core.ClassloaderUtil;
 
@@ -43,6 +47,9 @@ public class Index {
 
     @Autowired
     private ClassificationConfig classificationConfig;
+
+    @Autowired
+    private RequestProxy requestProxy;
 
 //    @Autowired
 //    private DomainGraphDBImpl domainGraphDB;
@@ -91,43 +98,83 @@ public class Index {
     public String generateTagsByUrl(@RequestParam(required = true, name = "url") String url,
                                           @RequestParam(required = false, name = "showScore", defaultValue = "false")
                                           boolean showScore )  {
-        logger.info("About to process request for URL: "+ url);
+        ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+        String sessionId = attr.getSessionId();
+
+        logger.info("About to check whether to use proxy request. ID: "+ sessionId);
+        boolean useProxy = requestProxy.isEnable();
+        logger.info("Done use proxy :"+ useProxy + " ID:"+ sessionId);
+
+        logger.info("About to get proxy url if use isEnabled. ID: "+ sessionId);
+        String proxyUrl = null;
+        if(useProxy){
+            proxyUrl = requestProxy.getProxyUrl();
+        }
+        logger.info("Done: Proxy URL: "+ proxyUrl + " ID: "+ sessionId);
+
+        logger.info("About to process request for URL: " + url + " ID: " + sessionId);
         Map<String, Object> response = new HashMap<>();
         if (StringUtils.isNotBlank(url)) {
-            String title = jsoupService.getTitle(url);
-            List<String> metaList = jsoupService.metas(url);
+            logger.info("About to get content string for URL. ID: "+ sessionId);
+            String contentString = jsoupService.getContentAsString(url);
+            logger.info("Content string  retrieved : Length : "+ contentString.length());
+
+            logger.info("About to generate document object out of content string. ID: "+ sessionId);
+            Document document = null;
+            if(StringUtils.isNotBlank(contentString)) {
+                document = jsoupService.getDocumentByParser(contentString);
+            }
+            logger.info("Done generating document out of content string. ID: "+ sessionId);
+
+            logger.info("About to get title from document. ID: "+ sessionId);
+            String title = null;
+            if(document != null) {
+                title = jsoupService.getTitleByDocument(document);
+            }
+            logger.info("Done getting title from document. ID: "+ sessionId);
+
+            logger.info("About to get metas from document. URL: "+ url + " ID:"+ sessionId);
+            List<String> metaList = null;
+            if(document != null) {
+                metaList = jsoupService.metasByDocument(document);
+            }
+            logger.info("Done getting metas from document. URL: "+ url + " ID:" + sessionId);
 
             List<String> titleTokens = new ArrayList<>();
             if (StringUtils.isNotBlank(title)) {
                 titleTokens.addAll(classificationService
                         .prepareTokens(Arrays.asList(classificationService.tokenize(title))));
             } else {
-                response.put(RestResponseKeys.MESSAGE.toString(), "empty title from document from url.");
+                response.put(RestResponseKeys.MESSAGE.toString(), "empty title from document from url. ID: "+ sessionId);
             }
 
             //Get domain name from url
-            logger.info("About to perform domain name retrieval.");
+            logger.info("About to perform domain name retrieval. URL: "+ url + " ID: "+ sessionId);
             String domain = classificationService.getDomainName(url);
-            logger.info("Domain name: "+ domain);
+            logger.info("Done. Domain name: "+ domain);
             //end of getting domain from url.
 
-            logger.info("About to get content string for URL.");
-            String contentString = jsoupService.getContentAsString(url);
-            logger.info("Content string  retrieved : Length : "+ contentString.length());
+            logger.info("About to get all links or URLs found in document. ID: "+ sessionId);
+            List<Map> linksMap = null;
+            if(document != null) {
+                linksMap = jsoupService.getLinksUrlAndValueByDocument(document);
+            }
+            logger.info("Done. found "+ linksMap.size() + " urls in document. ID: "+ sessionId);
 
-            List<Map> linksMap = jsoupService.getLinksUrlAndValue(url);
+            logger.info("About to extract text from document. URL :"+ url + "ID: "+ sessionId);
             String text = jsoupService
                     .parseHtmlText(classificationService.removeNavigationAndMenuBars(
                             classificationService.removePossibleImagesFromText(
                             classificationService.removePossibleInputFieldFromText(
                                     classificationService.removePossibleUrlFromText(linksMap, contentString)))), url);
+            logger.info("Done getting text extraction from document. URL: "+ url + " ID: "+ sessionId);
 
             if (StringUtils.isNotBlank(text)) {
-                logger.info("Text for analysis ready. Length: "+ text.length());
+                logger.info("Text for analysis ready. Length: "+ text.length() + " ID: "+ sessionId);
                 /**
                  * The start of getting potential colors.
                  */
-                logger.info("About to get potential colors by regex.");
+                logger.info("About to get potential colors by regex. ID: "+ sessionId);
                 List<String> potentialColor = AppUtils.getColorByRegEx(text);
                 List<String> itemColors = new ArrayList<>();
                 //Second step is to get available colors from input fields;
@@ -135,7 +182,7 @@ public class Index {
                 if(!colorsFromInputFields.isEmpty()){
                     potentialColor.addAll(colorsFromInputFields);
                 }
-                logger.info("Done getting potential colors. "+ potentialColor.toString());
+                logger.info("Done getting potential colors. "+ potentialColor.toString() + " ID: "+ sessionId);
 
                 if (!potentialColor.isEmpty()) {
                     List<String> getColorsFromRegExObj = AppUtils.getColorsFromRegEx(potentialColor);
@@ -205,16 +252,16 @@ public class Index {
                 //End of getting potential colors.
 
 
-                logger.info("About to get sizes from url.");
+                logger.info("About to get sizes from url. ID: "+ sessionId);
                 //Trying to get size of the item if exist, ideal for shoes and clothing
                 List<String> sizesFromContent = classificationService.sizeFromSelectFields(contentString);
                 if(showScore) {
                     response.put("availableSizes", sizesFromContent);
                 }
                 //End of getting size from content.
-                logger.info("Done getting sizes for url. Size: "+ sizesFromContent.toString());
+                logger.info("Done getting sizes for url. Size: "+ sizesFromContent.toString() + " ID: "+ sessionId);
 
-                logger.info("About to get fabric name from URL");
+                logger.info("About to get fabric name from URL ID: "+ sessionId);
                 //Get potential material make of the said item.
                 List<FabricName> fabricNames = classificationService.getFabricsFromContent(text);
                 List<String> materialsFound = new ArrayList<>();
@@ -224,16 +271,16 @@ public class Index {
                     }
                 }
                 //End of potential material of make.
-                logger.info("Done getting fabric names from URL. Fabrics: "+ fabricNames.toString());
+                logger.info("Done getting fabric names from URL. Fabrics: "+ fabricNames.toString() + " ID: "+ sessionId);
 
                 //Start of content analysis of content page.
-                logger.info("About to tokenize content .");
+                logger.info("About to tokenize content . ID: "+ sessionId);
                 String[] tokens = classificationService.tokenize(text.toLowerCase().trim());
-                logger.info("Done generating tokens. Length: "+ tokens.length);
+                logger.info("Done generating tokens. Length: "+ tokens.length + " ID: "+ sessionId);
 
                 logger.info("About to detect sentences.");
                 String[] sentences = classificationService.sentenceDetection(text.toLowerCase().trim());
-                logger.info("Done detecting sentences. Length: "+ sentences.length);
+                logger.info("Done detecting sentences. Length: "+ sentences.length + " ID: "+ sessionId);
 
                 String article = null;
                 if (sentences != null && sentences.length > 0) {
@@ -272,23 +319,26 @@ public class Index {
                 String description = null;
                 String keywords = null;
 
-                List<Map> metaKeyValuePair = classificationService.generateKeyValuePairs(metaList);
-                if (!metaKeyValuePair.isEmpty()) {
-                    description = classificationService
-                            .getContentMetaDataValue(NameAndContentMetaData.NAME,
-                                    metaKeyValuePair, WebMetaName.DESCRIPTION);
-                    keywords = classificationService
-                            .getContentMetaDataValue(NameAndContentMetaData.NAME,
-                                    metaKeyValuePair, WebMetaName.KEYWORDS);
+                List<Map> metaKeyValuePair = null;
+                if(metaList != null) {
+                    metaKeyValuePair = classificationService.generateKeyValuePairs(metaList);
+                    if (!metaKeyValuePair.isEmpty()) {
+                        description = classificationService
+                                .getContentMetaDataValue(NameAndContentMetaData.NAME,
+                                        metaKeyValuePair, WebMetaName.DESCRIPTION);
+                        keywords = classificationService
+                                .getContentMetaDataValue(NameAndContentMetaData.NAME,
+                                        metaKeyValuePair, WebMetaName.KEYWORDS);
 
-                    if (StringUtils.isNotBlank(keywords)) {
-                        keywordsList = classificationService
-                                .prepareTokens(Arrays.asList(classificationService.tokenize(keywords)));
-                    }
+                        if (StringUtils.isNotBlank(keywords)) {
+                            keywordsList = classificationService
+                                    .prepareTokens(Arrays.asList(classificationService.tokenize(keywords)));
+                        }
 
-                    if (StringUtils.isNotBlank(description)) {
-                        descriptionList = classificationService
-                                .prepareTokens(Arrays.asList(classificationService.tokenize(description)));
+                        if (StringUtils.isNotBlank(description)) {
+                            descriptionList = classificationService
+                                    .prepareTokens(Arrays.asList(classificationService.tokenize(description)));
+                        }
                     }
                 }
                 //end of content meta data
@@ -296,9 +346,12 @@ public class Index {
                 /**
                  * About to execute the method below to retrieve price of the said item.
                  */
-                Map<String, Object> priceMap = classificationService.getPrice(contentString, metaKeyValuePair);
-                if(priceMap != null && !priceMap.isEmpty()){
-                    //response.put("price", priceMap);
+                Map<String, Object> priceMap = null;
+                if(StringUtils.isNotBlank(contentString) && metaKeyValuePair != null) {
+                    priceMap = classificationService.getPrice(contentString, metaKeyValuePair);
+                    if (priceMap != null && !priceMap.isEmpty()) {
+                        //response.put("price", priceMap);
+                    }
                 }
                 //end of get price
 
@@ -550,14 +603,14 @@ public class Index {
                  * The method is to help determine whether a given content is gender specific or neutral. If former is
                  * is found it should be surfaced and otherwise that should be surfaced as well.
                  */
-                logger.info("About to get gender for a given URL.");
+                logger.info("About to get gender for a given URL. ID: "+ sessionId);
                 Map<String, Object> gender = classificationService.getGender(sentences, keywords, description);
                 if(!gender.isEmpty()){
                     if(showScore) {
                         response.putAll(gender);
                     }
                 }
-                logger.info("Done getting gender. Gender: "+ gender.toString());
+                logger.info("Done getting gender. Gender: "+ gender.toString() + "ID: "+ sessionId);
                 //end of get gender.
 
                 //Get the top level category that an attribute belongs to and score 'em
@@ -610,7 +663,7 @@ public class Index {
                         is more than one.
                      */
                     logger.info("About to get combination matrix. Using Response Category to attributes list. "+
-                            responseCategoryToAttributeList.toString());
+                            responseCategoryToAttributeList.toString() + " ID:"+ sessionId);
                     List<ResponseCategoryToAttribute> updated = null;
                     if(responseCategoryToAttributeList.size() > 1){
                         updated = classificationService
@@ -629,15 +682,16 @@ public class Index {
                     }
                     if(updated != null) {
                         logger.info("Done with getting combination matrix. Combined response to category : "
-                                + updated.toString());
+                                + updated.toString() + " ID: "+ sessionId);
                     } else {
-                        logger.info("Done with getting combination matrix. Combined response to category : None");
+                        logger.info("Done with getting combination matrix. Combined response to category : None. ID:"
+                                + sessionId);
                     }
 
                     /**
                      * Merge all response to categories which share the same category.
                      */
-                    logger.info("About to merge responses based on categories.");
+                    logger.info("About to merge responses based on categories. ID: "+ sessionId);
                     List<ResponseCategoryToAttribute> mergeResponseToCategories =
                             classificationService.groupResponseByCategory(responseCategoryToAttributeList);
                     if(!mergeResponseToCategories.isEmpty()){
@@ -653,19 +707,22 @@ public class Index {
                         }
                     }
                     logger.info("Done merging responses by categories. Response to category: "
-                            + mergeResponseToCategories.toString());
+                            + mergeResponseToCategories.toString() + " ID:"+ sessionId);
 
-                    logger.info("About to get response matrix threshold.");
+                    logger.info("About to get response matrix threshold. ID: "+ sessionId);
                     Integer responseMatrixThreshold = Integer.parseInt(classificationConfig.getResponseMatrixThreshold());
-                    logger.info("Done getting response matrix threshold. Value: "+ responseMatrixThreshold);
+                    logger.info("Done getting response matrix threshold. Value: "+ responseMatrixThreshold + " ID: "+ sessionId);
 
-                    logger.info("About to merge response to category based on rules engine data set.");
+                    logger.info("About to merge response to category based on rules engine data set. ID: "+ sessionId);
                     if(!mergeResponseToCategories.isEmpty() &&
                             mergeResponseToCategories.size() > responseMatrixThreshold){
                         RulesEngineDataSet rulesEngineDataSet = new RulesEngineDataSet();
                         rulesEngineDataSet.setTitle(possibleTitle);
                         rulesEngineDataSet.setBody(text);
-                        rulesEngineDataSet.setMetas(metaKeyValuePair);
+
+                        if(metaKeyValuePair != null) {
+                            rulesEngineDataSet.setMetas(metaKeyValuePair);
+                        }
 
                         //Added response to attributes result from combined decision to merged responses.
                         if(updated != null && !updated.isEmpty()){
@@ -677,12 +734,12 @@ public class Index {
 
                         if(responseCategoryToAttribute != null) {
                             logger.info("Response to category based on rules engine. Results: "+
-                                    responseCategoryToAttribute.toString());
+                                    responseCategoryToAttribute.toString() + " ID: "+ sessionId);
 
                             response.put(ResponseMap.CLASSIFICATION.toString(),
                                     responseCategoryToAttribute.toResponseMap());
                         }
-                        logger.info("Merged responses is greater than 1:"+ responseMatrixThreshold);
+                        logger.info("Merged responses is greater than 1:"+ responseMatrixThreshold + " ID:"+ sessionId);
                     } else {
                         if(mergeResponseToCategories.size() == 1) {
                             response.put(ResponseMap.CLASSIFICATION.toString(), mergeResponseToCategories.get(0).toResponseMap());
@@ -699,7 +756,7 @@ public class Index {
                 }
             }
         } else {
-            response.put(RestResponseKeys.MESSAGE.toString(), "empty or missing url.");
+            response.put(RestResponseKeys.MESSAGE.toString(), "empty or missing url. ID: "+ sessionId);
         }
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -707,7 +764,7 @@ public class Index {
         try {
             outputString = objectMapper.writeValueAsString(response);
         } catch (Exception e){
-            logger.debug("Error in parsing response as string. Message: "+ e.getMessage());
+            logger.debug("Error in parsing response as string. Message: "+ e.getMessage() +" ID: "+ sessionId);
         }
 
         return outputString;

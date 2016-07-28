@@ -3,12 +3,16 @@ package contentclassification.service;
 import contentclassification.domain.AppUtils;
 import contentclassification.domain.HtmlUnitImpl;
 import contentclassification.domain.JsoupImpl;
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,6 +45,16 @@ public class JsoupService {
         return document;
     }
 
+    public Document getDocumentByParser(String htmlCode){
+        Document document = null;
+        try {
+            document = JsoupImpl.parseHtml(htmlCode);
+        } catch (Exception e){
+            logger.debug("Error in parsing html from content as string. Message: "+ e.getMessage());
+        }
+        return document;
+    }
+
     public List<String> metas(String url){
         List<String> metas = null;
         try{
@@ -52,6 +66,35 @@ public class JsoupService {
         return metas;
     }
 
+
+    public List<String> metasByDocument(Document document){
+        List<String> metas = null;
+        try{
+            if (document != null) {
+                metas = new ArrayList<>();
+                Elements elements = document.select("meta");
+                if (!elements.isEmpty()) {
+                    for (Element element : elements) {
+                        metas.add(element.toString());
+                    }
+                }
+            }
+        } catch (Exception e){
+            logger.debug("Error in getting meta details. Message: "+ e.getMessage());
+        }
+        return metas;
+    }
+
+
+    public String getTitleByDocument(Document document){
+        String title = null;
+        try {
+            title = document.title();
+        } catch (Exception e){
+            logger.debug("Error in getting title. Message:" + e.getMessage());
+        }
+        return title;
+    }
     public List<String> links(String url){
         List<String> links = null;
         try{
@@ -114,6 +157,24 @@ public class JsoupService {
             links = jsoup.getLinksUrlAndValue();
         } catch (Exception e){
             logger.debug("Error in getting links. Message: "+ e.getMessage());
+        }
+        return links;
+    }
+
+    public List<Map> getLinksUrlAndValueByDocument(Document document){
+        List<Map> links = new ArrayList<>();
+        try {
+            Elements elementLinks = document.select("a[href]");
+            if (!elementLinks.isEmpty()) {
+                for (Element link : elementLinks) {
+                    Map<String, String> m = new HashMap<>();
+                    m.put("value", link.text());
+                    m.put("link", link.attr("abs:href"));
+                    links.add(m);
+                }
+            }
+        } catch (Exception e){
+            logger.debug("Error in getting URLs : %s", e.getMessage());
         }
         return links;
     }

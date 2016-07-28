@@ -8,7 +8,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -54,7 +53,7 @@ public class HtmlUnitImpl {
             HtmlPage page = client.getPage(webRequest);
             text = page.asText();
         } catch (Exception e){
-            e.printStackTrace();
+            logger.debug("Error in getting text. Message: "+ e.getMessage());
         }
         return text;
     }
