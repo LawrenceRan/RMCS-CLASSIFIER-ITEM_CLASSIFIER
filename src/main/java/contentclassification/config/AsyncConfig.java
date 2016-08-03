@@ -30,8 +30,8 @@ public class AsyncConfig implements AsyncConfigurer {
         threadPoolTaskExecutor.setCorePoolSize(5);
         threadPoolTaskExecutor.setQueueCapacity(1000);
         threadPoolTaskExecutor.setWaitForTasksToCompleteOnShutdown(true);
-        threadPoolTaskExecutor.setThreadNamePrefix("3rd-party-provider-thread-");
-        threadPoolTaskExecutor.setBeanName("3rd-party-provider-thread");
+        threadPoolTaskExecutor.setThreadNamePrefix("ric-thread-");
+        threadPoolTaskExecutor.setBeanName("ric-thread");
         threadPoolTaskExecutor.initialize();
         logger.info("Done initializing async executor.");
         return threadPoolTaskExecutor;

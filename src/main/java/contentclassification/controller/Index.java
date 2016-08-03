@@ -5,7 +5,6 @@ import contentclassification.config.ClassificationConfig;
 import contentclassification.config.RequestProxy;
 import contentclassification.config.WordNetDictConfig;
 import contentclassification.domain.*;
-//import contentclassification.service.DomainGraphDBImpl;
 import contentclassification.service.ClassificationServiceImpl;
 import contentclassification.service.JsoupService;
 import contentclassification.service.ThirdPartyProviderService;
@@ -21,9 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.support.RequestContext;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
-import weka.core.ClassloaderUtil;
 
 import java.util.*;
 
@@ -131,14 +128,18 @@ public class Index {
             if(StringUtils.isNotBlank(domain)){
                 isDomainAProvider = thirdPartyProviderService.isDomainAProvider(domain);
             }
-            logger.info("Done getting content string from third party provider.");
+            logger.info("Done getting content string from third party provider. Results: "+ isDomainAProvider);
 
             logger.info("About to make request to third party provider.");
             String thirdPartyProviderDescription = null;
             if(isDomainAProvider){
                 thirdPartyProviderDescription = thirdPartyProviderService.getItemDescription(domain, url);
             }
-            logger.info("Done getting third party provider.");
+            if(StringUtils.isNotBlank(thirdPartyProviderDescription)) {
+                logger.info("Done getting third party provider. Item details: " + thirdPartyProviderDescription);
+            } else {
+                logger.info("Done getting third party provider. Item details: None.");
+            }
 
             logger.info("About to get content string for URL. ID: "+ sessionId);
             String contentString = jsoupService.getContentAsString(url);
@@ -197,7 +198,7 @@ public class Index {
                                                 classificationService.removePossibleUrlFromText(linksMap, contentString)))), url);
             }
 
-            if(StringUtils.isNotBlank(thirdPartyProviderDescription) && StringUtils.isBlank(contentString)){
+            if(StringUtils.isNotBlank(thirdPartyProviderDescription) && isDomainAProvider){
                 logger.info("About to use description gotten from a third party provider.");
                 text = thirdPartyProviderDescription;
                 contentString = thirdPartyProviderDescription;

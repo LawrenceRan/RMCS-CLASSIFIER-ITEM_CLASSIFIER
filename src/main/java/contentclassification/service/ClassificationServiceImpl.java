@@ -1881,6 +1881,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                                     StringBuilder builder = new StringBuilder();
                                     int x = 0;
                                     if(!a.isEmpty()) {
+
                                         for (String b : a) {
                                             if (x < (intersection.size() - 1)) {
                                                 builder.append(b + " ");
