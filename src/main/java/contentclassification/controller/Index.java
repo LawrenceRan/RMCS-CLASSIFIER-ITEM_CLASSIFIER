@@ -8,6 +8,7 @@ import contentclassification.domain.*;
 //import contentclassification.service.DomainGraphDBImpl;
 import contentclassification.service.ClassificationServiceImpl;
 import contentclassification.service.JsoupService;
+import contentclassification.service.ThirdPartyProviderService;
 import contentclassification.service.WordNetService;
 import org.apache.commons.lang3.StringUtils;
 import org.atteo.evo.inflector.English;
@@ -50,6 +51,9 @@ public class Index {
 
     @Autowired
     private RequestProxy requestProxy;
+
+    @Autowired
+    private ThirdPartyProviderService thirdPartyProviderService;
 
 //    @Autowired
 //    private DomainGraphDBImpl domainGraphDB;
@@ -115,9 +119,34 @@ public class Index {
         logger.info("About to process request for URL: " + url + " ID: " + sessionId);
         Map<String, Object> response = new HashMap<>();
         if (StringUtils.isNotBlank(url)) {
+
+            //Get domain name from url
+            logger.info("About to perform domain name retrieval. URL: "+ url + " ID: "+ sessionId);
+            String domain = classificationService.getDomainName(url);
+            logger.info("Done. Domain name: "+ domain);
+            //end of getting domain from url.
+
+            logger.info("About to retrieve content string from third party provider.");
+            boolean isDomainAProvider = false;
+            if(StringUtils.isNotBlank(domain)){
+                isDomainAProvider = thirdPartyProviderService.isDomainAProvider(domain);
+            }
+            logger.info("Done getting content string from third party provider.");
+
+            logger.info("About to make request to third party provider.");
+            String thirdPartyProviderDescription = null;
+            if(isDomainAProvider){
+                thirdPartyProviderDescription = thirdPartyProviderService.getItemDescription(domain, url);
+            }
+            logger.info("Done getting third party provider.");
+
             logger.info("About to get content string for URL. ID: "+ sessionId);
             String contentString = jsoupService.getContentAsString(url);
-            logger.info("Content string  retrieved : Length : "+ contentString.length());
+            if(StringUtils.isNotBlank(contentString)) {
+                logger.info("Content string  retrieved : Length : " + contentString.length());
+            } else {
+                logger.info("No content string  retrieved : Length : 0");
+            }
 
             logger.info("About to generate document object out of content string. ID: "+ sessionId);
             Document document = null;
@@ -141,32 +170,39 @@ public class Index {
             logger.info("Done getting metas from document. URL: "+ url + " ID:" + sessionId);
 
             List<String> titleTokens = new ArrayList<>();
+            logger.info("About to get tokens of title from document.");
             if (StringUtils.isNotBlank(title)) {
                 titleTokens.addAll(classificationService
                         .prepareTokens(Arrays.asList(classificationService.tokenize(title))));
-            } else {
-                response.put(RestResponseKeys.MESSAGE.toString(), "empty title from document from url. ID: "+ sessionId);
-            }
-
-            //Get domain name from url
-            logger.info("About to perform domain name retrieval. URL: "+ url + " ID: "+ sessionId);
-            String domain = classificationService.getDomainName(url);
-            logger.info("Done. Domain name: "+ domain);
-            //end of getting domain from url.
+            } else { logger.info("Done empty title from document from url. ID: "+ sessionId); }
 
             logger.info("About to get all links or URLs found in document. ID: "+ sessionId);
             List<Map> linksMap = null;
             if(document != null) {
                 linksMap = jsoupService.getLinksUrlAndValueByDocument(document);
             }
-            logger.info("Done. found "+ linksMap.size() + " urls in document. ID: "+ sessionId);
+            if(linksMap != null) {
+                logger.info("Done. found " + linksMap.size() + " urls in document. ID: " + sessionId);
+            } else {
+                logger.info("Done. none found 0 urls in document. ID: " + sessionId);
+            }
 
             logger.info("About to extract text from document. URL :"+ url + "ID: "+ sessionId);
-            String text = jsoupService
-                    .parseHtmlText(classificationService.removeNavigationAndMenuBars(
-                            classificationService.removePossibleImagesFromText(
-                            classificationService.removePossibleInputFieldFromText(
-                                    classificationService.removePossibleUrlFromText(linksMap, contentString)))), url);
+            String text = null;
+            if(StringUtils.isNotBlank(contentString)) {
+                text = jsoupService
+                        .parseHtmlText(classificationService.removeNavigationAndMenuBars(
+                                classificationService.removePossibleImagesFromText(
+                                        classificationService.removePossibleInputFieldFromText(
+                                                classificationService.removePossibleUrlFromText(linksMap, contentString)))), url);
+            }
+
+            if(StringUtils.isNotBlank(thirdPartyProviderDescription) && StringUtils.isBlank(contentString)){
+                logger.info("About to use description gotten from a third party provider.");
+                text = thirdPartyProviderDescription;
+                contentString = thirdPartyProviderDescription;
+                logger.info("Done third party description. Description: "+ text);
+            }
             logger.info("Done getting text extraction from document. URL: "+ url + " ID: "+ sessionId);
 
             if (StringUtils.isNotBlank(text)) {
@@ -348,7 +384,7 @@ public class Index {
                  */
                 Map<String, Object> priceMap = null;
                 if(StringUtils.isNotBlank(contentString) && metaKeyValuePair != null) {
-                    priceMap = classificationService.getPrice(contentString, metaKeyValuePair);
+                    priceMap = classificationService.getPrice(contentString);
                     if (priceMap != null && !priceMap.isEmpty()) {
                         //response.put("price", priceMap);
                     }
@@ -646,7 +682,7 @@ public class Index {
                                 responseCategoryToAttribute.setSizes(sizesFromContent);
                             }
 
-                            if(!priceMap.isEmpty()){
+                            if(priceMap != null && !priceMap.isEmpty()){
                                 responseCategoryToAttribute.setPricing(priceMap);
                             }
 

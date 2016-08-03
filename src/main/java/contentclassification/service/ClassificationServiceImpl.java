@@ -1018,7 +1018,7 @@ public class ClassificationServiceImpl implements ClassificationService{
      * This method in an implementation to retrieve price for a given item or content.
      */
     @Override
-    public Map<String, Object> getPrice(String text, List<Map> metaKeyValuePair){
+    public Map<String, Object> getPrice(String text){
         String[] idRegEx = RegExManager.loadRegEx("regex-price", "htmlId");
         String[] idValue = RegExManager.loadRegEx("regex-price","htmlValue");
         String[] priceReg = RegExManager.loadRegEx("regex-price", "priceReg");
@@ -1852,7 +1852,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                                     Pattern pattern = Pattern.compile(r, Pattern.CASE_INSENSITIVE);
                                     Matcher matcher = pattern.matcher(s);
                                     while (matcher.find()) {
-                                        foundPossibleSentences.add(matcher.group());
+                                        foundPossibleSentences.add(s);
                                     }
                                 }
                             }
@@ -1865,15 +1865,30 @@ public class ClassificationServiceImpl implements ClassificationService{
                             if(l2 != null && !l1.isEmpty()) {
                                 List<String> intersection = getIntersection(l1, l2);
                                 if (!intersection.isEmpty()) {
+                                    List<String> a = new ArrayList<>();
+                                    for(String s1 : intersection){
+                                        for(String r1 : regExText) {
+                                            if(StringUtils.isNotBlank(r1)) {
+                                                String pattern = r1 + ".+" + s1;
+                                                Pattern pattern1 = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
+                                                Matcher matcher = pattern1.matcher(s);
+                                                while (matcher.find()) {
+                                                    a.add(matcher.group());
+                                                }
+                                            }
+                                        }
+                                    }
                                     StringBuilder builder = new StringBuilder();
                                     int x = 0;
-                                    for (String b : intersection) {
-                                        if (x < (intersection.size() - 1)) {
-                                            builder.append(b + " ");
-                                        } else {
-                                            builder.append(b);
+                                    if(!a.isEmpty()) {
+                                        for (String b : a) {
+                                            if (x < (intersection.size() - 1)) {
+                                                builder.append(b + " ");
+                                            } else {
+                                                builder.append(b);
+                                            }
+                                            x++;
                                         }
-                                        x++;
                                     }
 
                                     brand = builder.toString();
