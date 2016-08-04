@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import sun.net.www.protocol.mailto.MailToURLConnection;
 
 import java.net.URI;
 import java.util.*;

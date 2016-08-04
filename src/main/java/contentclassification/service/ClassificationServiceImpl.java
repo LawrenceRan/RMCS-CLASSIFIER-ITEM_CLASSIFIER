@@ -12,6 +12,7 @@ import net.sf.javaml.core.DefaultDataset;
 import net.sf.javaml.core.DenseInstance;
 import net.sf.javaml.core.Instance;
 import net.sf.javaml.tools.weka.WekaClusterer;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -1860,20 +1861,36 @@ public class ClassificationServiceImpl implements ClassificationService{
                     }
 
                     if(!foundPossibleSentences.isEmpty()){
+                        List<String> symbolsList = Symbols.loadSymbolsAsString();
                         for(String s : foundPossibleSentences){
                             List<String> l1 = Arrays.asList(tokenize(s.toLowerCase().trim()));
                             if(l2 != null && !l1.isEmpty()) {
                                 List<String> intersection = getIntersection(l1, l2);
+
+                                if(!intersection.isEmpty()) {
+                                    if(!symbolsList.isEmpty()){
+                                        for(String symbol : symbolsList){
+                                            if(intersection.contains(symbol)) {
+                                                intersection.remove(symbol);
+                                            }
+                                        }
+                                    }
+                                }
+
                                 if (!intersection.isEmpty()) {
                                     List<String> a = new ArrayList<>();
                                     for(String s1 : intersection){
                                         for(String r1 : regExText) {
                                             if(StringUtils.isNotBlank(r1)) {
                                                 String pattern = r1 + ".+" + s1;
-                                                Pattern pattern1 = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
-                                                Matcher matcher = pattern1.matcher(s);
-                                                while (matcher.find()) {
-                                                    a.add(matcher.group());
+                                                try {
+                                                    Pattern pattern1 = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
+                                                    Matcher matcher = pattern1.matcher(s);
+                                                    while (matcher.find()) {
+                                                        a.add(matcher.group());
+                                                    }
+                                                } catch (Exception e){
+                                                    logger.debug("Error in regex get brands. Message: "+ e.getMessage());
                                                 }
                                             }
                                         }
@@ -1881,8 +1898,49 @@ public class ClassificationServiceImpl implements ClassificationService{
                                     StringBuilder builder = new StringBuilder();
                                     int x = 0;
                                     if(!a.isEmpty()) {
+                                        List<String> union = new ArrayList<>();
+                                        for(String z : a){
+                                            union.addAll(Arrays.asList(tokenize(z)));
+                                        }
+                                        Set<String> cleaner = new HashSet<>();
+                                        cleaner.addAll(union);
+                                        union.clear();
+                                        union.addAll(cleaner);
 
-                                        for (String b : a) {
+                                        List<Map<String, Object>> getTermToBICScoreFromClusterObject
+                                                = getTermToBICScoreFromCluster(union, a);
+
+                                        Collections.sort(getTermToBICScoreFromClusterObject,
+                                                new Comparator<Map<String, Object>>() {
+                                            @Override
+                                            public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+                                                Double d1 = (Double) o1.get("bicScore");
+                                                Double d2 = (Double) o2.get("bicScore");
+                                                return d1.compareTo(d2);
+                                            }
+                                        });
+
+                                        List<String> termsFound = new ArrayList<>();
+                                        if(!getTermToBICScoreFromClusterObject.isEmpty()){
+                                            Map i = getTermToBICScoreFromClusterObject.get(0);
+                                            if(!i.isEmpty()) {
+                                                Double k = (Double) i.get("bicScore");
+                                                for (Map<String, Object> m : getTermToBICScoreFromClusterObject) {
+                                                    if (m.containsKey("bicScore")) {
+                                                        Double j = (Double) m.get("bicScore");
+                                                        if (j.equals(k)) {
+                                                            termsFound.add(m.get("term").toString().trim().toLowerCase());
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        if(!termsFound.isEmpty()){
+                                            intersection = getIntersection(termsFound, l2);
+                                        }
+
+                                        for (String b : intersection) {
                                             if (x < (intersection.size() - 1)) {
                                                 builder.append(b + " ");
                                             } else {
@@ -1891,7 +1949,6 @@ public class ClassificationServiceImpl implements ClassificationService{
                                             x++;
                                         }
                                     }
-
                                     brand = builder.toString();
                                 }
                             }
@@ -1948,5 +2005,48 @@ public class ClassificationServiceImpl implements ClassificationService{
             }
         }
         return brand;
+    }
+
+    @Override
+    public List<Map<String, Object>> getTermToBICScoreFromCluster(List<String> unionOfTerms, List<String> sentences){
+        List<Map<String, Object>> answer = new ArrayList<>();
+        if (!unionOfTerms.isEmpty() && !sentences.isEmpty()) {
+            for(String t : unionOfTerms){
+                Map<String, Object> map = new HashMap<>();
+                double d = 0d;
+
+                int x = 0;
+                double[] id = new double[sentences.size()];
+                for(String s : sentences){
+                    id[x] = s.contains(t) ? 1 : 0;
+                    x++;
+                }
+                Instance instance = new DenseInstance(id);
+                Dataset dataset = new DefaultDataset();
+                dataset.add(instance);
+
+                XMeans xm = new XMeans();
+                Clusterer kMeans = new WekaClusterer(xm);
+                Dataset[] cluster = kMeans.cluster(dataset);
+
+                ClusterEvaluation clusterEvaluation = new SumOfAveragePairwiseSimilarities();
+                ClusterEvaluation evaluation1 = new SumOfCentroidSimilarities();
+                ClusterEvaluation evaluation2 = new AICScore();
+                ClusterEvaluation evaluation3 = new BICScore();
+
+                double sumOfAveragePairwiseSimilarities = clusterEvaluation.score(cluster);
+                double sumOfCentroidSimilarities = evaluation1.score(cluster);
+                double aicScore = evaluation2.score(cluster);
+                double bicScore = evaluation3.score(cluster);
+
+                map.put("term", t);
+                map.put("sumOfAveragePairwiseSimilarities", sumOfAveragePairwiseSimilarities);
+                map.put("sumOfCentroidSimilarities", sumOfCentroidSimilarities);
+                map.put("aicScore", aicScore);
+                map.put("bicScore", bicScore);
+                answer.add(map);
+            }
+        }
+        return answer;
     }
 }

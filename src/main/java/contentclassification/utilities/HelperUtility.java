@@ -1,5 +1,7 @@
 package contentclassification.utilities;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,5 +17,18 @@ public class HelperUtility {
             }
         }
         return list;
+    }
+
+    public static String[] listToArray(List<String> list){
+        String[] output = null;
+        if(list != null && !list.isEmpty()){
+            output = new String[list.size()];
+            int x = 0;
+            for(String s : list){
+                output[x] = s;
+                x++;
+            }
+        }
+        return output;
     }
 }

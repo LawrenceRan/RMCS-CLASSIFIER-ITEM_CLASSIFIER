@@ -10,7 +10,8 @@ import java.util.List;
  */
 public enum ThirdPartyProviderResponseKeys {
     CLOTH_SIZE("ClothingSize"), BRAND("Brand"), DEPARTMENT("Department"), SIZE("Size"),
-    ITEM_ATTRIBUTES("ItemAttributes"), PRODUCT_TYPE_NAME("ProductTypeName"), TITLE("Title"), COLOR("Color");
+    ITEM_ATTRIBUTES("ItemAttributes"), PRODUCT_TYPE_NAME("ProductTypeName"), TITLE("Title"), COLOR("Color"),
+    OFFER_SUMMARY("OfferSummary");
 
     private final String key;
 

@@ -467,7 +467,7 @@ public class Classification {
             if(inputStream != null ) {
                 try {
                     Path temp = Files.createTempFile("en-pos-maxent", ".bin");
-                    Files.copy(inputStream, temp);
+                    Files.copy(inputStream, temp, StandardCopyOption.REPLACE_EXISTING);
                     File file = temp.toFile();
 
                     if(file.exists() && file.canRead()) {

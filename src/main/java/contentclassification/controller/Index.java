@@ -94,7 +94,7 @@ public class Index {
         return modelAndView;
     }
 
-    @RequestMapping(value = "/v1/url", method = RequestMethod.GET, produces = "application/json")
+    @RequestMapping(value = "/v1/url", method = RequestMethod.GET, produces = "application/json;charset=utf-8")
     @ResponseBody
     public String generateTagsByUrl(@RequestParam(required = true, name = "url") String url,
                                           @RequestParam(required = false, name = "showScore", defaultValue = "false")
@@ -190,7 +190,7 @@ public class Index {
 
             logger.info("About to extract text from document. URL :"+ url + "ID: "+ sessionId);
             String text = null;
-            if(StringUtils.isNotBlank(contentString)) {
+            if(StringUtils.isNotBlank(contentString) && !isDomainAProvider) {
                 text = jsoupService
                         .parseHtmlText(classificationService.removeNavigationAndMenuBars(
                                 classificationService.removePossibleImagesFromText(

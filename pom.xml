@@ -146,6 +146,7 @@
                     <include>application-production2.properties</include>
                     <include>request-proxy.properties</include>
                     <include>default-third-party-providers.yml</include>
+                    <include>en-list-of-symbols.yml</include>
                 </includes>
             </resource>
         </resources>
