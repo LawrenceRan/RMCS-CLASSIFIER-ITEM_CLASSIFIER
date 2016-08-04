@@ -1079,12 +1079,14 @@ public class ClassificationServiceImpl implements ClassificationService{
 
                 if(sentenceDetection != null && sentenceDetection.length > 0){
                     for(String s : sentenceDetection){
-                        for(String p : priceReg) {
-                            if(StringUtils.isNotBlank(p)) {
-                                Pattern pattern = Pattern.compile(p, Pattern.CASE_INSENSITIVE);
-                                Matcher matcher = pattern.matcher(s);
-                                while (matcher.find()) {
-                                    ps.add(matcher.group());
+                        if(StringUtils.isNotBlank(s)) {
+                            for (String p : priceReg) {
+                                if (StringUtils.isNotBlank(p)) {
+                                    Pattern pattern = Pattern.compile(p, Pattern.CASE_INSENSITIVE);
+                                    Matcher matcher = pattern.matcher(s);
+                                    while (matcher.find()) {
+                                        ps.add(matcher.group());
+                                    }
                                 }
                             }
                         }
@@ -1093,14 +1095,16 @@ public class ClassificationServiceImpl implements ClassificationService{
 
                 if(!ps.isEmpty()){
                     for(String s  : ps){
-                        for(String priceRegEx : possiblePriceValue) {
-                            if(StringUtils.isNotBlank(priceRegEx)) {
-                                Pattern pattern = Pattern.compile(priceRegEx, Pattern.CASE_INSENSITIVE);
-                                Matcher matcher = pattern.matcher(s);
-                                while (matcher.find()) {
-                                    String n = matcher.group();
-                                    if (StringUtils.isNotBlank(n)) {
-                                        psv.add(Double.parseDouble(n));
+                        if(StringUtils.isNotBlank(s)) {
+                            for (String priceRegEx : possiblePriceValue) {
+                                if (StringUtils.isNotBlank(priceRegEx)) {
+                                    Pattern pattern = Pattern.compile(priceRegEx, Pattern.CASE_INSENSITIVE);
+                                    Matcher matcher = pattern.matcher(s);
+                                    while (matcher.find()) {
+                                        String n = matcher.group();
+                                        if (StringUtils.isNotBlank(n)) {
+                                            psv.add(Double.parseDouble(n));
+                                        }
                                     }
                                 }
                             }
@@ -1172,7 +1176,7 @@ public class ClassificationServiceImpl implements ClassificationService{
 
                     }
                 }
-                logger.info("testing..");
+
 //                String[] productIdDomSearch = {"[^data-product]"};
 //                if (productIdDomSearch != null && productIdDomSearch.length > 0) {
 //                    for (String s : productIdDomSearch) {

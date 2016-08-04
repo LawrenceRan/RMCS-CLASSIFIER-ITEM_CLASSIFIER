@@ -148,7 +148,7 @@ public class ThirdPartyProviderService {
                                     String key = m.get("key").toString();
                                     if(StringUtils.isNotBlank(key)){
                                         value = mapResponseKeysToValues.get(key);
-                                        paragraphs.add(key + " : " + value);
+                                        paragraphs.add(key + ": " + value);
                                     }
                                 }
                             }
