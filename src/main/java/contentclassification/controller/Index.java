@@ -22,6 +22,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 
+import java.net.URLDecoder;
 import java.util.*;
 
 /**
@@ -101,6 +102,14 @@ public class Index {
                                           boolean showScore )  {
         ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
         String sessionId = attr.getSessionId();
+
+        logger.info("About to decode URL parameter. URL "+ url);
+        try {
+            url = URLDecoder.decode(url, "UTF-8");
+        } catch (Exception e){
+            logger.debug("Error in decoding URL parameter. URL: "+ url);
+        }
+        logger.info("Done decoding URL parameter. Updated URL: "+ url);
 
         logger.info("About to check whether to use proxy request. ID: "+ sessionId);
         boolean useProxy = requestProxy.isEnable();
