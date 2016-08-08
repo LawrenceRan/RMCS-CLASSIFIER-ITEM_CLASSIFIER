@@ -30,6 +30,7 @@ public class NotificationService {
         simpleMailMessage.setFrom("auto-notif@rancardsolutions.com");
         simpleMailMessage.setSubject("testing e-mail sender ");
         simpleMailMessage.setText("testing");
+        javaMailSender.send(simpleMailMessage);
         logger.info("Done sending mail...");
     }
 }
