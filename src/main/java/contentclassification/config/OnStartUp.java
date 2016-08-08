@@ -31,10 +31,5 @@ public class OnStartUp implements ApplicationListener<ContextRefreshedEvent> {
         System.setProperty("clothing.fabric.names.uri", classificationConfig.getFabricNameResource());
         System.setProperty("enable.javascript", classificationConfig.getEnableJavascript());
         System.setProperty("enable.css", classificationConfig.getEnableCss());
-        try {
-            notificationService.sendNotification();
-        } catch (InterruptedException e) {
-            logger.debug("Error in sending start up message. Message: ", e.getMessage());
-        }
     }
 }
