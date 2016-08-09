@@ -148,6 +148,7 @@
                     <include>default-third-party-providers.yml</include>
                     <include>en-list-of-symbols.yml</include>
                     <include>mail.properties</include>
+                    <include>logback-spring.xml</include>
                 </includes>
             </resource>
         </resources>
