@@ -1,5 +1,6 @@
 package contentclassification.service;
 
+import org.apache.commons.lang3.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,15 +51,15 @@ public class NotificationService {
         if(!errorAttributes.isEmpty()){
             int x = 0;
             for(Map.Entry<String, Object> entry : errorAttributes.entrySet()){
-                String message = x < (errorAttributes.size() - 1) ? entry.getKey() + ": " + entry.getValue() + "\n"
-                        : entry.getKey() + " : " + entry.getValue();
+                String message = x < (errorAttributes.size() - 1) ? WordUtils.capitalize(entry.getKey()) + ": " + entry.getValue() + "\n"
+                        : WordUtils.capitalize(entry.getKey()) + " : " + entry.getValue();
                 messageBuilder.append(message);
             }
         }
         SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
         simpleMailMessage.setTo("nanabenyin.otoo@rancardsolutions.com");
         simpleMailMessage.setFrom("auto-notif@rancardsolutions.com");
-        simpleMailMessage.setSubject("" + profile + "");
+        simpleMailMessage.setSubject("Exception occurred : " + WordUtils.capitalize(profile) + "");
         simpleMailMessage.setText(messageBuilder.toString());
         javaMailSender.send(simpleMailMessage);
         logger.info("done sending exception as mail.");
