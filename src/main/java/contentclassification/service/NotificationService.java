@@ -46,6 +46,7 @@ public class NotificationService {
         Thread.sleep(10000);
 
         String profile = environment.getActiveProfiles()[0];
+        String appName = environment.getProperty("spring.application.name");
 
         StringBuilder messageBuilder = new StringBuilder();
         if(!errorAttributes.isEmpty()){
@@ -59,7 +60,7 @@ public class NotificationService {
         SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
         simpleMailMessage.setTo("nanabenyin.otoo@rancardsolutions.com");
         simpleMailMessage.setFrom("auto-notif@rancardsolutions.com");
-        simpleMailMessage.setSubject("Exception occurred : " + WordUtils.capitalize(profile) + "");
+        simpleMailMessage.setSubject( appName +" exception occurred : " + WordUtils.capitalize(profile) + "");
         simpleMailMessage.setText(messageBuilder.toString());
         javaMailSender.send(simpleMailMessage);
         logger.info("done sending exception as mail.");
