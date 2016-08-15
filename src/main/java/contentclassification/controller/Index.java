@@ -335,10 +335,14 @@ public class Index {
 
                 List<Categories> categoriesList = classificationService.getCategories();
                 List<String> multiWordAttributes = new ArrayList<>();
-                List<String> allAttributes = new ArrayList<>();
+                List<String> allAttributes = null;
+                List<String> allCategories = null;
 
                 if (categoriesList != null && !categoriesList.isEmpty()) {
+                    allAttributes = new ArrayList<>();
+                    allCategories = new ArrayList<>();
                     for (Categories c : categoriesList) {
+                        allCategories.add(c.getCategory());
                         allAttributes.addAll(c.getAttributes());
                         multiWordAttributes.addAll(classificationService.getMultiWordedAttributes(c));
                     }
@@ -442,6 +446,10 @@ public class Index {
 
 
                     List<String> intersect = classificationService.getIntersection(tokensAsList, allAttributes);
+
+                    if(intersect.isEmpty()) {
+                        intersect = classificationService.getIntersection(tokensAsList, allCategories);
+                    }
 
                     if (intersect != null && !intersect.isEmpty()) {
                         List<TFIDFWeightedScore> tfIdfWeightedScores = new ArrayList<>();

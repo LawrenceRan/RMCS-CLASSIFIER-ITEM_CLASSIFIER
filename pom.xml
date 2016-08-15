@@ -150,6 +150,7 @@
                     <include>mail.properties</include>
                     <include>logback-spring.xml</include>
                     <include>regex-id-in-urls</include>
+                    <include>en-gender-groupings</include>
                 </includes>
             </resource>
         </resources>

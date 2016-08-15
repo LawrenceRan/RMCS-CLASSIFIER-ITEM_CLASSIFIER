@@ -14,6 +14,8 @@ import net.sf.javaml.core.Instance;
 import net.sf.javaml.tools.weka.WekaClusterer;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.atteo.evo.inflector.English;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -1106,7 +1108,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                                             n = n.contains(",") ? n.replace(",", "") : n;
                                             Double parseNumber = 0D;
                                             try {
-                                                parseNumber = Double.parseDouble(n);
+                                                parseNumber = Double.valueOf(n);
                                             } catch (Exception e) {
                                                 logger.debug("Error parsing double. Message: "+ e.getMessage());
                                             }
@@ -1378,7 +1380,7 @@ public class ClassificationServiceImpl implements ClassificationService{
 
                             if(!totalTermToGroups.isEmpty()) {
                                 TotalTermToGroup toGroup = totalTermToGroups.get(0);
-                                results.put("gender", toGroup.getTerm());
+                                results.put("gender", English.plural(toGroup.getTerm(), 1));
                             }
                         }
                     }

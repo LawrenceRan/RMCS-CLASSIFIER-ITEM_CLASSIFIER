@@ -101,7 +101,7 @@ public class LearningImpl {
     }
 
     private String find(String query){
-        logger.info("");
+        logger.info("About to send query. Query : "+ query);
         String findings = null;
         String queryStr =
                 "PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>\n" +
@@ -116,9 +116,9 @@ public class LearningImpl {
                         "WHERE\n" +
                         "   { ?book dc:title ?title }";
         Query qry = QueryFactory.create(queryStr);
-        QueryExecution queryExcution = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
+        QueryExecution queryExecution = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
         try{
-            ResultSet resultSet = queryExcution.execSelect();
+            ResultSet resultSet = queryExecution.execSelect();
             for(; resultSet.hasNext();){
                 List<String> resultVars = resultSet.getResultVars();
                 logger.info("Result Vars: "+ resultVars);
@@ -126,7 +126,7 @@ public class LearningImpl {
         } catch (Exception e){
             logger.debug("Error: "+ e.getMessage());
         } finally {
-            queryExcution.close();
+            queryExecution.close();
         }
         return findings;
     }
