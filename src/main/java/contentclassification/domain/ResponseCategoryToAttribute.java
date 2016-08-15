@@ -15,7 +15,7 @@ public class ResponseCategoryToAttribute {
     private String category;
     private List<String> attributes;
     private List<String> colors;
-    private String gender;
+    private Map<String, Object> gender;
     private List<String> materials;
     private List<String> sizes;
     private Map<String, Object> pricing;
@@ -57,11 +57,11 @@ public class ResponseCategoryToAttribute {
         this.colors = colors;
     }
 
-    public String getGender() {
+    public Map<String,Object> getGender() {
         return gender;
     }
 
-    public void setGender(String gender) {
+    public void setGender(Map<String, Object> gender) {
         this.gender = gender;
     }
 

@@ -5,6 +5,7 @@ import contentclassification.domain.*;
 import contentclassification.model.RulesEngineModel;
 import contentclassification.utilities.BM25;
 import contentclassification.utilities.HelperUtility;
+import edu.mit.jwi.item.POS;
 import net.sf.javaml.clustering.Clusterer;
 import net.sf.javaml.clustering.evaluation.*;
 import net.sf.javaml.core.Dataset;
@@ -45,6 +46,9 @@ public class ClassificationServiceImpl implements ClassificationService{
 
     @Autowired
     private RulesEngineModelServiceImpl rulesEngineModelService;
+
+    @Autowired
+    private WordNetService wordNetService;
 
     Classification classification = null;
 
@@ -840,9 +844,9 @@ public class ClassificationServiceImpl implements ClassificationService{
                     colors.addAll(r.getColors());
                 }
 
-                String gender = r.getGender();
-                if(StringUtils.isNotBlank(gender)){
-                    genderMap.put(r.getCategory(), gender);
+                Map<String, Object> gender = r.getGender();
+                if(gender != null && !gender.isEmpty()){
+                    genderMap.putAll(gender);
                 }
 
                 List<String> materials = r.getMaterials();
@@ -915,7 +919,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                 responseCategoryToAttribute.setColors(updatedColors);
 
                 if(!genderMap.isEmpty()){
-                    responseCategoryToAttribute.setGender(genderMap.get(includedCategory).toString());
+                    responseCategoryToAttribute.setGender(genderMap);
                 }
 
                 //Add materials found to combined response.
@@ -969,7 +973,7 @@ public class ClassificationServiceImpl implements ClassificationService{
         if(responseCategoryToAttributes != null && !responseCategoryToAttributes.isEmpty()){
             Map<String, List<String>> categoryToAttributes = new HashMap<>();
             Map<String, List<String>> colorsMap = new HashMap<>();
-            Map<String, String> genderMap = new HashMap<>();
+            Map<String, Object> genderMap = new HashMap<>();
             Map<String, List<String>> materialsMap = new HashMap<>();
             Map<String, List<String>> sizesMap = new HashMap<>();
             Map<String, Map<String, Object>> pricingMap = new HashMap<>();
@@ -1005,7 +1009,18 @@ public class ClassificationServiceImpl implements ClassificationService{
                     r.setCategory(ca);
                     r.setAttributes(categoryToAttributes.get(ca));
                     r.setColors(colorsMap.get(ca));
-                    r.setGender(genderMap.get(ca));
+                    if(!genderMap.isEmpty()) {
+                        if(genderMap.containsKey(ca)) {
+                            Map<String, Object> m = (Map<String, Object>) genderMap.get(ca);
+                            if(m != null && !m.isEmpty()) {
+                                if(m.containsKey("gender")) {
+                                    if(m.get("gender") instanceof Map) {
+                                        r.setGender((Map<String, Object>) m.get("gender"));
+                                    }
+                                }
+                            }
+                        }
+                    }
                     r.setMaterials(materialsMap.get(ca));
                     r.setSizes(sizesMap.get(ca));
                     r.setPricing(pricingMap.get(ca));
@@ -1380,23 +1395,25 @@ public class ClassificationServiceImpl implements ClassificationService{
 
                             if(!totalTermToGroups.isEmpty()) {
                                 TotalTermToGroup toGroup = totalTermToGroups.get(0);
-                                results.put("gender", English.plural(toGroup.getTerm(), 1));
+                                String g = English.plural(toGroup.getTerm(), 1);
+                                if(StringUtils.isNotBlank(g)) {
+                                    List<Map> stemmers = wordNetService.findStemmers(g);
+                                    g = (stemmers != null && !stemmers.isEmpty()) ?
+                                            stemmers.get(0).get(POS.NOUN.getNumber()).toString() : g;
+                                    String getTopLevelGender = HelperUtility.getTopLevelGender(g);
+                                    Map<String, List<String>> map = null;
+                                    if (StringUtils.isNotBlank(getTopLevelGender)) {
+                                        map = new HashMap<>();
+                                        List<String> list = new ArrayList<>();
+                                        list.add(g);
+                                        map.put(getTopLevelGender, list);
+                                    }
+                                    results.put("gender", getTopLevelGender != null ? map : g);
+                                }
                             }
                         }
                     }
                 }
-
-                //get all possessive nouns
-//                List<Map> posMap = getPos(tokenize(possibleTitle));
-//                if(!posMap.isEmpty()){
-//                    for(Map m : posMap){
-//                        if(m.containsKey("pos")){
-//                            String pos = m.get("pos").toString();
-//                            //logger.info("POS: "+ pos);
-//                        }
-//                    }
-//                }
-
             }
         }
         return results;

@@ -1,1 +1,1 @@
-{ male : ["men"], female : ["women"]}
+{ male : ["men", "gentlemen","boy", "male", "masculine", "man", "gentleman"], female : ["women","lady", "girl", "female", "feminine", "woman", "ladies"]}

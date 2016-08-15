@@ -313,7 +313,7 @@ public class Index {
                 List<String> materialsFound = new ArrayList<>();
                 if(!fabricNames.isEmpty()){
                     for(FabricName fabricName : fabricNames){
-                        materialsFound.add(fabricName.getName());
+                        materialsFound.add(fabricName.getName().trim().toLowerCase());
                     }
                 }
                 //End of potential material of make.
@@ -688,7 +688,7 @@ public class Index {
 
                             if(!gender.isEmpty()) {
                                 if(gender.containsKey("gender")) {
-                                    responseCategoryToAttribute.setGender(gender.get("gender").toString());
+                                    responseCategoryToAttribute.setGender(gender);
                                 }
                             }
 
