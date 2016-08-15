@@ -25,10 +25,6 @@ public class ThirdPartyProvider {
     private String urlKey;
     private List<Map<String, Object>> responseKeys;
 
-    public static Logger getLogger() {
-        return logger;
-    }
-
     public Long getId() {
         return id;
     }

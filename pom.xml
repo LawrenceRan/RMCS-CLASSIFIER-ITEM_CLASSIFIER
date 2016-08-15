@@ -149,6 +149,7 @@
                     <include>en-list-of-symbols.yml</include>
                     <include>mail.properties</include>
                     <include>logback-spring.xml</include>
+                    <include>regex-id-in-urls</include>
                 </includes>
             </resource>
         </resources>
@@ -369,6 +370,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>18.0</version>
         </dependency>
     </dependencies>
 </project>

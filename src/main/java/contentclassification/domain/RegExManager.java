@@ -118,4 +118,30 @@ public class RegExManager {
         }
         return regExs;
     }
+
+    public static String[] loadRegEx(String resourceFileName, String key, String value){
+        String[] regExs = null;
+        ClassLoader classLoader = RegExManager.class.getClassLoader();
+        InputStream inputStream = classLoader.getResourceAsStream(resourceFileName);
+        if(inputStream != null){
+            try{
+                Yaml yaml = new Yaml();
+                Map regEx = (Map) yaml.load(inputStream);
+                if(regEx != null && !regEx.isEmpty()){
+                    if(regEx.containsKey(key)) {
+                        if(regEx.containsKey(key)) {
+                            Object l = regEx.get(key);
+                            if (l instanceof List) {
+                                List<String> ls = (List<String>) l;
+                                regExs = ls.toArray(new String[regEx.size()]);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e){
+                logger.debug("Error in getting regex brands. Message: "+ e.getMessage());
+            }
+        }
+        return regExs;
+    }
 }

@@ -1,0 +1,1 @@
+- { domain : "amazon.com", patterns : ["\\/B\\d.*(\\?|\\/)"], exclude : ["\\?", "\\/", "\\&"]}

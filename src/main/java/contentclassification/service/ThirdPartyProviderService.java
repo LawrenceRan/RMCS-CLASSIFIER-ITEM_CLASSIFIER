@@ -1,5 +1,6 @@
 package contentclassification.service;
 
+import contentclassification.domain.RegExManager;
 import contentclassification.domain.ThirdPartyProvider;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
@@ -8,7 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.yaml.snakeyaml.Yaml;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -84,6 +87,10 @@ public class ThirdPartyProviderService {
                         }
                     }
 
+                    if(StringUtils.isBlank(id)){
+                        id = retrieveIdFromUrl(url, thirdPartyProvider.getDomain());
+                    }
+
                     if(StringUtils.isNotBlank(requestUrl) && StringUtils.isNotBlank(id)){
                         String idRegEx = "{id}";
                         requestUrl = requestUrl.replace(idRegEx, id) +"?domain="+ supportedDomain;
@@ -95,7 +102,6 @@ public class ThirdPartyProviderService {
                         } catch (Exception e){
                             logger.debug("Error making rest call. Message: "+ e.getMessage());
                         }
-                        logger.info("testing...");
 
                         if(responseMap != null){
                             List<String> responseKeys = new ArrayList<>();
@@ -158,10 +164,10 @@ public class ThirdPartyProviderService {
                                 int x = 0;
                                 for(String s : paragraphs){
                                     if(x < (paragraphs.size() - 1)) {
-                                        stringBuilder.append(s);
+                                        stringBuilder.append(s.trim());
                                         stringBuilder.append("\n");
                                     } else {
-                                        stringBuilder.append(s);
+                                        stringBuilder.append(s.trim());
                                     }
                                     x++;
                                 }
@@ -173,5 +179,85 @@ public class ThirdPartyProviderService {
             }
         }
         return description;
+    }
+
+    private String retrieveIdFromUrl(String url, String domain){
+        String id = null;
+        try{
+            ClassLoader classLoader = getClass().getClassLoader();
+            InputStream inputStream = classLoader.getResourceAsStream("regex-id-in-urls");
+            if(inputStream != null) {
+                boolean isDomainPresent = false;
+                List<String> patterns = null;
+                List<String> exclusionList = null;
+
+                Yaml yaml = new Yaml();
+                List<Map<String, Object>> mapList = (List<Map<String, Object>>) yaml.load(inputStream);
+                if(mapList != null && !mapList.isEmpty()) {
+                    for(Map<String, Object> m : mapList) {
+                        if (m.containsKey("domain")) {
+                            Object object = m.get("domain");
+                            if (object instanceof String) {
+                                String dbDomain = object.toString();
+                                isDomainPresent = dbDomain.equalsIgnoreCase(domain);
+                            }
+
+                            if(isDomainPresent){
+                                if(m.containsKey("patterns")){
+                                    Object patternsObj = m.get("patterns");
+                                    if(patternsObj instanceof List){
+                                        patterns = (List<String>) patternsObj;
+                                    }
+                                }
+
+                                if(m.containsKey("exclude")){
+                                    Object ex = m.get("exclude");
+                                    exclusionList = ex instanceof List ? (List<String>) ex : null;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                List<String> foundIds = null;
+                if(patterns != null && !patterns.isEmpty()){
+                    foundIds = new ArrayList<>();
+                    for(String pattern : patterns){
+                        Pattern p = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
+                        Matcher matcher = p.matcher(url);
+                        while (matcher.find()){
+                            foundIds.add(matcher.group());
+                        }
+                    }
+
+                    if(!foundIds.isEmpty() && exclusionList != null && !exclusionList.isEmpty()){
+                        id = foundIds.get(0);
+                        StringBuilder regExBuilder = new StringBuilder();
+                        regExBuilder.append("(");
+
+                        int x = 0;
+                        for(String s : exclusionList){
+                            if(x < exclusionList.size() - 1) {
+                                regExBuilder.append(s);
+                                regExBuilder.append("|");
+                            } else {
+                                regExBuilder.append("s");
+                            }
+                            x++;
+                        }
+                        regExBuilder.append(")");
+
+                        logger.info("Reg: "+ regExBuilder.toString());
+
+                        id = StringUtils.isBlank(id) ? null : id.replaceAll(regExBuilder.toString(), "");
+                    }
+                }
+
+                logger.info("found.");
+            }
+        } catch (Exception e){
+            logger.debug("Error occurred in retrieving Id from url. Message: "+ e.getMessage());
+        }
+        return id;
     }
 }

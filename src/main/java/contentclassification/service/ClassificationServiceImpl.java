@@ -1103,7 +1103,14 @@ public class ClassificationServiceImpl implements ClassificationService{
                                     while (matcher.find()) {
                                         String n = matcher.group();
                                         if (StringUtils.isNotBlank(n)) {
-                                            psv.add(Double.parseDouble(n));
+                                            n = n.contains(",") ? n.replace(",", "") : n;
+                                            Double parseNumber = 0D;
+                                            try {
+                                                parseNumber = Double.parseDouble(n);
+                                            } catch (Exception e) {
+                                                logger.debug("Error parsing double. Message: "+ e.getMessage());
+                                            }
+                                            psv.add(parseNumber);
                                         }
                                     }
                                 }
@@ -1899,6 +1906,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                                             }
                                         }
                                     }
+
                                     StringBuilder builder = new StringBuilder();
                                     int x = 0;
                                     if(!a.isEmpty()) {
