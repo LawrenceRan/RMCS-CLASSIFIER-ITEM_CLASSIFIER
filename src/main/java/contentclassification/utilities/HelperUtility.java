@@ -61,4 +61,30 @@ public class HelperUtility {
         }
         return gender;
     }
+
+    public static String textToHtml(String text){
+        String html = null;
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("<html>");
+        if(StringUtils.isNotBlank(text)){
+            int len = text.length();
+            for(int x = 0; x < len; x++){
+                char c = text.charAt(x);
+                switch (c){
+                    case '\r':
+                        stringBuilder.append("</br>");
+                        break;
+                    case '\n':
+                        stringBuilder.append("</br>");
+                        break;
+                    default:
+                        stringBuilder.append(c);
+                        break;
+                }
+            }
+        }
+        stringBuilder.append("</html>");
+        html = stringBuilder.toString();
+        return html;
+    }
 }

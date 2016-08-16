@@ -1570,8 +1570,6 @@ public class ClassificationServiceImpl implements ClassificationService{
                             if(rulesEngineTask != null){
                                 switch (rulesEngineTask){
                                     case OCCURRENCE:
-                                        Map<ResponseCategoryToAttribute, Double> rScore = new HashMap<>();
-
                                         List<ResponseToAttributeClusterScore> responseToAttributeClusterScoreList = new ArrayList<>();
 
                                         if(!responseCategoryToAttributeList.isEmpty()) {
@@ -1917,7 +1915,9 @@ public class ClassificationServiceImpl implements ClassificationService{
                                                     Pattern pattern1 = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
                                                     Matcher matcher = pattern1.matcher(s);
                                                     while (matcher.find()) {
-                                                        a.add(matcher.group());
+                                                        String found = matcher.
+                                                                group().replaceAll("(?i)" + r1, "");
+                                                        a.add(found);
                                                     }
                                                 } catch (Exception e){
                                                     logger.debug("Error in regex get brands. Message: "+ e.getMessage());
@@ -1928,6 +1928,9 @@ public class ClassificationServiceImpl implements ClassificationService{
 
                                     StringBuilder builder = new StringBuilder();
                                     int x = 0;
+
+                                    List<Map> scoredTerms = null;
+
                                     if(!a.isEmpty()) {
                                         List<String> union = new ArrayList<>();
                                         for(String z : a){
@@ -1938,8 +1941,36 @@ public class ClassificationServiceImpl implements ClassificationService{
                                         union.clear();
                                         union.addAll(cleaner);
 
+                                        //return only NNP (Proper noun, singular)
+                                        List<Map> getPosObj = getPos(union.toArray(new String[union.size()]));
+                                        if (getPosObj != null && !getPosObj.isEmpty()) {
+                                            union.clear();
+                                            for(Map<String, String> m : getPosObj){
+                                                if(m.containsKey("pos")){
+                                                    String pos = m.get("pos");
+                                                    POSRESPONSES posresponses = null;
+
+                                                    try {
+                                                        posresponses = POSRESPONSES.valueOf(pos);
+                                                    } catch (Exception e){
+                                                        logger.debug("Error in getting parts of speech. Message: "+
+                                                                e.getMessage()
+                                                        );
+                                                    }
+                                                    if(posresponses != null) {
+                                                        if (posresponses == POSRESPONSES.NNP) {
+                                                            if(m.containsKey("token")) {
+                                                                union.add(m.get("token"));
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
                                         List<Map<String, Object>> getTermToBICScoreFromClusterObject
                                                 = getTermToBICScoreFromCluster(union, a);
+
 
                                         Collections.sort(getTermToBICScoreFromClusterObject,
                                                 new Comparator<Map<String, Object>>() {
@@ -1951,11 +1982,14 @@ public class ClassificationServiceImpl implements ClassificationService{
                                             }
                                         });
 
+                                        Collections.reverse(getTermToBICScoreFromClusterObject);
+
                                         List<String> termsFound = new ArrayList<>();
                                         if(!getTermToBICScoreFromClusterObject.isEmpty()){
                                             Map i = getTermToBICScoreFromClusterObject.get(0);
                                             if(!i.isEmpty()) {
                                                 Double k = (Double) i.get("bicScore");
+                                                scoredTerms = new ArrayList<>();
                                                 for (Map<String, Object> m : getTermToBICScoreFromClusterObject) {
                                                     if (m.containsKey("bicScore")) {
                                                         Double j = (Double) m.get("bicScore");
@@ -1963,27 +1997,76 @@ public class ClassificationServiceImpl implements ClassificationService{
                                                             termsFound.add(m.get("term").toString().trim().toLowerCase());
                                                         }
                                                     }
+                                                    scoredTerms.add(m);
                                                 }
                                             }
                                         }
 
-                                        if(!termsFound.isEmpty()){
-                                            intersection = getIntersection(termsFound, l2);
+//                                        if(!termsFound.isEmpty()){
+//                                            intersection = getIntersection(termsFound, l2);
+//                                        }
+//
+//                                        for (String b : intersection) {
+//                                            if (x < (intersection.size() - 1)) {
+//                                                builder.append(b + " ");
+//                                            } else {
+//                                                builder.append(b);
+//                                            }
+//                                            x++;
+//                                        }
+                                    }
+
+                                    //run scored terms against found regex expression groups.
+                                    if(!a.isEmpty()){
+                                        List<String> terms = null;
+                                        if(scoredTerms != null && !scoredTerms.isEmpty()){
+                                            terms = new ArrayList<>();
+                                            for(Map<String, Object> m : scoredTerms){
+                                                if(m.containsKey("term")){
+                                                    terms.add(m.get("term").toString());
+                                                }
+                                            }
                                         }
 
-                                        for (String b : intersection) {
-                                            if (x < (intersection.size() - 1)) {
-                                                builder.append(b + " ");
-                                            } else {
-                                                builder.append(b);
+                                        if(terms != null && !terms.isEmpty()){
+                                            List<TFIDFWeightedScore> tfIdfWeightedScores = new ArrayList<>();
+                                            for(String a1 : a){
+                                                String[] tokens = tokenize(a1);
+                                                for(String t : terms){
+                                                    TFIDFWeightedScore tfidfWeightedScore =
+                                                            getTfIdfWeightedScore(tokens, t);
+                                                    tfIdfWeightedScores.add(tfidfWeightedScore);
+                                                }
                                             }
-                                            x++;
+
+                                            Collections.sort(tfIdfWeightedScores, TFIDFWeightedScore.tfidfWeightedScoreComparator);
+
+                                            if(!tfIdfWeightedScores.isEmpty()) {
+                                                builder = new StringBuilder();
+                                                TFIDFWeightedScore tfidfWeightedScore = tfIdfWeightedScores.get(0);
+                                                if (tfIdfWeightedScores.size() > 1) {
+
+                                                    for(TFIDFWeightedScore weightedScore : tfIdfWeightedScores){
+                                                        if(tfidfWeightedScore.getScore().equals(
+                                                                weightedScore.getScore())){
+                                                            builder.append(weightedScore.getTerm());
+                                                            builder.append(" ");
+                                                        }
+                                                    }
+                                                } else {
+                                                    builder.append(tfidfWeightedScore.getTerm());
+                                                }
+                                            }
                                         }
                                     }
+
                                     brand = builder.toString();
                                 }
                             }
                         }
+
+                        logger.info("testing...");
+
                     }
 
                     if(StringUtils.isBlank(brand)) {
@@ -2016,7 +2099,6 @@ public class ClassificationServiceImpl implements ClassificationService{
                             }
                         }
 
-
                         if (!possibleBrands.isEmpty()) {
                             StringBuilder builder = new StringBuilder();
                             int x = 0;
@@ -2034,6 +2116,9 @@ public class ClassificationServiceImpl implements ClassificationService{
                     }
                 }
             }
+
+            //Using title to get brand
+
         }
         return brand;
     }
