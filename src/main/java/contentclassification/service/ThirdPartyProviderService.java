@@ -59,6 +59,7 @@ public class ThirdPartyProviderService {
     }
 
     public String getItemDescription(String domain, String url){
+        logger.info("About to get item description for Domain: "+ domain +" URL: "+ url);
         String description = null;
         if(StringUtils.isNotBlank(domain)){
             String supportedDomain = getSupportedDomain(domain);
@@ -97,6 +98,7 @@ public class ThirdPartyProviderService {
 
                         Map<String, Object> responseMap = null;
                         try {
+                            logger.info("Request sent to endpoint : "+ requestUrl);
                             RestTemplate restTemplate = new RestTemplate();
                             responseMap = restTemplate.getForObject(requestUrl, HashMap.class);
                         } catch (Exception e){
@@ -178,6 +180,7 @@ public class ThirdPartyProviderService {
                 }
             }
         }
+        logger.info("Done getting item description URL : "+ url + " Results: "+ description);
         return description;
     }
 
