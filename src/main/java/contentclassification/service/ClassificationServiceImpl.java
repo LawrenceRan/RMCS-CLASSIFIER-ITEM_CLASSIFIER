@@ -2064,9 +2064,6 @@ public class ClassificationServiceImpl implements ClassificationService{
                                 }
                             }
                         }
-
-                        logger.info("testing...");
-
                     }
 
                     if(StringUtils.isBlank(brand)) {
