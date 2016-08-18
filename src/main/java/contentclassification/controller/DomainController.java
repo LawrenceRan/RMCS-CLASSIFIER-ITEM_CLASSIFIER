@@ -1,9 +1,6 @@
 package contentclassification.controller;
 
-import com.google.common.collect.HashBiMap;
-import com.hp.hpl.jena.rdf.model.Model;
 import contentclassification.model.Domain;
-//import contentclassification.service.DomainGraphDBImpl;
 import contentclassification.service.DomainServiceImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

@@ -36,7 +36,6 @@ import java.util.regex.Pattern;
  */
 @Service
 public class ClassificationServiceImpl implements ClassificationService{
-
     private static final Logger logger = LoggerFactory.getLogger(ClassificationServiceImpl.class);
     @Autowired
     private TermsScoringConfig termsScoringConfig;
@@ -1432,10 +1431,13 @@ public class ClassificationServiceImpl implements ClassificationService{
         if (sentences != null && sentences.length > 0) {
             if (StringUtils.isNotBlank(sentences[0])) {
                 String t = sentences[0];
-                if (t.contains("\n")) {
+                if (t.contains("\n") || t.contains("\r")) {
                     possibleTitle = t.substring(0, t.indexOf("\n"));
                 }
             }
+
+            //Default to first index of the sentences.
+            possibleTitle = StringUtils.isBlank(possibleTitle) ? sentences[0] : null;
         }
         //End of getting a possible title.
         return possibleTitle;
@@ -1949,14 +1951,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                                                 if(m.containsKey("pos")){
                                                     String pos = m.get("pos");
                                                     POSRESPONSES posresponses = null;
-
-                                                    try {
-                                                        posresponses = POSRESPONSES.valueOf(pos);
-                                                    } catch (Exception e){
-                                                        logger.debug("Error in getting parts of speech. Message: "+
-                                                                e.getMessage()
-                                                        );
-                                                    }
+                                                    posresponses = getPOSRESPONSES(pos);
                                                     if(posresponses != null) {
                                                         if (posresponses == POSRESPONSES.NNP) {
                                                             if(m.containsKey("token")) {
@@ -1966,6 +1961,28 @@ public class ClassificationServiceImpl implements ClassificationService{
                                                     }
                                                 }
                                             }
+
+                                            //Second iteration of pos using external resources.
+                                            if(union.isEmpty()){
+                                                if(!getPosObj.isEmpty()) {
+                                                    for(Map<String, String> m : getPosObj) {
+                                                        POSRESPONSES posresponses = null;
+                                                        if(m.containsKey("pos")){
+                                                            posresponses = getPOSRESPONSES(m.get("pos"));
+                                                        }
+
+                                                        if(posresponses != null) {
+                                                            if (StringUtils.isNotBlank(m.get("token"))) {
+//                                                                LearningImpl learning =
+//                                                                        LearningImpl.setQuery(m.get("token"));
+//                                                                String output = learning.find();
+//                                                                logger.info("Result : " + output);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+
                                         }
 
                                         List<Map<String, Object>> getTermToBICScoreFromClusterObject
@@ -2043,7 +2060,8 @@ public class ClassificationServiceImpl implements ClassificationService{
 
                                             if(!tfIdfWeightedScores.isEmpty()) {
                                                 builder = new StringBuilder();
-                                                TFIDFWeightedScore tfidfWeightedScore = tfIdfWeightedScores.get(0);
+                                                TFIDFWeightedScore tfidfWeightedScore =
+                                                        tfIdfWeightedScores.get(0) != null ? tfIdfWeightedScores.get(0) : null;
                                                 if (tfIdfWeightedScores.size() > 1) {
 
                                                     for(TFIDFWeightedScore weightedScore : tfIdfWeightedScores){
@@ -2054,7 +2072,9 @@ public class ClassificationServiceImpl implements ClassificationService{
                                                         }
                                                     }
                                                 } else {
-                                                    builder.append(tfidfWeightedScore.getTerm());
+                                                    if(tfidfWeightedScore != null) {
+                                                        builder.append(tfidfWeightedScore.getTerm());
+                                                    }
                                                 }
                                             }
                                         }
@@ -2161,5 +2181,17 @@ public class ClassificationServiceImpl implements ClassificationService{
             }
         }
         return answer;
+    }
+
+    private POSRESPONSES getPOSRESPONSES(String pos){
+        POSRESPONSES posresponses = null;
+        try {
+            posresponses = POSRESPONSES.valueOf(pos);
+        } catch (Exception e){
+            logger.debug("Error in getting parts of speech. Message: "+
+                            e.getMessage()
+            );
+        }
+        return posresponses;
     }
 }

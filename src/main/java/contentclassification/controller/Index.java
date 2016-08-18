@@ -87,11 +87,33 @@ public class Index {
         return modelAndView;
     }
 
+    @RequestMapping(value = "/tags", method = RequestMethod.GET, produces = "application/json;charset=utf-8")
+    @ResponseBody
+    public String getTags(){
+        ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+        String sessionId = attr.getSessionId();
+        Map<String, Object> response = new HashMap<>();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String outputString = null;
+        try {
+            outputString = objectMapper.writeValueAsString(response);
+        } catch (Exception e){
+            logger.debug("Error in parsing response as string. Message: "+ e.getMessage() +" ID: "+ sessionId);
+        }
+        return outputString;
+    }
+
     @RequestMapping(value = "/v1/learning", method = RequestMethod.GET, produces = "application/json")
     public ModelAndView getExternalData(@RequestParam(required = true) String query) {
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
-
+        if(StringUtils.isNotBlank(query)){
+            LearningImpl learning = LearningImpl.setQuery(query);
+            String answer = learning.find();
+            logger.info("Anwser");
+        }
+        modelAndView.addAllObjects(response);
         return modelAndView;
     }
 

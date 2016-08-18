@@ -7,10 +7,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by rsl_prod_005 on 5/9/16.
@@ -100,33 +100,91 @@ public class LearningImpl {
         return update;
     }
 
-    private String find(String query){
-        logger.info("About to send query. Query : "+ query);
+    public String find(){
+        logger.info("About to send query. Query : "+ this.query);
         String findings = null;
+        StringBuilder queryStringBuilder = new StringBuilder();
+        queryStringBuilder.append("PREFIX owl: <http://www.w3.org/2002/07/owl#>");
+        queryStringBuilder.append("\n");
+        queryStringBuilder.append("PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>");
+        queryStringBuilder.append("\n");
+        queryStringBuilder.append("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>");
+        queryStringBuilder.append("\n");
+        queryStringBuilder.append("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>");
+        queryStringBuilder.append("\n");
+        queryStringBuilder.append("PREFIX foaf: <http://xmlns.com/foaf/0.1/>");
+        queryStringBuilder.append("\n");
+        queryStringBuilder.append("PREFIX dc: <http://purl.org/dc/elements/1.1/>");
+        queryStringBuilder.append("\n");
+        queryStringBuilder.append("PREFIX : <http://dbpedia.org/resource/>");
+        queryStringBuilder.append("\n");
+        queryStringBuilder.append("PREFIX dbpedia2: <http://dbpedia.org/property/>");
+        queryStringBuilder.append("\n");
+        queryStringBuilder.append("PREFIX dbpedia: <http://dbpedia.org/>");
+        queryStringBuilder.append("\n");
+        queryStringBuilder.append("PREFIX skos: <http://www.w3.org/2004/02/skos/core#>");
+        queryStringBuilder.append("\n");
+        queryStringBuilder.append("PREFIX bif: <http://www.openlinksw.com/schemas/bif#>");
+        queryStringBuilder.append("\n");
+//        queryStringBuilder.append("SELECT ?x WHERE {?x rdfs:label ?name. FILTER(bif:contains(?name, \"Tokyo*\"))} LIMIT 10");
+        queryStringBuilder.append("SELECT ?x WHERE {?x rdfs:label ?name} LIMIT 1");
+//        queryStringBuilder.append("SELECT ?x ");
+//        queryStringBuilder.append("\n");
+//        queryStringBuilder.append("WHERE {");
+//        queryStringBuilder.append("\t?x rdfs:label ?name . ");
+//        queryStringBuilder.append("\n");
+//        queryStringBuilder.append("\tFILTER REGEX(?name, ");
+//        queryStringBuilder.append("\"^");
+//        queryStringBuilder.append(WordUtils.capitalize(this.query));
+//        queryStringBuilder.append("([(].*[)])?$\"");
+//        queryStringBuilder.append(")");
+//        queryStringBuilder.append("}");
+
+        //String queryStr = queryStringBuilder.toString();
         String queryStr =
-                "PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>\n" +
-                        "PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" +
-                        "PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>\n" +
-                        "PREFIX owl:     <http://www.w3.org/2002/07/owl#>\n" +
-                        "PREFIX fn:      <http://www.w3.org/2005/xpath-functions#>\n" +
-                        "PREFIX apf:     <http://jena.hpl.hp.com/ARQ/property#>\n" +
-                        "PREFIX dc:      <http://purl.org/dc/elements/1.1/>\n" +
-                        "\n" +
-                        "SELECT ?book ?title\n" +
-                        "WHERE\n" +
-                        "   { ?book dc:title ?title }";
-        Query qry = QueryFactory.create(queryStr);
-        QueryExecution queryExecution = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
+                "PREFIX wd: <http://www.wikidata.org/entity/> \n" +
+                        "PREFIX wdt: <http://www.wikidata.org/prop/direct/>\n" +
+                        "PREFIX dbpprop: <http://dbpedia.org/property/>"+
+                        "PREFIX wikibase: <http://wikiba.se/ontology#>\n" +
+                        "PREFIX bd: <http://www.bigdata.com/rdf#>\n" +
+                        "PREFIX p: <http://www.wikidata.org/prop/>\n" +
+                        "PREFIX ps: <http://www.wikidata.org/prop/statement/>\n" +
+                        "PREFIX pq: <http://www.wikidata.org/prop/qualifier/>\n" +
+                        "PREFIX wdt: <http://www.wikidata.org/prop/direct/>\n" +
+                        "PREFIX wd: <http://www.wikidata.org/entity/>\n" +
+                        "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>" +
+                        "\n"+
+                        "SELECT ?item ?itemLabel ?_PubMed_ID WHERE {\n" +
+                        "  ?item wdt:P1716 wd:Q13442814.\n" +
+                        "  SERVICE wikibase:label {\n" +
+                        "    bd:serviceParam wikibase:language \"en\".\n" +
+                        "    ?item rdfs:label ?itemLabel.\n" +
+                        "  }\n" +
+                        "  FILTER(CONTAINS(LCASE(?itemLabel), \"zika\"))\n" +
+                        "  OPTIONAL { ?item wdt:P698 ?_PubMed_ID. }\n" +
+                        "}\n" +
+                        "LIMIT 1000";
+        QueryExecution queryExecution = null;
         try{
+            Query qry = QueryFactory.create(queryStr);
+//            //https://query.wikidata.org/sparql
+            //http://dbpedia.org/sparql
+            queryExecution = QueryExecutionFactory.sparqlService("https://query.wikidata.org/sparql", qry);
+            queryExecution.setTimeout(120000, TimeUnit.MILLISECONDS);
             ResultSet resultSet = queryExecution.execSelect();
+
             for(; resultSet.hasNext();){
                 List<String> resultVars = resultSet.getResultVars();
-                logger.info("Result Vars: "+ resultVars);
+                String resultsItemLabel = resultSet.next().getLiteral("itemLabel").getLexicalForm();
+//                String resultsItem = resultSet.next().getLiteral("item").getLexicalForm();
+                logger.info("Result Vars: "+ resultVars + " Lexical: "+ resultsItemLabel + " Item: resultsItem");
             }
         } catch (Exception e){
             logger.debug("Error: "+ e.getMessage());
         } finally {
-            queryExecution.close();
+            if(queryExecution != null) {
+                queryExecution.close();
+            }
         }
         return findings;
     }
