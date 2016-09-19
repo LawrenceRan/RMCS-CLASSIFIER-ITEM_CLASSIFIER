@@ -479,6 +479,8 @@ public class Classification {
                             Map<String, Object> map = new HashMap<>();
                             map.put("token", tokens[x]);
                             map.put("pos", t);
+                            POSRESPONSES posresponses = POSRESPONSES.valueOf(t);
+                            map.put("initial", posresponses != null ? posresponses.toString() : "");
                             pos.add(map);
                             x++;
                         }

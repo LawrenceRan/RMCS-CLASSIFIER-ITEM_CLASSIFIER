@@ -111,7 +111,9 @@ public class Index {
         if(StringUtils.isNotBlank(query)){
             LearningImpl learning = LearningImpl.setQuery(query);
             String answer = learning.find();
-            logger.info("Anwser");
+            if(StringUtils.isNotBlank(answer)) {
+                response.put(LearningResponseKeys.DESCRIPTIONS.toString(), answer);
+            }
         }
         modelAndView.addAllObjects(response);
         return modelAndView;
@@ -844,5 +846,22 @@ public class Index {
         }
 
         return outputString;
+    }
+
+    @RequestMapping("/v1/parts-of-speech")
+    public ModelAndView getPOSByTerms(@RequestParam(required = true) String query){
+        ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
+        Map<String, Object> response = new HashMap<>();
+        if(StringUtils.isNotBlank(query)){
+            String[] tokens = classificationService.tokenize(query);
+            if(tokens != null && tokens.length > 0) {
+                List<Map> pos = classificationService.getPos(tokens);
+                if(pos != null && !pos.isEmpty()){
+                    response.put("parts-of-speech", pos);
+                }
+            }
+        }
+        modelAndView.addAllObjects(response);
+        return modelAndView;
     }
 }

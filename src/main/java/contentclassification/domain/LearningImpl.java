@@ -1,14 +1,28 @@
 package contentclassification.domain;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hp.hpl.jena.query.*;
+import com.hp.hpl.jena.rdf.model.Literal;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
+import contentclassification.controller.Languages;
+import contentclassification.controller.LearningResponseKeys;
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -104,30 +118,40 @@ public class LearningImpl {
         logger.info("About to send query. Query : "+ this.query);
         String findings = null;
         StringBuilder queryStringBuilder = new StringBuilder();
-        queryStringBuilder.append("PREFIX owl: <http://www.w3.org/2002/07/owl#>");
-        queryStringBuilder.append("\n");
-        queryStringBuilder.append("PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>");
-        queryStringBuilder.append("\n");
-        queryStringBuilder.append("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>");
-        queryStringBuilder.append("\n");
-        queryStringBuilder.append("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>");
-        queryStringBuilder.append("\n");
-        queryStringBuilder.append("PREFIX foaf: <http://xmlns.com/foaf/0.1/>");
-        queryStringBuilder.append("\n");
-        queryStringBuilder.append("PREFIX dc: <http://purl.org/dc/elements/1.1/>");
-        queryStringBuilder.append("\n");
-        queryStringBuilder.append("PREFIX : <http://dbpedia.org/resource/>");
-        queryStringBuilder.append("\n");
-        queryStringBuilder.append("PREFIX dbpedia2: <http://dbpedia.org/property/>");
-        queryStringBuilder.append("\n");
-        queryStringBuilder.append("PREFIX dbpedia: <http://dbpedia.org/>");
-        queryStringBuilder.append("\n");
-        queryStringBuilder.append("PREFIX skos: <http://www.w3.org/2004/02/skos/core#>");
-        queryStringBuilder.append("\n");
-        queryStringBuilder.append("PREFIX bif: <http://www.openlinksw.com/schemas/bif#>");
-        queryStringBuilder.append("\n");
+        queryStringBuilder.append("PREFIX gas: <http://www.bigdata.com/rdf/gas#>\n" +
+                "PREFIX entity: <http://www.wikidata.org/entity/>\n" +
+                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                "\n" +
+                "SELECT ?x WHERE { \n" +
+                "        ?x rdfs:label ?name .\n" +
+                "  \t\tFILTER(lang(?name) = 'en')\n" +
+                "  \t\tFILTER(CONTAINS(?name, '" + WordUtils.capitalize(this.query.trim()) + "')).\n" +
+                "   }\n" +
+                "limit 10");
+//        queryStringBuilder.append("PREFIX owl: <http://www.w3.org/2002/07/owl#>");
+//        queryStringBuilder.append("\n");
+//        queryStringBuilder.append("PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>");
+//        queryStringBuilder.append("\n");
+//        queryStringBuilder.append("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>");
+//        queryStringBuilder.append("\n");
+//        queryStringBuilder.append("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>");
+//        queryStringBuilder.append("\n");
+//        queryStringBuilder.append("PREFIX foaf: <http://xmlns.com/foaf/0.1/>");
+//        queryStringBuilder.append("\n");
+//        queryStringBuilder.append("PREFIX dc: <http://purl.org/dc/elements/1.1/>");
+//        queryStringBuilder.append("\n");
+//        queryStringBuilder.append("PREFIX : <http://dbpedia.org/resource/>");
+//        queryStringBuilder.append("\n");
+//        queryStringBuilder.append("PREFIX dbpedia2: <http://dbpedia.org/property/>");
+//        queryStringBuilder.append("\n");
+//        queryStringBuilder.append("PREFIX dbpedia: <http://dbpedia.org/>");
+//        queryStringBuilder.append("\n");
+//        queryStringBuilder.append("PREFIX skos: <http://www.w3.org/2004/02/skos/core#>");
+//        queryStringBuilder.append("\n");
+//        queryStringBuilder.append("PREFIX bif: <http://www.openlinksw.com/schemas/bif#>");
+//        queryStringBuilder.append("\n");
 //        queryStringBuilder.append("SELECT ?x WHERE {?x rdfs:label ?name. FILTER(bif:contains(?name, \"Tokyo*\"))} LIMIT 10");
-        queryStringBuilder.append("SELECT ?x WHERE {?x rdfs:label ?name} LIMIT 1");
+//        queryStringBuilder.append("SELECT ?x WHERE {?x rdfs:label ?name} LIMIT 1");
 //        queryStringBuilder.append("SELECT ?x ");
 //        queryStringBuilder.append("\n");
 //        queryStringBuilder.append("WHERE {");
@@ -141,43 +165,124 @@ public class LearningImpl {
 //        queryStringBuilder.append("}");
 
         //String queryStr = queryStringBuilder.toString();
-        String queryStr =
-                "PREFIX wd: <http://www.wikidata.org/entity/> \n" +
-                        "PREFIX wdt: <http://www.wikidata.org/prop/direct/>\n" +
-                        "PREFIX dbpprop: <http://dbpedia.org/property/>"+
-                        "PREFIX wikibase: <http://wikiba.se/ontology#>\n" +
-                        "PREFIX bd: <http://www.bigdata.com/rdf#>\n" +
-                        "PREFIX p: <http://www.wikidata.org/prop/>\n" +
-                        "PREFIX ps: <http://www.wikidata.org/prop/statement/>\n" +
-                        "PREFIX pq: <http://www.wikidata.org/prop/qualifier/>\n" +
-                        "PREFIX wdt: <http://www.wikidata.org/prop/direct/>\n" +
-                        "PREFIX wd: <http://www.wikidata.org/entity/>\n" +
-                        "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>" +
-                        "\n"+
-                        "SELECT ?item ?itemLabel ?_PubMed_ID WHERE {\n" +
-                        "  ?item wdt:P1716 wd:Q13442814.\n" +
-                        "  SERVICE wikibase:label {\n" +
-                        "    bd:serviceParam wikibase:language \"en\".\n" +
-                        "    ?item rdfs:label ?itemLabel.\n" +
-                        "  }\n" +
-                        "  FILTER(CONTAINS(LCASE(?itemLabel), \"zika\"))\n" +
-                        "  OPTIONAL { ?item wdt:P698 ?_PubMed_ID. }\n" +
-                        "}\n" +
-                        "LIMIT 1000";
+//        String queryStr =
+//                "PREFIX wd: <http://www.wikidata.org/entity/> \n" +
+//                        "PREFIX wdt: <http://www.wikidata.org/prop/direct/>\n" +
+//                        "PREFIX dbpprop: <http://dbpedia.org/property/>"+
+//                        "PREFIX wikibase: <http://wikiba.se/ontology#>\n" +
+//                        "PREFIX bd: <http://www.bigdata.com/rdf#>\n" +
+//                        "PREFIX p: <http://www.wikidata.org/prop/>\n" +
+//                        "PREFIX ps: <http://www.wikidata.org/prop/statement/>\n" +
+//                        "PREFIX pq: <http://www.wikidata.org/prop/qualifier/>\n" +
+//                        "PREFIX wdt: <http://www.wikidata.org/prop/direct/>\n" +
+//                        "PREFIX wd: <http://www.wikidata.org/entity/>\n" +
+//                        "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>" +
+//                        "\n"+
+//                        "SELECT ?item ?itemLabel ?_PubMed_ID WHERE {\n" +
+//                        "  ?item wdt:P1716 wd:Q13442814.\n" +
+//                        "  SERVICE wikibase:label {\n" +
+//                        "    bd:serviceParam wikibase:language \"en\".\n" +
+//                        "    ?item rdfs:label ?itemLabel.\n" +
+//                        "  }\n" +
+//                        "  FILTER(CONTAINS(LCASE(?itemLabel), \"zika\"))\n" +
+//                        "  OPTIONAL { ?item wdt:P698 ?_PubMed_ID. }\n" +
+//                        "}\n" +
+//                        "LIMIT 1000";
         QueryExecution queryExecution = null;
         try{
-            Query qry = QueryFactory.create(queryStr);
-//            //https://query.wikidata.org/sparql
-            //http://dbpedia.org/sparql
-            queryExecution = QueryExecutionFactory.sparqlService("https://query.wikidata.org/sparql", qry);
+            Query qry = QueryFactory.create(queryStringBuilder.toString());
+            String wikidata = "https://query.wikidata.org/sparql";
+            String dbpedia = "http://dbpedia.org/sparql";
+            String sparqlEr = "http://sparql.org/sparql";
+            queryExecution = QueryExecutionFactory.sparqlService(wikidata, qry);
             queryExecution.setTimeout(120000, TimeUnit.MILLISECONDS);
             ResultSet resultSet = queryExecution.execSelect();
 
+            List<String> uris = new ArrayList<>();
+
             for(; resultSet.hasNext();){
-                List<String> resultVars = resultSet.getResultVars();
-                String resultsItemLabel = resultSet.next().getLiteral("itemLabel").getLexicalForm();
-//                String resultsItem = resultSet.next().getLiteral("item").getLexicalForm();
-                logger.info("Result Vars: "+ resultVars + " Lexical: "+ resultsItemLabel + " Item: resultsItem");
+                QuerySolution querySolution = resultSet.nextSolution();
+                RDFNode rdfNode = querySolution.get("x");
+                if(rdfNode.isResource()){
+                    Resource resource = (Resource) rdfNode;
+                    if(!resource.isAnon()){
+                        String uri = resource.getURI();
+                        if(StringUtils.isNotBlank(uri)) {
+                            uris.add(uri);
+                        }
+                    }
+                }
+            }
+
+            if(!uris.isEmpty()){
+                for(String uri : uris){
+                    RestTemplate restTemplate = new RestTemplate();
+                    HttpComponentsClientHttpRequestFactory httpComponentsClientHttpRequestFactory
+                            = new HttpComponentsClientHttpRequestFactory();
+                    HttpClient httpClient = HttpClientBuilder.create().setRedirectStrategy(new LaxRedirectStrategy())
+                            .build();
+                    httpComponentsClientHttpRequestFactory.setHttpClient(httpClient);
+                    restTemplate.setRequestFactory(httpComponentsClientHttpRequestFactory);
+
+                    String responseString = restTemplate.getForObject(uri, String.class);
+                    if(StringUtils.isNotBlank(responseString)){
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        Map<String, Object> responseMap = objectMapper.readValue(responseString, HashMap.class);
+                        if(responseMap != null && !responseMap.isEmpty()){
+                            if(responseMap.containsKey(LearningResponseKeys.ENTITIES.toString())){
+                                Object entities = responseMap.get(LearningResponseKeys.ENTITIES.toString());
+                                if(entities instanceof Map) {
+                                    Map<String, Object> entitiesMap = (Map<String, Object>) entities;
+                                    if (!entitiesMap.isEmpty()) {
+                                        Set<String> keySets = entitiesMap.keySet();
+                                        if (!keySets.isEmpty()) {
+                                            for (String keySet : keySets) {
+                                                if (entitiesMap.containsKey(keySet)) {
+                                                    Object value = entitiesMap.get(keySet);
+                                                    if (value instanceof Map) {
+                                                        Map<String, Object> valueMap = (Map<String, Object>) value;
+                                                        if(!valueMap.isEmpty()) {
+                                                            if (valueMap
+                                                                    .containsKey(LearningResponseKeys.DESCRIPTIONS.toString())) {
+                                                                Object description = valueMap
+                                                                        .get(LearningResponseKeys.DESCRIPTIONS.toString());
+                                                                if (description instanceof Map) {
+                                                                    Map<String, Object> descriptionMap
+                                                                            = (Map<String, Object>) description;
+                                                                    if (!descriptionMap.isEmpty()) {
+                                                                        if(descriptionMap
+                                                                                .containsKey(Languages.ENGLISH.toString())) {
+                                                                            Object englishValue
+                                                                                    = descriptionMap.get(Languages.ENGLISH.toString());
+                                                                            if(englishValue instanceof Map) {
+                                                                                Map<String, Object> objectMap =
+                                                                                        (Map<String, Object>) englishValue;
+                                                                                if(!objectMap.isEmpty()) {
+                                                                                    if (objectMap
+                                                                                            .containsKey(LearningResponseKeys.VALUE.toString())) {
+                                                                                        Object obj = objectMap.get(LearningResponseKeys.VALUE.toString());
+                                                                                        if(obj instanceof String) {
+                                                                                            findings = obj.toString();
+                                                                                            logger.info("Description collected. Result : "+ findings);
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         } catch (Exception e){
             logger.debug("Error: "+ e.getMessage());
