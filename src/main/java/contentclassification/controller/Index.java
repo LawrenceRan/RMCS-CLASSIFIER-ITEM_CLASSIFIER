@@ -864,4 +864,21 @@ public class Index {
         modelAndView.addAllObjects(response);
         return modelAndView;
     }
+
+    @RequestMapping("/v1/stems")
+    public ModelAndView getStemmers(@RequestParam(required = true) String query){
+        ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
+        Map<String, Object> response = new HashMap<>();
+        if(StringUtils.isNotBlank(query)){
+            String[] tokens = classificationService.tokenize(query);
+            if(tokens != null && tokens.length > 0) {
+                List<String> stems = classificationService.getStems(tokens);
+                if(stems != null && !stems.isEmpty()) {
+                    response.put("stems", stems);
+                }
+            }
+        }
+        modelAndView.addAllObjects(response);
+        return modelAndView;
+    }
 }
