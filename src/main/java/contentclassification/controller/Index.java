@@ -865,6 +865,53 @@ public class Index {
         return modelAndView;
     }
 
+    @RequestMapping("/v2/parts-of-speech")
+    public ModelAndView getPOSByTerms(@RequestParam(required = true) String query,
+                                      @RequestParam(required = false) String pos){
+        ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
+        Map<String, Object> response = new HashMap<>();
+        if(StringUtils.isNotBlank(query)){
+            String[] tokens = classificationService.tokenize(query);
+            if(tokens != null && tokens.length > 0){
+                List<Map> posResults = null;
+                List<POSRESPONSES> posresponsesList = null;
+                if(StringUtils.isNotBlank(pos)) {
+                    List<String> requestPos = Arrays.asList(pos.split(","));
+                    if (!requestPos.isEmpty()) {
+                        posresponsesList = new ArrayList<>();
+                        for(String selectedPos : requestPos){
+                            POSRESPONSES posresponses = classificationService.getPOSRESPONSES(selectedPos);
+                            if(posresponses != null){
+                                posresponsesList.add(posresponses);
+                            }
+                        }
+
+                        if(posresponsesList.isEmpty()){
+                            posresponsesList = null;
+                            String message = "Unsupported part-of-speech initial passed. Request : "+ pos;
+                            List<POSRESPONSES> supportedPos = Arrays.asList(POSRESPONSES.values());
+                            response.put("supportsPartsOfSpeech", supportedPos);
+                            response.put("massage", message);
+                        }
+                    }
+                } else {
+                    String message = "Supported part-of-speech initial passed.";
+                    List<POSRESPONSES> supportedPos = Arrays.asList(POSRESPONSES.values());
+                    response.put("supportsPartsOfSpeech", supportedPos);
+                    response.put("massage", message);
+                }
+
+                posResults = StringUtils.isNotBlank(pos) && posresponsesList != null ?
+                        classificationService.getPos(tokens, posresponsesList) : classificationService.getPos(tokens);
+                response.put("parts-of-speech", posResults);
+            }
+        } else {
+            response.put("message", "Query parameter is missing or empty.");
+        }
+        modelAndView.addAllObjects(response);
+        return modelAndView;
+    }
+
     @RequestMapping("/v1/stems")
     public ModelAndView getStemmers(@RequestParam(required = true) String query){
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());

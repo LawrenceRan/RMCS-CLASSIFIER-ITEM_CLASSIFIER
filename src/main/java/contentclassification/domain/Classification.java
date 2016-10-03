@@ -495,6 +495,24 @@ public class Classification {
         return pos;
     }
 
+    public List<Map> getPos(String[] tokens, List<POSRESPONSES> posresponsesList){
+        List<Map> pos = new ArrayList<>();
+        if(tokens != null && tokens.length > 0){
+            List<Map> allPos = getPos(tokens);
+            if(!allPos.isEmpty()){
+                for(Map mapPos : allPos){
+                    if(mapPos.containsKey("pos")){
+                        POSRESPONSES posresponses = POSRESPONSES.valueOf(mapPos.get("pos").toString());
+                        if(posresponsesList.contains(posresponses)){
+                            pos.add(mapPos);
+                        }
+                    }
+                }
+            }
+        }
+        return pos;
+    }
+
     public <T> List<T> union(List<T> a, List<T> b){
         Set<T> set = new HashSet<>();
         set.addAll(a);

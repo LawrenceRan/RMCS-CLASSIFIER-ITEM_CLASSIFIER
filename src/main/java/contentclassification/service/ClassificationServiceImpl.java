@@ -90,6 +90,11 @@ public class ClassificationServiceImpl implements ClassificationService{
     }
 
     @Override
+    public List<Map> getPos(String[] tokens, List<POSRESPONSES> posresponsesList){
+        return classification.getPos(tokens, posresponsesList);
+    }
+
+    @Override
     public List<String> getIntersection(List<String> a, List<String> b) {
         return classification.intersection(a,b);
     }
@@ -2183,10 +2188,10 @@ public class ClassificationServiceImpl implements ClassificationService{
         return answer;
     }
 
-    private POSRESPONSES getPOSRESPONSES(String pos){
+    public POSRESPONSES getPOSRESPONSES(String pos){
         POSRESPONSES posresponses = null;
         try {
-            posresponses = POSRESPONSES.valueOf(pos);
+            posresponses = POSRESPONSES.valueOf(pos.trim().toUpperCase());
         } catch (Exception e){
             logger.debug("Error in getting parts of speech. Message: "+
                             e.getMessage()

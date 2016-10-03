@@ -16,6 +16,7 @@ public interface ClassificationService {
     public String getStem(String word);
     public List<String> getStems(String[] tokens);
     public List<Map> getPos(String[] tokens);
+    public List<Map> getPos(String[] tokens, List<POSRESPONSES> posresponsesList);
     public List<String> getIntersection(List<String> a, List<String> b);
     public List<Categories> getCategories();
     public double getTFScore(String[] document, String term);
