@@ -867,7 +867,8 @@ public class Index {
 
     @RequestMapping("/v2/parts-of-speech")
     public ModelAndView getPOSByTerms(@RequestParam(required = true) String query,
-                                      @RequestParam(required = false) String pos){
+                                      @RequestParam(required = false) String pos,
+                                      @RequestParam(required = false, defaultValue = "false") Boolean groupByPos){
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
         if(StringUtils.isNotBlank(query)){
@@ -903,7 +904,15 @@ public class Index {
 
                 posResults = StringUtils.isNotBlank(pos) && posresponsesList != null ?
                         classificationService.getPos(tokens, posresponsesList) : classificationService.getPos(tokens);
-                response.put("parts-of-speech", posResults);
+
+                if(groupByPos && !posResults.isEmpty()){
+                    List<Map> groupedPos = classificationService.groupByPos(posResults);
+                    response.clear();
+                    response.put("groupedByPos", groupedPos);
+                    logger.info("Group by pos passed.");
+                }
+
+                if(!groupByPos) { response.put("parts-of-speech", posResults); }
             }
         } else {
             response.put("message", "Query parameter is missing or empty.");

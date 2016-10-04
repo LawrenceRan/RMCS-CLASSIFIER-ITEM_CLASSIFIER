@@ -2188,6 +2188,61 @@ public class ClassificationServiceImpl implements ClassificationService{
         return answer;
     }
 
+    @Override
+    public List<Map> groupByPos(List<Map> pos) {
+        List<Map> groupedPos = null;
+        if(pos != null && !pos.isEmpty()){
+            Set<String> posSet = new HashSet<>();
+            for(Map posMap : pos){
+                if(posMap.containsKey("pos")){
+                    posSet.add(posMap.get("pos").toString());
+                }
+            }
+
+            if(!posSet.isEmpty()){
+                groupedPos = new ArrayList<>();
+                for (String incomingPos : posSet){
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("pos", incomingPos);
+
+                    List<String> tokens = new ArrayList<>();
+                    String selectedInitial = null;
+
+                    //Get tokens with this pos
+                    for(Map m : pos){
+                        String pos1 = null;
+                        String token = null;
+                        String initial = null;
+
+                        if(m.containsKey("token")){
+                            token = m.get("token").toString();
+                        }
+
+                        if(m.containsKey("initial")){
+                            initial = m.get("initial").toString();
+                        }
+
+                        if(m.containsKey("pos")){
+                            pos1 = m.get("pos").toString();
+                            if(incomingPos.equals(pos1)){
+                                if(StringUtils.isNotBlank(token)) {
+                                    tokens.add(token);
+                                    selectedInitial = initial;
+                                }
+                            }
+                        }
+                    }
+
+                    map.put("tokens", tokens);
+                    map.put("initial", selectedInitial);
+
+                    groupedPos.add(map);
+                }
+            }
+        }
+        return groupedPos;
+    }
+
     public POSRESPONSES getPOSRESPONSES(String pos){
         POSRESPONSES posresponses = null;
         try {

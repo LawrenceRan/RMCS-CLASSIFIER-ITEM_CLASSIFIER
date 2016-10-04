@@ -64,4 +64,5 @@ public interface ClassificationService {
     public String getDomainName(String url);
     public String getBrand(String text, String possibleTitle);
     public List<Map<String, Object>> getTermToBICScoreFromCluster(List<String> unionOfTerms, List<String> sentences);
+    public List<Map> groupByPos(List<Map> pos);
 }
