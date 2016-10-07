@@ -937,4 +937,37 @@ public class Index {
         modelAndView.addAllObjects(response);
         return modelAndView;
     }
+
+    @RequestMapping("/v1/meaning")
+    public ModelAndView getLexicalMeaning(@RequestParam(name = "query", required = true) String query){
+        ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
+        Map<String, Object> response = new HashMap<>();
+        if(StringUtils.isNotBlank(query)){
+            String[] tokens = classificationService.tokenize(query);
+            List<Map> responseMap = null;
+            if(tokens != null && tokens.length > 0) {
+                int len = tokens.length;
+                if(len == 1) {
+                    responseMap = wordNetService.getResponse(query);
+                }
+
+                if(len > 1){
+                    responseMap = new ArrayList<>();
+                    for(String token : tokens) {
+                        Map<String, Object> tokenMap = new HashMap<>();
+                        tokenMap.put("query", token);
+                        tokenMap.put("results", wordNetService.getResponse(token));
+                        responseMap.add(tokenMap);
+                    }
+                }
+
+                response.put("query", query);
+                if (responseMap != null && !responseMap.isEmpty()) {
+                    response.put("results", responseMap);
+                }
+            }
+        }
+        modelAndView.addAllObjects(response);
+        return modelAndView;
+    }
 }
