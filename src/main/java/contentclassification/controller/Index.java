@@ -1022,8 +1022,9 @@ public class Index {
                     List<String> updatedSuggestions = spellCheckerService.updateSuggestions(query, suggestions);
                     response.put("suggestions", updatedSuggestions);
                 }
-                response.put("message", "Invalid or empty query passed.");
             }
+        } else {
+            response.put("message", "Invalid or empty query passed.");
         }
         modelAndView.addAllObjects(response);
         return modelAndView;
