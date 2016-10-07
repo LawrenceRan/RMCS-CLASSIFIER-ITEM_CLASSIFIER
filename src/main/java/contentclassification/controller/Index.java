@@ -7,6 +7,7 @@ import contentclassification.config.WordNetDictConfig;
 import contentclassification.domain.*;
 import contentclassification.service.ClassificationServiceImpl;
 import contentclassification.service.JsoupService;
+import contentclassification.service.SpellCheckerServiceImpl;
 import contentclassification.service.ThirdPartyProviderService;
 import contentclassification.service.WordNetService;
 import org.apache.commons.lang3.StringUtils;
@@ -23,7 +24,18 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 
 import java.net.URLDecoder;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.ArrayList;;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Created by rsl_prod_005 on 5/6/16.
@@ -52,6 +64,9 @@ public class Index {
 
     @Autowired
     private ThirdPartyProviderService thirdPartyProviderService;
+
+    @Autowired
+    private SpellCheckerServiceImpl spellCheckerService;
 
 //    @Autowired
 //    private DomainGraphDBImpl domainGraphDB;
@@ -965,6 +980,49 @@ public class Index {
                 if (responseMap != null && !responseMap.isEmpty()) {
                     response.put("results", responseMap);
                 }
+            }
+        } else {
+            response.put("message", "Invalid or empty query passed.");
+        }
+        modelAndView.addAllObjects(response);
+        return modelAndView;
+    }
+
+    @RequestMapping("/v1/spell/checker")
+    public ModelAndView getSpellChecker(@RequestParam(name = "query", required = true) String query){
+        ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
+        Map<String, Object> response = new HashMap<>();
+        if(StringUtils.isNotBlank(query)){
+            String line = spellCheckerService.getCorrectedLine(query);
+            response.put("correctedLine", line);
+        } else {
+            response.put("message", "Invalid or empty query passed.");
+        }
+        modelAndView.addAllObjects(response);
+        return modelAndView;
+    }
+
+    @RequestMapping("/v1/spell/suggestions")
+    public ModelAndView getSpellSuggestions(@RequestParam(name = "query", required = true) String query){
+        ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
+        Map<String, Object> response = new HashMap<>();
+        if(StringUtils.isNotBlank(query)){
+            boolean isCorrect = spellCheckerService.isCorrect(query);
+            if(!isCorrect){
+                List<String> suggestions = spellCheckerService.getSuggestions(query);
+                if(suggestions != null && !suggestions.isEmpty()){
+                    List<String> updatedSuggestions = spellCheckerService.updateSuggestions(query, suggestions);
+                    response.put("suggestions", updatedSuggestions);
+                } else {
+                    response.put("message", "no suggestions.");
+                }
+            } else {
+                List<String> suggestions = spellCheckerService.getSuggestions(query);
+                if(suggestions != null && !suggestions.isEmpty()){
+                    List<String> updatedSuggestions = spellCheckerService.updateSuggestions(query, suggestions);
+                    response.put("suggestions", updatedSuggestions);
+                }
+                response.put("message", "Invalid or empty query passed.");
             }
         }
         modelAndView.addAllObjects(response);
