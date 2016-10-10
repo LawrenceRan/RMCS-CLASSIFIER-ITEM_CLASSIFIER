@@ -4,7 +4,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import contentclassification.config.ClassificationConfig;
 import contentclassification.config.RequestProxy;
 import contentclassification.config.WordNetDictConfig;
-import contentclassification.domain.*;
+import contentclassification.domain.AppUtils;
+import contentclassification.domain.Categories;
+import contentclassification.domain.Color;
+import contentclassification.domain.ContentAreaGroupings;
+import contentclassification.domain.FabricName;
+import contentclassification.domain.LearningImpl;
+import contentclassification.domain.NameAndContentMetaData;
+import contentclassification.domain.POSRESPONSES;
+import contentclassification.domain.ResponseCategoryToAttribute;
+import contentclassification.domain.ResponseMap;
+import contentclassification.domain.RestResponseKeys;
+import contentclassification.domain.RulesEngineDataSet;
+import contentclassification.domain.TFIDFWeightedScore;
+import contentclassification.domain.TermToGroupScore;
+import contentclassification.domain.TotalTermToGroup;
+import contentclassification.domain.WebMetaName;
 import contentclassification.service.ClassificationServiceImpl;
 import contentclassification.service.JsoupService;
 import contentclassification.service.SpellCheckerServiceImpl;
@@ -17,25 +32,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.Map;
-import java.util.ArrayList;;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
+
+;
 
 /**
  * Created by rsl_prod_005 on 5/6/16.
@@ -1007,6 +1025,144 @@ public class Index {
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
         if(StringUtils.isNotBlank(query)){
+            Set<String> setTokens = new HashSet<>();
+            String[] tokens = classificationService.tokenize(query, " ");
+
+            if(tokens != null && tokens.length > 0){
+                setTokens.addAll(Arrays.asList(tokens));
+            }
+
+            tokens = classificationService.tokenize(query);
+            if(tokens != null && tokens.length > 0){
+                setTokens.addAll(Arrays.asList(tokens));
+            }
+
+            tokens = setTokens.toArray(new String[setTokens.size()]);
+
+            if(tokens.length > 0) {
+                int len = tokens.length;
+                if(len == 1) {
+                    boolean isCorrect = spellCheckerService.isCorrect(query);
+                    if (!isCorrect) {
+                        List<String> suggestions = spellCheckerService.getSuggestions(query);
+                        if (suggestions != null && !suggestions.isEmpty()) {
+                            List<String> updatedSuggestions = spellCheckerService.updateSuggestions(query, suggestions);
+                            response.put("term", query);
+                            response.put("suggestion", updatedSuggestions);
+                        } else {
+                            response.put("message", "no suggestions.");
+                        }
+                    } else {
+                        List<String> suggestions = spellCheckerService.getSuggestions(query);
+                        if (suggestions != null && !suggestions.isEmpty()) {
+                            List<String> updatedSuggestions = spellCheckerService.updateSuggestions(query, suggestions);
+                            response.put("term", query);
+                            response.put("suggestion", updatedSuggestions);
+                        }
+                    }
+                }
+
+                if(len > 1){
+                    List<Map> suggestionsResult = new ArrayList<>();
+
+                    List<String> filteredWords = new ArrayList<>();
+
+                    for(String token : tokens){
+                        Map<String, Object> updatedSuggestionsMap = new HashMap<>();
+                        boolean isCorrect = spellCheckerService.isCorrect(token);
+                        if (!isCorrect) {
+                            List<String> suggestions = spellCheckerService.getSuggestions(token);
+                            if (suggestions != null && !suggestions.isEmpty()) {
+                                List<String> updatedSuggestions =
+                                        spellCheckerService.updateSuggestions(token, suggestions);
+                                updatedSuggestionsMap.put("term", token);
+                                updatedSuggestionsMap.put("suggestion", updatedSuggestions);
+                                filteredWords.addAll(updatedSuggestions);
+                            }
+                        } else {
+                            List<String> suggestions = spellCheckerService.getSuggestions(token);
+                            if (suggestions != null && !suggestions.isEmpty()) {
+                                List<String> updatedSuggestions =
+                                        spellCheckerService.updateSuggestions(token, suggestions);
+                                updatedSuggestionsMap.put("term", token);
+                                updatedSuggestionsMap.put("suggestion",updatedSuggestions);
+                                filteredWords.addAll(updatedSuggestions);
+                            } else {
+                                updatedSuggestionsMap.put(token, "no suggestions.");
+                            }
+                        }
+                        suggestionsResult.add(updatedSuggestionsMap);
+                    }
+
+                    //Check all query are sentence without tokenizing
+                    String line = spellCheckerService.getCorrectedLine(query);
+                    if(StringUtils.isNotBlank(line)){
+                        Map<String, Object> sentenceMap = new HashMap<>();
+                        sentenceMap.put("term", query);
+                        sentenceMap.put("suggestion", line);
+                        filteredWords.add(line);
+                        suggestionsResult.add(sentenceMap);
+                    }
+
+                    if (!suggestionsResult.isEmpty()) {
+                        response.put("suggestions", suggestionsResult);
+                    }
+
+                    if(!filteredWords.isEmpty()){
+                        List<Map> similarityScoreMapList = new ArrayList<>();
+                        for(String word : filteredWords){
+                            Map<String, Object> similarityScoreMap = new HashMap<>();
+                            double similarityScore = spellCheckerService.getSimilarityScore(query, word);
+                            similarityScoreMap.put("term", word);
+                            similarityScoreMap.put("score", similarityScore);
+                            similarityScoreMapList.add(similarityScoreMap);
+                        }
+
+                        Collections.sort(similarityScoreMapList, new Comparator<Map>() {
+                            @Override
+                            public int compare(Map o1, Map o2) {
+                                Double d1 = (Double) o1.get("score");
+                                Double d2 = (Double) o2.get("score");
+                                int answer = 0;
+                                if (d1 >= d2) {
+                                    answer = -1;
+                                } else {
+                                    answer = 1;
+                                }
+                                return answer;
+                            }
+                        });
+
+                        filteredWords.clear();
+                        for(Map wordsMap : similarityScoreMapList){
+                            if(wordsMap.containsKey("term")){
+                                filteredWords.add(wordsMap.get("term").toString());
+                            }
+                        }
+
+                        if(!filteredWords.isEmpty()) {
+                            response.clear();
+                            response.put("term", query);
+                            response.put("suggestion", filteredWords);
+                        }
+                    }
+                }
+            }
+        } else {
+            response.put("message", "Invalid or empty query passed.");
+        }
+        modelAndView.addAllObjects(response);
+        return modelAndView;
+    }
+
+    @RequestMapping("/v2/spell/suggestions")
+    public ModelAndView getSpellAndSentenceSuggestions(@RequestParam(name = "query", required = true) String query,
+                                                       @RequestParam(name = "includeSentence",
+                                                               required = false, defaultValue = "false")
+                                                       Boolean suggestSentence){
+        ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
+        Map<String, Object> response = new HashMap<>();
+        if(StringUtils.isNotBlank(query)){
             boolean isCorrect = spellCheckerService.isCorrect(query);
             if(!isCorrect){
                 List<String> suggestions = spellCheckerService.getSuggestions(query);
@@ -1015,6 +1171,10 @@ public class Index {
                     response.put("suggestions", updatedSuggestions);
                 } else {
                     response.put("message", "no suggestions.");
+                }
+
+                if(suggestSentence){
+
                 }
             } else {
                 List<String> suggestions = spellCheckerService.getSuggestions(query);
@@ -1029,4 +1189,46 @@ public class Index {
         modelAndView.addAllObjects(response);
         return modelAndView;
     }
+
+    @RequestMapping("/v1/sentence/suggestion")
+    public ModelAndView getSentenceSuggestions(@RequestParam(name = "query", required = true) String query){
+        ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
+        Map<String, Object> response = new HashMap<>();
+        if(StringUtils.isNotBlank(query)) {
+            String[] tokens = classificationService.tokenize(query);
+            List<Map> wordNetResponse = null;
+            if(tokens != null && tokens.length > 0){
+                wordNetResponse = new ArrayList<>();
+                int len = tokens.length;
+                if( len == 1){
+                    wordNetResponse = wordNetService.getResponse(tokens[0]);
+                }
+
+                if(len > 1) {
+                    wordNetResponse = new ArrayList<>();
+                    for (String token : tokens) {
+                        Map<String, Object> tokenToLexicalMeaning = new HashMap<>();
+                        tokenToLexicalMeaning.put(token, wordNetService.getResponse(token));
+                        wordNetResponse.add(tokenToLexicalMeaning);
+                    }
+                }
+            }
+
+            Map<String, Object> tokenToWordForms = null;
+            if(wordNetResponse != null && !wordNetResponse.isEmpty()){
+                tokenToWordForms = new HashMap<>();
+                for(Map wordNetMap : wordNetResponse) {
+                    if (wordNetMap.containsKey("wordForms")) {
+
+                    }
+                }
+                response.put("suggestions", wordNetResponse);
+            }
+        } else {
+            response.put("message", "Invalid or empty query passed.");
+        }
+        modelAndView.addAllObjects(response);
+        return modelAndView;
+    }
+
 }

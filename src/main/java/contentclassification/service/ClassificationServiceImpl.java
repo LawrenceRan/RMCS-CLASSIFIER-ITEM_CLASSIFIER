@@ -64,6 +64,21 @@ public class ClassificationServiceImpl implements ClassificationService{
     }
 
     @Override
+    public String[] tokenize(String text, String delimiter){
+        String[] tokens = null;
+        if(StringUtils.isNotBlank(text)){
+            StringTokenizer stringTokens = new StringTokenizer(text, delimiter);
+            tokens = new String[stringTokens.countTokens()];
+            int x = 0;
+            while (stringTokens.hasMoreTokens()){
+                tokens[x] = stringTokens.nextToken();
+                x++;
+            }
+        }
+        return tokens;
+    }
+
+    @Override
     public String getStem(String word) {
         JWIImpl jwi = new JWIImpl(word);
         return jwi.getStem();

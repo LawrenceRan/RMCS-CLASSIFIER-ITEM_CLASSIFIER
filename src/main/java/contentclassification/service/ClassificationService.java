@@ -12,6 +12,7 @@ public interface ClassificationService {
 
     public List<String> uniqueCollection(String text);
     public String[] tokenize(String text);
+    public String[] tokenize(String text, String delimiter);
     public String[] sentenceDetection(String text);
     public String getStem(String word);
     public List<String> getStems(String[] tokens);

@@ -183,11 +183,9 @@ public class Classification {
             ClassLoader classLoader = getClass().getClassLoader();
             InputStream modelStream = classLoader.getResourceAsStream("en-token.bin");
             if(modelStream != null) {
-                if (modelStream != null) {
-                    TokenizerModel tokenizerModel = new TokenizerModel(modelStream);
-                    Tokenizer tokenizer = new TokenizerME(tokenizerModel);
-                    tokens = tokenizer.tokenize(title);
-                }
+                TokenizerModel tokenizerModel = new TokenizerModel(modelStream);
+                Tokenizer tokenizer = new TokenizerME(tokenizerModel);
+                tokens = tokenizer.tokenize(title);
             }
         } catch (FileNotFoundException e){
             logger.debug("File not found exception: "+ e.getMessage());
