@@ -186,6 +186,7 @@ public class Classification {
                 TokenizerModel tokenizerModel = new TokenizerModel(modelStream);
                 Tokenizer tokenizer = new TokenizerME(tokenizerModel);
                 tokens = tokenizer.tokenize(title);
+                modelStream.close();
             }
         } catch (FileNotFoundException e){
             logger.debug("File not found exception: "+ e.getMessage());
@@ -203,11 +204,10 @@ public class Classification {
             ClassLoader classLoader = getClass().getClassLoader();
             InputStream modelStream = classLoader.getResourceAsStream("en-sent.bin");
             if(modelStream != null) {
-                if (modelStream != null) {
-                    SentenceModel sentenceModel = new SentenceModel(modelStream);
-                    SentenceDetectorME sentenceDetectorME = new SentenceDetectorME(sentenceModel);
-                    sentences = sentenceDetectorME.sentDetect(this.title);
-                }
+                SentenceModel sentenceModel = new SentenceModel(modelStream);
+                SentenceDetectorME sentenceDetectorME = new SentenceDetectorME(sentenceModel);
+                sentences = sentenceDetectorME.sentDetect(this.title);
+                modelStream.close();
             }
         } catch (FileNotFoundException e){
             logger.debug("File not found exception: "+ e.getMessage());
@@ -225,11 +225,10 @@ public class Classification {
             ClassLoader classLoader = getClass().getClassLoader();
             InputStream modelStream = classLoader.getResourceAsStream("en-sent.bin");
             if(modelStream != null) {
-                if (modelStream != null) {
-                    SentenceModel sentenceModel = new SentenceModel(modelStream);
-                    SentenceDetectorME sentenceDetectorME = new SentenceDetectorME(sentenceModel);
-                    sentences = sentenceDetectorME.getSentenceProbabilities();
-                }
+                SentenceModel sentenceModel = new SentenceModel(modelStream);
+                SentenceDetectorME sentenceDetectorME = new SentenceDetectorME(sentenceModel);
+                sentences = sentenceDetectorME.getSentenceProbabilities();
+                modelStream.close();
             }
         } catch (FileNotFoundException e){
             logger.debug("File not found exception: "+ e.getMessage());
@@ -487,6 +486,12 @@ public class Classification {
                     }
                 } catch (Exception e){
                     logger.debug("IO Exception: "+ e.getMessage());
+                } finally {
+                    try {
+                        inputStream.close();
+                    } catch (Exception e){
+                        logger.warn("Error in closing file. Message : "+ e.getMessage());
+                    }
                 }
             }
         }

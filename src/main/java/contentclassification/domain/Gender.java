@@ -41,6 +41,7 @@ public class Gender {
             if(inputStream != null){
                 Yaml yaml = new Yaml();
                 try{
+                    @SuppressWarnings("unchecked")
                     List<String> genders = (List<String>) yaml.load(inputStream);
 
                     if(!genders.isEmpty()){
@@ -65,6 +66,12 @@ public class Gender {
                     }
                 } catch (Exception e){
                     logger.debug("Error in getting yaml. Message: "+ e.getMessage());
+                } finally {
+                  try{
+                      inputStream.close();
+                  } catch (Exception e){
+                      logger.warn("Error in closing file. Message : "+ e.getMessage());
+                  }
                 }
             }
         } catch (Exception e){

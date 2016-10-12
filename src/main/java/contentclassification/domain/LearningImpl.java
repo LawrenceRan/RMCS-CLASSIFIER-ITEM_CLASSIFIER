@@ -294,6 +294,11 @@ public class LearningImpl {
         return findings;
     }
 
+    /**
+     * This method would be used to generate sentences out of a given tags.
+     * @param tags
+     * @return
+     */
     public static String generateSentence(String[] tags){
         String sentence = null;
         if(tags != null && tags.length > 0){
@@ -311,22 +316,26 @@ public class LearningImpl {
                 }
 
                 String s = stringBuilder.toString();
-                //logger.info("Sentense: "+ s);
             } catch(Exception e){
                 logger.debug("Error: "+ e.getMessage());
             } finally {
-                if(inputStream != null){
-                    try{
+                try {
+                    if(inputStream != null) {
                         inputStream.close();
-                    } catch (Exception ex){
-
                     }
+                } catch (Exception ex) {
+                    logger.warn("Error in closing file. Message : "+ ex.getMessage());
                 }
             }
         }
         return sentence;
     }
 
+    /**
+     * This method is used to get parts-of-speech of a given list of strings.
+     * @param collection
+     * @return
+     */
     public static Map<String, Object> getPartsOfSpeech(List<String> collection){
         Map<String, Object> response = new HashMap<>();
         if(collection != null && !collection.isEmpty()){

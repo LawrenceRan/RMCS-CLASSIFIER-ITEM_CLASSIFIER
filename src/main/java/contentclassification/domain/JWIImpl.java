@@ -2,14 +2,17 @@ package contentclassification.domain;
 
 import edu.mit.jwi.Dictionary;
 import edu.mit.jwi.IDictionary;
+import edu.mit.jwi.data.BinarySearchWordnetFile;
 import edu.mit.jwi.item.IIndexWord;
 import edu.mit.jwi.item.IWord;
 import edu.mit.jwi.item.IWordID;
 import edu.mit.jwi.item.POS;
 import edu.mit.jwi.morph.WordnetStemmer;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.URL;
 import java.util.*;
 
@@ -136,5 +139,12 @@ public class JWIImpl {
             }
         }
         return glosses;
+    }
+
+    public List<Map> search(){
+        List<Map> resultsMap = null;
+        IDictionary iDictionary = database();
+
+        return resultsMap;
     }
 }

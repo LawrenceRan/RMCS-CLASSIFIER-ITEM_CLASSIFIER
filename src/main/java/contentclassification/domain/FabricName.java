@@ -114,6 +114,7 @@ public class FabricName {
         if(inputStream != null){
             try {
                 Yaml yaml = new Yaml();
+                @SuppressWarnings("unchecked")
                 List<Map> maps = (List<Map>) yaml.load(inputStream);
                 if (!maps.isEmpty()) {
                     for (Map<String, String> m : maps) {
@@ -132,6 +133,12 @@ public class FabricName {
                 }
             } catch (Exception e){
                 logger.debug("IOException: "+ e.getMessage());
+            } finally {
+                try{
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.warn("Error in closing file. Message : "+ e.getMessage());
+                }
             }
         }
         return fabricNames;
@@ -175,6 +182,12 @@ public class FabricName {
                     yaml.dump(maps, new FileWriter(temp.toFile()));
                 } catch (IOException io){
                     logger.debug("IOException: "+ io.getMessage());
+                } finally {
+                    try{
+                        resource.close();
+                    }catch (Exception e){
+                        logger.warn("Error in closing file. Message : "+ e.getMessage());
+                    }
                 }
             }
         }

@@ -83,6 +83,7 @@ public class ColorsDescription {
         if(inputStream != null){
             try{
                 Yaml yaml = new Yaml();
+                @SuppressWarnings("unchecked")
                 List<Map> data = (List<Map>) yaml.load(inputStream);
                 if (data != null && !data.isEmpty()){
                     for(Map<String, String> m  : data){
@@ -116,6 +117,12 @@ public class ColorsDescription {
                 }
             } catch (Exception e){
                 logger.debug("Error in getting colors descriptors. Message: "+ e.getMessage());
+            } finally {
+                try{
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.warn("Error in closing file. Message : "+ e.getMessage());
+                }
             }
         }
         return colorsDescriptionList;

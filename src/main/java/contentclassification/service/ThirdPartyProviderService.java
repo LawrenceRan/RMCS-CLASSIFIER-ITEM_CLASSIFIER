@@ -257,6 +257,8 @@ public class ThirdPartyProviderService {
                 }
 
                 logger.info("found.");
+
+                inputStream.close();
             }
         } catch (Exception e){
             logger.debug("Error occurred in retrieving Id from url. Message: "+ e.getMessage());

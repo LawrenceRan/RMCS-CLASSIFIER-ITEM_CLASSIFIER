@@ -1,5 +1,6 @@
 package contentclassification.config;
 
+import contentclassification.service.DictionaryIndexerService;
 import contentclassification.service.NotificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,9 @@ public class OnStartUp implements ApplicationListener<ContextRefreshedEvent> {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private DictionaryIndexerService dictionaryIndexerService;
+
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         System.setProperty(wordNetDictConfig.getValue(), wordNetDictConfig.getDict());
@@ -31,5 +35,8 @@ public class OnStartUp implements ApplicationListener<ContextRefreshedEvent> {
         System.setProperty("clothing.fabric.names.uri", classificationConfig.getFabricNameResource());
         System.setProperty("enable.javascript", classificationConfig.getEnableJavascript());
         System.setProperty("enable.css", classificationConfig.getEnableCss());
+
+        //Load dictionary in to lucene indexer.
+
     }
 }

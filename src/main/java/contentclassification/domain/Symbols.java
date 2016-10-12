@@ -64,6 +64,12 @@ public class Symbols {
                 }
             } catch (Exception e){
                 logger.debug("Error in parsing yaml file. Message : "+ e.getMessage());
+            } finally {
+                try {
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.warn("Error in closing file. Message : "+ e.getMessage());
+                }
             }
         }
         return list;

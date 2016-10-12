@@ -66,6 +66,7 @@ public class CombinationMatrix {
                 Yaml yaml = new Yaml();
                 Object object = yaml.load(inputStream);
                 if(object instanceof List){
+                    @SuppressWarnings("unchecked")
                     List<Map> rules = (List<Map>) object;
                     if(!rules.isEmpty()){
                         for(Map<String, Object> map : rules){
@@ -76,6 +77,7 @@ public class CombinationMatrix {
                                 }
 
                                 if(keySet.equals("matrix")){
+                                    @SuppressWarnings("unchecked")
                                     List<String> combined = (List<String>) map.get(keySet);
                                     combinationMatrix.setCombinedCategories(combined);
                                 }
@@ -84,6 +86,7 @@ public class CombinationMatrix {
                         }
                     }
                 }
+                inputStream.close();
             }
         } catch (Exception e){
             logger.debug("Exception in getting combination matrix: "+ e.getMessage());

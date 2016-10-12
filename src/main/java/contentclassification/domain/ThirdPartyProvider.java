@@ -178,6 +178,7 @@ public class ThirdPartyProvider {
         if(inputStream != null){
             try {
                 Yaml yaml = new Yaml();
+                @SuppressWarnings("unchecked")
                 List<Map<String, Object>> maps = (List<Map<String, Object>>) yaml.load(inputStream);
                 if(maps != null && !maps.isEmpty()){
                     for(Map<String, Object> m : maps){
@@ -253,6 +254,7 @@ public class ThirdPartyProvider {
                         if(m.containsKey("responseKeys")){
                             Object object = m.get("responseKeys");
                             if(object instanceof List){
+                                @SuppressWarnings("unchecked")
                                 List<Map<String, Object>> mapList = (List<Map<String, Object>>) object;
                                 if(!mapList.isEmpty()){
                                     thirdPartyProvider.setResponseKeys(mapList);
@@ -264,6 +266,12 @@ public class ThirdPartyProvider {
                 }
             } catch (Exception e){
                 logger.debug("Error in loading providers. Message: "+ e.getMessage());
+            } finally {
+                try {
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.warn("Error in closing file. Message : "+ e.getMessage());
+                }
             }
         }
         return thirdPartyProviderList;

@@ -26,4 +26,9 @@ public class WordNetService {
         JWIImpl jwi = new JWIImpl(query);
         return jwi.glosses();
     }
+
+    public List<Map> search(String query){
+        JWIImpl jwi = new JWIImpl(query);
+        return jwi.search();
+    }
 }

@@ -210,6 +210,12 @@ public class JenaImpl {
 //                    //Property comment = contentclassification.model.getProperty("comment");
 //                    logger.info("Comment" + resIterator.toString());
                 }
+
+                try {
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.warn("Error in closing file. Message : "+ e.getMessage());
+                }
             }
         }
 

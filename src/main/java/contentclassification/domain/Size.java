@@ -68,12 +68,19 @@ public class Size {
         if(inputStream != null){
             try {
                 Yaml yaml = new Yaml();
+                @SuppressWarnings("unchecked")
                 Map<String, List<String>> maps = (Map<String, List<String>>) yaml.load(inputStream);
                 if(!maps.isEmpty()){
                     list = maps;
                 }
             } catch (Exception io){
                 logger.debug("IO Exception : "+ io.getMessage());
+            } finally {
+                try {
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.warn("Error in closing file. Message : "+ e.getMessage());
+                }
             }
         }
         return list;

@@ -83,6 +83,12 @@ public class Color {
                 }
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());
+            } finally {
+                try{
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.warn("Error in closing file. Message : "+ e.getMessage());
+                }
             }
         } else {
             logger.debug("Curated colors resource doesn't exist.");
@@ -121,9 +127,10 @@ public class Color {
                         colors.add(color);
                     }
                 }
+                inputStream.close();
             }
         } catch (Exception e){
-            System.out.println("Error: "+ e.getMessage());
+            logger.debug("Error in loading colors by input stream. Message : " + e.getMessage());
         }
         return colors;
     }
@@ -208,6 +215,12 @@ public class Color {
                 exclude = (Map<String, List<String>>) yaml.load(inputStream);
             } catch(Exception ex){
                 logger.debug("Error in getting colors exclusion list. Message: "+ ex.getMessage());
+            } finally {
+                try{
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.warn("Error in closing file. Message : "+ e.getMessage());
+                }
             }
         }
         return exclude;
@@ -222,12 +235,13 @@ public class Color {
                     int initialSize = 0;
                     int currentSize = 0;
                     Yaml yaml = new Yaml();
+                    @SuppressWarnings("unchecked")
                     Map<String, List<String>> list = (Map<String, List<String>>) yaml.load(inputStream);
                     if(list != null && !list.isEmpty()){
                         if(list.containsKey("exclusionList")){
                             List<String> exclusionList = list.get("exclusionList");
                             initialSize = exclusionList.size();
-                            if(exclusionList != null){
+                            if(!exclusionList.isEmpty()){
                                 exclusionList.add(exclude);
                                 currentSize = exclusionList.size();
                                 list.put("exclusionList", exclusionList);
@@ -249,6 +263,12 @@ public class Color {
                     }
                 } catch (Exception e){
                     logger.debug("Error in writing: "+ e.getMessage());
+                } finally {
+                    try{
+                        inputStream.close();
+                    } catch (Exception e){
+                        logger.warn("Error in closing file. Message : "+ e.getMessage());
+                    }
                 }
             }
         }

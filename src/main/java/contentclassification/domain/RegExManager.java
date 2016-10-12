@@ -36,6 +36,12 @@ public class RegExManager {
                 }
             } catch (Exception e){
                 logger.debug("Error in getting regex brands. Message: "+ e.getMessage());
+            } finally {
+                try{
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.warn("Error in closing file. Message : "+ e.getMessage());
+                }
             }
         }
         return regExs;
@@ -54,6 +60,7 @@ public class RegExManager {
                         if(regEx.containsKey("html")) {
                             Object l = regEx.get("html");
                             if (l instanceof List) {
+                                @SuppressWarnings("unchecked")
                                 List<String> ls = (List<String>) l;
                                 regExs = ls.toArray(new String[regEx.size()]);
                             }
@@ -62,6 +69,12 @@ public class RegExManager {
                 }
             } catch (Exception e){
                 logger.debug("Error in getting regex brands. Message: "+ e.getMessage());
+            } finally {
+                try{
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.warn("Error in closing file. Message : "+ e.getMessage());
+                }
             }
         }
         return regExs;
@@ -80,6 +93,7 @@ public class RegExManager {
                         if(regEx.containsKey("htmlAttributes")) {
                             Object l = regEx.get("htmlAttributes");
                             if (l instanceof List) {
+                                @SuppressWarnings("unchecked")
                                 List<String> ls = (List<String>) l;
                                 regExs = ls.toArray(new String[regEx.size()]);
                             }
@@ -88,6 +102,12 @@ public class RegExManager {
                 }
             } catch (Exception e){
                 logger.debug("Error in getting regex brands. Message: "+ e.getMessage());
+            } finally {
+                try {
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.warn("Error in closing file. Message : "+ e.getMessage());
+                }
             }
         }
         return regExs;
@@ -106,6 +126,7 @@ public class RegExManager {
                         if(regEx.containsKey(key)) {
                             Object l = regEx.get(key);
                             if (l instanceof List) {
+                                @SuppressWarnings("unchecked")
                                 List<String> ls = (List<String>) l;
                                 regExs = ls.toArray(new String[regEx.size()]);
                             }
@@ -114,6 +135,12 @@ public class RegExManager {
                 }
             } catch (Exception e){
                 logger.debug("Error in getting regex brands. Message: "+ e.getMessage());
+            } finally {
+                try {
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.warn("Error in closing file. Message : "+ e.getMessage());
+                }
             }
         }
         return regExs;
@@ -132,6 +159,7 @@ public class RegExManager {
                         if(regEx.containsKey(key)) {
                             Object l = regEx.get(key);
                             if (l instanceof List) {
+                                @SuppressWarnings("unchecked")
                                 List<String> ls = (List<String>) l;
                                 regExs = ls.toArray(new String[regEx.size()]);
                             }
@@ -140,6 +168,12 @@ public class RegExManager {
                 }
             } catch (Exception e){
                 logger.debug("Error in getting regex brands. Message: "+ e.getMessage());
+            } finally {
+                try {
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.warn("Error in closing file. Message : "+ e.getMessage());
+                }
             }
         }
         return regExs;

@@ -69,6 +69,7 @@ public class RulesEngine {
             if(inputStream != null){
                 try{
                     Yaml yaml = new Yaml();
+                    @SuppressWarnings("unchecked")
                     Map<Integer, Object> rules = (Map<Integer, Object>) yaml.load(inputStream);
                     if(!rules.isEmpty()){
                         for(Map.Entry<Integer, Object> entry : rules.entrySet()) {
@@ -78,6 +79,7 @@ public class RulesEngine {
                             String id = prefix+":"+ruleId;
                             rulesEngineModel.setId(id);
                             if(entry.getValue() instanceof List){
+                                @SuppressWarnings("unchecked")
                                 List<Map> rulesMap = (List<Map>) entry.getValue();
                                 rulesEngineModel.setRules(rulesMap);
                                 rulesEngineModels.add(rulesEngineModel);
@@ -86,6 +88,12 @@ public class RulesEngine {
                     }
                 } catch (Exception e){
                     logger.debug("Error message: "+ e.getMessage());
+                } finally {
+                    try {
+                        inputStream.close();
+                    } catch (Exception e){
+                        logger.warn("Error in closing file. Message : "+ e.getMessage());
+                    }
                 }
             }
         } catch (Exception e){

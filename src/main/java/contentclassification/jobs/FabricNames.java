@@ -26,6 +26,12 @@ public class FabricNames {
             if(inputStream != null) {
                 FabricName.writeFabricNames(fabricNameList, inputStream);
                 logger.info("Fabrics: " + fabricNameList.size());
+
+                try {
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.warn("Error in closing file. Message : "+ e.getMessage());
+                }
             }
         }
     }

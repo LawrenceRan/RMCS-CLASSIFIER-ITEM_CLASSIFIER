@@ -1,6 +1,8 @@
 package contentclassification.utilities;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.InputStream;
@@ -12,6 +14,7 @@ import java.util.Map;
  * Created by rsl_prod_005 on 7/22/16.
  */
 public class HelperUtility {
+    private static Logger logger = LoggerFactory.getLogger(HelperUtility.class);
     public static <T> List<T> iterableToList(Iterable<T> iterable){
         List<T> list = new ArrayList<>();
         if(iterable.iterator().hasNext()) {
@@ -42,12 +45,14 @@ public class HelperUtility {
             InputStream inputStream = classLoader.getResourceAsStream("en-gender-groupings");
             if(inputStream != null){
                 Yaml yaml = new Yaml();
+                @SuppressWarnings("unchecked")
                 Map<String, Object> map = (Map<String, Object>) yaml.load(inputStream);
                 if(map != null && !map.isEmpty()){
                     for(Map.Entry<String, Object> entry : map.entrySet()){
                         String key = entry.getKey();
                         Object valueObj = entry.getValue();
                         if(valueObj instanceof List){
+                            @SuppressWarnings("unchecked")
                             List<String> values = (List<String>) valueObj;
                             if(!values.isEmpty()){
                                 if(values.contains(term.toLowerCase().trim())){
@@ -56,6 +61,12 @@ public class HelperUtility {
                             }
                         }
                     }
+                }
+
+                try{
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.warn("Error in closing file. Message : "+ e.getMessage());
                 }
             }
         }

@@ -44,6 +44,12 @@ public class SpellCheckerServiceImpl implements SpellCheckerService {
                 spellDictionaryHashMap = new SpellDictionaryHashMap(reader);
             } catch (Exception e){
                 logger.debug("Error in getting dictionary file. Message : "+ e.getMessage());
+            } finally {
+                try{
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.warn("Error in closing file. Message : "+ e.getMessage());
+                }
             }
         }
     }

@@ -152,6 +152,7 @@
                     <include>regex-id-in-urls</include>
                     <include>en-gender-groupings</include>
                     <include>words.utf-8.txt</include>
+                    <include>language-dictionaries-config.yml</include>
                 </includes>
             </resource>
         </resources>

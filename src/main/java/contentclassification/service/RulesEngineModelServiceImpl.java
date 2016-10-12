@@ -78,6 +78,7 @@ public class RulesEngineModelServiceImpl extends RulesEngineModelService<RulesEn
                         RulesEngineModel rulesEngineModel = new RulesEngineModel();
                         ObjectMapper objectMapper = new ObjectMapper();
                         if(StringUtils.isNotBlank(r)) {
+                            @SuppressWarnings("unchecked")
                             Map<String, Object> map = objectMapper.readValue(r, HashMap.class);
                             if (!map.isEmpty()) {
                                 if (map.containsKey("id")) {
@@ -87,6 +88,7 @@ public class RulesEngineModelServiceImpl extends RulesEngineModelService<RulesEn
                                 if (map.containsKey("rules")) {
                                     Object rulesObject = map.get("rules");
                                     if (rulesObject instanceof List) {
+                                        @SuppressWarnings("unchecked")
                                         List<Map> rules = (ArrayList<Map>) rulesObject;
                                         if (!rules.isEmpty()) {
                                             rulesEngineModel.setRules(rules);

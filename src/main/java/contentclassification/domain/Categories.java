@@ -53,38 +53,43 @@ public class Categories {
         try {
             ClassLoader classLoader = Categories.class.getClassLoader();
             InputStream inputStream = classLoader.getResourceAsStream("fashion-categories.yml");
-            Yaml yaml = new Yaml();
-            Map<String, List<String>> ymlCategories = (Map<String, List<String>>) yaml.load(inputStream);
+            if(inputStream != null){
+                Yaml yaml = new Yaml();
+                @SuppressWarnings("unchecked")
+                Map<String, List<String>> ymlCategories = (Map<String, List<String>>) yaml.load(inputStream);
 
-            if (ymlCategories != null && !ymlCategories.isEmpty()) {
-                int x = 0;
-                for (Map.Entry<String, List<String>> category : ymlCategories.entrySet()) {
-                    Categories c = new Categories();
-                    c.category = category.getKey();
+                if (ymlCategories != null && !ymlCategories.isEmpty()) {
+                    int x = 0;
+                    for (Map.Entry<String, List<String>> category : ymlCategories.entrySet()) {
+                        Categories c = new Categories();
+                        c.category = category.getKey();
 
-                    List<String> attributes = category.getValue();
-                    List<String> attributesPluralized = new LinkedList<>();
-                    if (!attributes.isEmpty()) {
-                        for (String s : attributes) {
-                            Set<String> pluralized = pluralize(s);
-                            if (!pluralized.isEmpty()) {
-                                for (String p : pluralized) {
-                                    attributesPluralized.add(p);
+                        List<String> attributes = category.getValue();
+                        List<String> attributesPluralized = new LinkedList<>();
+                        if (!attributes.isEmpty()) {
+                            for (String s : attributes) {
+                                Set<String> pluralized = pluralize(s);
+                                if (!pluralized.isEmpty()) {
+                                    for (String p : pluralized) {
+                                        attributesPluralized.add(p);
+                                    }
                                 }
                             }
+
+                            Set<String> cleanUp = new HashSet<>();
+                            cleanUp.addAll(attributesPluralized);
+
+                            attributesPluralized.clear();
+                            attributesPluralized.addAll(cleanUp);
+
+                            c.attributes = attributesPluralized;
                         }
-
-                        Set<String> cleanUp = new HashSet<>();
-                        cleanUp.addAll(attributesPluralized);
-
-                        attributesPluralized.clear();
-                        attributesPluralized.addAll(cleanUp);
-
-                        c.attributes = attributesPluralized;
+                        categories.add(c);
+                        x++;
                     }
-                    categories.add(c);
-                    x++;
                 }
+
+                inputStream.close();
             }
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
@@ -99,6 +104,7 @@ public class Categories {
             ClassLoader classLoader = getClass().getClassLoader();
             InputStream url = classLoader.getResourceAsStream("fashion-categories.yml");
             if(url != null) {
+                @SuppressWarnings("unchecked")
                 Map<String, List<String>> ymlCategories = (Map<String, List<String>>) yaml.load(url);
 
                 if (ymlCategories != null && !ymlCategories.isEmpty()) {
@@ -137,6 +143,8 @@ public class Categories {
                         x++;
                     }
                 }
+
+                url.close();
             }
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
@@ -150,18 +158,23 @@ public class Categories {
             try {
                 ClassLoader classLoader = Categories.class.getClassLoader();
                 InputStream inputStream = classLoader.getResourceAsStream("fashion-categories.yml");
-                Yaml yaml = new Yaml();
-                Map<String, List<String>> ymlCategories = (Map<String, List<String>>) yaml.load(inputStream);
-                if (ymlCategories != null && !ymlCategories.isEmpty()) {
-                    int x = 0;
-                    if(ymlCategories.containsKey(name)){
-                        List<String> attributes = ymlCategories.get(name);
-                        if(attributes != null && !attributes.isEmpty()){
-                            categories = new Categories();
-                            categories.setCategory(name);
-                            categories.setAttributes(attributes);
+                if(inputStream != null) {
+                    Yaml yaml = new Yaml();
+                    @SuppressWarnings("unchecked")
+                    Map<String, List<String>> ymlCategories = (Map<String, List<String>>) yaml.load(inputStream);
+                    if (ymlCategories != null && !ymlCategories.isEmpty()) {
+                        int x = 0;
+                        if (ymlCategories.containsKey(name)) {
+                            List<String> attributes = ymlCategories.get(name);
+                            if (attributes != null && !attributes.isEmpty()) {
+                                categories = new Categories();
+                                categories.setCategory(name);
+                                categories.setAttributes(attributes);
+                            }
                         }
                     }
+
+                    inputStream.close();
                 }
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());

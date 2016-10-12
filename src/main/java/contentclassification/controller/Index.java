@@ -22,6 +22,7 @@ import contentclassification.domain.TotalTermToGroup;
 import contentclassification.domain.WebMetaName;
 import contentclassification.service.ClassificationServiceImpl;
 import contentclassification.service.JsoupService;
+import contentclassification.service.LearningService;
 import contentclassification.service.SpellCheckerServiceImpl;
 import contentclassification.service.ThirdPartyProviderService;
 import contentclassification.service.WordNetService;
@@ -85,6 +86,9 @@ public class Index {
 
     @Autowired
     private SpellCheckerServiceImpl spellCheckerService;
+
+    @Autowired
+    private LearningService learningService;
 
 //    @Autowired
 //    private DomainGraphDBImpl domainGraphDB;
@@ -1052,6 +1056,18 @@ public class Index {
                         } else {
                             response.put("message", "no suggestions.");
                         }
+
+                        //Get word forms for query passed
+                        List<Map> wordNetServiceResponse = wordNetService.getResponse(query);
+                        if(wordNetServiceResponse != null && !wordNetServiceResponse.isEmpty()){
+                            for(Map wordMap : wordNetServiceResponse){
+
+                            }
+                        }
+
+                        List<Map> searchResponse = wordNetService.search(query);
+                        logger.info("testing search responses.");
+
                     } else {
                         List<String> suggestions = spellCheckerService.getSuggestions(query);
                         if (suggestions != null && !suggestions.isEmpty()) {
@@ -1059,9 +1075,18 @@ public class Index {
                             response.put("term", query);
                             response.put("suggestion", updatedSuggestions);
                         }
+
+                        //Get word forms from Lexical database based query passed
+                        List<Map> wordNetServiceResponse = wordNetService.getResponse(query);
+                        if(wordNetServiceResponse != null && !wordNetServiceResponse.isEmpty()){
+                            for(Map wordMap : wordNetServiceResponse){
+
+                            }
+                        }
                     }
                 }
 
+                //This part of the code is executed when the set of unique words is greater than 1.
                 if(len > 1){
                     List<Map> suggestionsResult = new ArrayList<>();
 

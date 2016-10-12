@@ -61,6 +61,12 @@ public class ColorTags {
                 }
                 logger.info("New existing color size: " + exitingColors.size() + " : " + colors.size());
             }
+
+            try {
+                colorYmlFile.close();
+            } catch (Exception e){
+                logger.warn("Error in closing file. Message : "+ e.getMessage());
+            }
         }
     }
 
