@@ -1,5 +1,6 @@
 package contentclassification.domain;
 
+import contentclassification.utilities.HelperUtility;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -86,17 +87,18 @@ public class ColorsDescription {
                 @SuppressWarnings("unchecked")
                 List<Map> data = (List<Map>) yaml.load(inputStream);
                 if (data != null && !data.isEmpty()){
-                    for(Map<String, String> m  : data){
+                    for(Map m  : data){
+                        m = HelperUtility.uncheckedMapHandler(m);
                         ColorsDescription colorsDescription = new ColorsDescription();
                         if(m.containsKey("word")){
-                            String word = m.get("word");
+                            String word = m.get("word").toString();
                             if(StringUtils.isNotBlank(word)) {
                                 colorsDescription.setWord(word);
                             }
                         }
 
                         if(m.containsKey("pos")){
-                            String posStr = m.get("pos");
+                            String posStr = m.get("pos").toString();
                             if(StringUtils.isNotBlank(posStr)) {
                                 POSRESPONSES pos = POSRESPONSES.fromString(posStr);
                                 if(pos != null){
@@ -106,7 +108,7 @@ public class ColorsDescription {
                         }
 
                         if (m.containsKey("literary")){
-                            String literary = m.get("literary");
+                            String literary = m.get("literary").toString();
                             if(StringUtils.isNotBlank(literary)){
                                 colorsDescription.setLiterary(literary);
                             }

@@ -1,5 +1,7 @@
 package contentclassification.config;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.xpath.operations.Bool;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -18,6 +20,9 @@ public class WordNetDictConfig {
     private String value;
     @Value("${wordnet.display.results}")
     private String displayResults;
+
+    @Value("${lucene.indexer.dir}")
+    private String luceneIndexerDir;
 
     public String getDict() {
         return dict;
@@ -45,5 +50,54 @@ public class WordNetDictConfig {
 
     public boolean getDisplayResultsBool(){
         return Boolean.parseBoolean(this.displayResults);
+    }
+
+    public String getLuceneIndexerDir() {
+        return luceneIndexerDir;
+    }
+
+    public void setLuceneIndexerDir(String luceneIndexerDir) {
+        this.luceneIndexerDir = luceneIndexerDir;
+    }
+
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (obj == this) {
+            return true;
+        }
+        if (obj.getClass() != getClass()) {
+            return false;
+        }
+        WordNetDictConfig rhs = (WordNetDictConfig) obj;
+        return new EqualsBuilder()
+                .append(this.dict, rhs.dict)
+                .append(this.value, rhs.value)
+                .append(this.displayResults, rhs.displayResults)
+                .append(this.luceneIndexerDir, rhs.luceneIndexerDir)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder()
+                .append(dict)
+                .append(value)
+                .append(displayResults)
+                .append(luceneIndexerDir)
+                .toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "WordNetDictConfig{" +
+                "dict='" + dict + '\'' +
+                ", value='" + value + '\'' +
+                ", displayResults='" + displayResults + '\'' +
+                ", luceneIndexerDir='" + luceneIndexerDir + '\'' +
+                '}';
     }
 }

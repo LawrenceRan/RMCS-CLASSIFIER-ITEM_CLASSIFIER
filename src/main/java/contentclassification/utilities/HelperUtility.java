@@ -98,4 +98,10 @@ public class HelperUtility {
         html = stringBuilder.toString();
         return html;
     }
+
+    public static <T> Map<T, T> uncheckedMapHandler(Map<T, T> map){
+        @SuppressWarnings("unchecked")
+        Map<T, T> uncheckedMap = map;
+        return uncheckedMap;
+    }
 }

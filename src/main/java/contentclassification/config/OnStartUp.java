@@ -35,8 +35,11 @@ public class OnStartUp implements ApplicationListener<ContextRefreshedEvent> {
         System.setProperty("clothing.fabric.names.uri", classificationConfig.getFabricNameResource());
         System.setProperty("enable.javascript", classificationConfig.getEnableJavascript());
         System.setProperty("enable.css", classificationConfig.getEnableCss());
+        System.setProperty("lucene.indexer.dir", wordNetDictConfig.getLuceneIndexerDir());
 
         //Load dictionary in to lucene indexer.
-
+        logger.info("About to start indexing language dictionary into indexer.");
+        dictionaryIndexerService.loadDefaultDictionaryIntoIndexer();
+        logger.info("Done loading default language dictionary into indexer.");
     }
 }

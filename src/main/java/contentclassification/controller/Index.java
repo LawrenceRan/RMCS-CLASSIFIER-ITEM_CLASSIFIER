@@ -1025,7 +1025,8 @@ public class Index {
     }
 
     @RequestMapping("/v1/spell/suggestions")
-    public ModelAndView getSpellSuggestions(@RequestParam(name = "query", required = true) String query){
+    public ModelAndView getSpellSuggestions(@RequestParam(name = "query", required = true) String query,
+                                            @RequestParam(name = "limit", required = false) Integer limit){
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
         if(StringUtils.isNotBlank(query)){
@@ -1049,10 +1050,12 @@ public class Index {
                     boolean isCorrect = spellCheckerService.isCorrect(query);
                     if (!isCorrect) {
                         List<String> suggestions = spellCheckerService.getSuggestions(query);
+
+                        List<String> updatedSuggestions = new ArrayList<>();
+
                         if (suggestions != null && !suggestions.isEmpty()) {
-                            List<String> updatedSuggestions = spellCheckerService.updateSuggestions(query, suggestions);
+                            updatedSuggestions.addAll(spellCheckerService.updateSuggestions(query, suggestions));
                             response.put("term", query);
-                            response.put("suggestion", updatedSuggestions);
                         } else {
                             response.put("message", "no suggestions.");
                         }
@@ -1066,14 +1069,22 @@ public class Index {
                         }
 
                         List<Map> searchResponse = wordNetService.search(query);
-                        logger.info("testing search responses.");
+                        if(searchResponse != null && !searchResponse.isEmpty()) {
+                            for(Map map :  searchResponse) {
+                                if(map.containsKey("word")) {
+                                    updatedSuggestions.add(map.get("word").toString());
+                                }
+                            }
+                        }
+
+                        response.put("suggestion", updatedSuggestions);
 
                     } else {
                         List<String> suggestions = spellCheckerService.getSuggestions(query);
+                        List<String> updatedSuggestions = new ArrayList<>();
                         if (suggestions != null && !suggestions.isEmpty()) {
-                            List<String> updatedSuggestions = spellCheckerService.updateSuggestions(query, suggestions);
+                            updatedSuggestions.addAll(spellCheckerService.updateSuggestions(query, suggestions));
                             response.put("term", query);
-                            response.put("suggestion", updatedSuggestions);
                         }
 
                         //Get word forms from Lexical database based query passed
@@ -1083,6 +1094,17 @@ public class Index {
 
                             }
                         }
+
+                        List<Map> searchResponse = wordNetService.search(query);
+                        if(searchResponse != null && !searchResponse.isEmpty()) {
+                            for(Map map :  searchResponse) {
+                                if(map.containsKey("word")) {
+                                    updatedSuggestions.add(map.get("word").toString());
+                                }
+                            }
+                        }
+
+                        response.put("suggestion", updatedSuggestions);
                     }
                 }
 
