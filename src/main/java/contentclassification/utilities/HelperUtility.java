@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by rsl_prod_005 on 7/22/16.
@@ -103,5 +104,51 @@ public class HelperUtility {
         @SuppressWarnings("unchecked")
         Map<T, T> uncheckedMap = map;
         return uncheckedMap;
+    }
+
+    public static <T> List<T> getValueOfMapAsList(Object object, String valueKey){
+        List<T> values = null;
+        if(object != null) {
+            if(object instanceof Map) {
+                Map map = (Map) object;
+                if (!map.isEmpty()) {
+                    values = new ArrayList<>();
+                    @SuppressWarnings("unchecked")
+                    Set<Map.Entry> entrySet = map.entrySet();
+
+                    for(Map.Entry entry : entrySet){
+                        values.add((T) entry.getValue());
+                    }
+                }
+            }
+
+            if(object instanceof List){
+                List list = (List) object;
+                if(!list.isEmpty()){
+                    values = new ArrayList<>();
+                    for(Object listObj : list){
+                        if(listObj instanceof Map){
+                            Map map = (Map) listObj;
+                            if (!map.isEmpty()) {
+                                @SuppressWarnings("unchecked")
+                                Set<Map.Entry> entrySet = map.entrySet();
+
+                                Object value = null;
+                                for(Map.Entry entry : entrySet){
+                                    if(entry.getKey().toString().equalsIgnoreCase(valueKey)) {
+                                        value = entry.getValue();
+                                    }
+                                }
+
+                                if(value != null){
+                                    values.add((T) value);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return values;
     }
 }

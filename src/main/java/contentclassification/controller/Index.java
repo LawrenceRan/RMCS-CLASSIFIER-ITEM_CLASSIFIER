@@ -26,6 +26,7 @@ import contentclassification.service.LearningService;
 import contentclassification.service.SpellCheckerServiceImpl;
 import contentclassification.service.ThirdPartyProviderService;
 import contentclassification.service.WordNetService;
+import contentclassification.utilities.HelperUtility;
 import org.apache.commons.lang3.StringUtils;
 import org.atteo.evo.inflector.English;
 import org.jsoup.nodes.Document;
@@ -1070,11 +1071,16 @@ public class Index {
 
                         List<Map> searchResponse = wordNetService.search(query);
                         if(searchResponse != null && !searchResponse.isEmpty()) {
-                            for(Map map :  searchResponse) {
-                                if(map.containsKey("word")) {
-                                    updatedSuggestions.add(map.get("word").toString());
-                                }
+                            List<String> getStringsFromSearchResponse =
+                                    HelperUtility.getValueOfMapAsList(searchResponse, "word");
+                            List<String> searchResponsesUpdated =
+                                    spellCheckerService.updateSuggestions(query, getStringsFromSearchResponse);
+
+                            if(searchResponsesUpdated != null && !searchResponsesUpdated.isEmpty()){
+                                updatedSuggestions.clear();
+                                updatedSuggestions.addAll(searchResponsesUpdated);
                             }
+
                         }
 
                         response.put("suggestion", updatedSuggestions);
@@ -1097,10 +1103,13 @@ public class Index {
 
                         List<Map> searchResponse = wordNetService.search(query);
                         if(searchResponse != null && !searchResponse.isEmpty()) {
-                            for(Map map :  searchResponse) {
-                                if(map.containsKey("word")) {
-                                    updatedSuggestions.add(map.get("word").toString());
-                                }
+                            List<String> getStringsFromSearchResponse =
+                                    HelperUtility.getValueOfMapAsList(searchResponse, "word");
+                            List<String> searchResponsesUpdated =
+                                    spellCheckerService.updateSuggestions(query, getStringsFromSearchResponse);
+                            if(searchResponsesUpdated != null && !searchResponsesUpdated.isEmpty()){
+                                updatedSuggestions.clear();
+                                updatedSuggestions.addAll(searchResponsesUpdated);
                             }
                         }
 

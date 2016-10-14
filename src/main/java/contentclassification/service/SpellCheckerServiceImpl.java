@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -148,45 +149,52 @@ public class SpellCheckerServiceImpl implements SpellCheckerService {
 
     @Override
     public List<String> updateSuggestions(String query, List<String> suggestions){
-        List<String> updatedSuggestions = new ArrayList<>();
+        List<String> updatedSuggestions = new LinkedList<>();
         List<Map> sortSuggestions = new ArrayList<>();
-        for(String suggestion : suggestions){
-            double score = getSimilarityScore(query.toLowerCase().trim(),
-                    suggestion.toLowerCase().trim());
+        if(suggestions != null && !suggestions.isEmpty()) {
+            for (String suggestion : suggestions) {
+                double score = getSimilarityScore(query.toLowerCase().trim(),
+                        suggestion.toLowerCase().trim());
 
-            if(score > 0) {
-                Map<String, Object> doubleMap = new HashMap<>();
-                doubleMap.put("score", score);
-                doubleMap.put("suggestion", suggestion);
+                if (score > 0) {
+                    Map<String, Object> doubleMap = new HashMap<>();
+                    doubleMap.put("score", score);
+                    doubleMap.put("suggestion", suggestion);
 
-                sortSuggestions.add(doubleMap);
-            }
-        }
-
-        Collections.sort(sortSuggestions, new Comparator<Map>() {
-            @Override
-            public int compare(Map o1, Map o2) {
-                Double score1 = (Double) o1.get("score");
-                Double score2 = (Double) o2.get("score");
-                int value;
-                if (score1 >= score2) {
-                    value = -1;
-                } else {
-                    value = 1;
+                    sortSuggestions.add(doubleMap);
                 }
-                return value;
             }
-        });
 
-        for(Map map : sortSuggestions){
-            updatedSuggestions.add(map.get("suggestion").toString());
-        }
+            Collections.sort(sortSuggestions, new Comparator<Map>() {
+                @Override
+                public int compare(Map o1, Map o2) {
+                    Double score1 = (Double) o1.get("score");
+                    Double score2 = (Double) o2.get("score");
+                    int value = 0;
 
-        if(!updatedSuggestions.isEmpty()){
-            List<String> updatedByRegEx = applyRegExToSuggestions(query, updatedSuggestions);
-            if(updatedByRegEx != null && !updatedByRegEx.isEmpty()){
-                updatedSuggestions.clear();
-                updatedSuggestions.addAll(updatedByRegEx);
+                    if (score1 > score2) {
+                        value = -1;
+                    }
+
+                    if (score1 < score2) {
+                        value = 1;
+                    }
+
+
+                    return value;
+                }
+            });
+
+            for (Map map : sortSuggestions) {
+                updatedSuggestions.add(map.get("suggestion").toString());
+            }
+
+            if (!updatedSuggestions.isEmpty()) {
+                List<String> updatedByRegEx = applyRegExToSuggestions(query, updatedSuggestions);
+                if (updatedByRegEx != null && !updatedByRegEx.isEmpty()) {
+                    updatedSuggestions.clear();
+                    updatedSuggestions.addAll(updatedByRegEx);
+                }
             }
         }
 
