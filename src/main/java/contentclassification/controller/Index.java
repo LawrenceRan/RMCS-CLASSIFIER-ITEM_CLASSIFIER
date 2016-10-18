@@ -1027,7 +1027,10 @@ public class Index {
 
     @RequestMapping("/v1/spell/suggestions")
     public ModelAndView getSpellSuggestions(@RequestParam(name = "query", required = true) String query,
-                                            @RequestParam(name = "limit", required = false) Integer limit){
+                                            @RequestParam(name = "limit", required = false) Integer limit,
+                                            @RequestParam(name = "includeWordForms", required = false,
+                                                    defaultValue = "false")
+                                            Boolean includeWordForms){
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
         if(StringUtils.isNotBlank(query)){
@@ -1053,6 +1056,7 @@ public class Index {
                         List<String> suggestions = spellCheckerService.getSuggestions(query);
 
                         List<String> updatedSuggestions = new ArrayList<>();
+                        List<String> wordForms = null;
 
                         if (suggestions != null && !suggestions.isEmpty()) {
                             updatedSuggestions.addAll(spellCheckerService.updateSuggestions(query, suggestions));
@@ -1062,42 +1066,66 @@ public class Index {
                         }
 
                         //Get word forms for query passed
-                        List<Map> wordNetServiceResponse = wordNetService.getResponse(query);
-                        if(wordNetServiceResponse != null && !wordNetServiceResponse.isEmpty()){
-                            for(Map wordMap : wordNetServiceResponse){
+                        if(!updatedSuggestions.isEmpty()) {
+                            query = updatedSuggestions.get(0);
+                            if(includeWordForms) {
+                                List<Map> wordNetServiceResponse = wordNetService.getResponse(query);
+                                if (wordNetServiceResponse != null && !wordNetServiceResponse.isEmpty()) {
+                                    wordForms = new ArrayList<>();
+                                    for (Map wordMap : wordNetServiceResponse) {
+                                        if (wordMap.containsKey("wordForms")) {
+                                            Object arrWordForms = wordMap.get("wordForms");
+                                            if (arrWordForms instanceof String[]) {
+                                                wordForms.addAll(Arrays.asList((String[]) arrWordForms));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            List<Map> searchResponse = wordNetService.search(query);
+                            if (searchResponse != null && !searchResponse.isEmpty()) {
+                                List<String> getStringsFromSearchResponse =
+                                        HelperUtility.getValueOfMapAsList(searchResponse, "word");
+                                List<String> searchResponsesUpdated =
+                                        spellCheckerService.updateSuggestions(query, getStringsFromSearchResponse);
+
+                                if (searchResponsesUpdated != null && !searchResponsesUpdated.isEmpty()) {
+                                    updatedSuggestions.clear();
+                                    updatedSuggestions.addAll(searchResponsesUpdated);
+                                }
 
                             }
                         }
 
-                        List<Map> searchResponse = wordNetService.search(query);
-                        if(searchResponse != null && !searchResponse.isEmpty()) {
-                            List<String> getStringsFromSearchResponse =
-                                    HelperUtility.getValueOfMapAsList(searchResponse, "word");
-                            List<String> searchResponsesUpdated =
-                                    spellCheckerService.updateSuggestions(query, getStringsFromSearchResponse);
-
-                            if(searchResponsesUpdated != null && !searchResponsesUpdated.isEmpty()){
-                                updatedSuggestions.clear();
-                                updatedSuggestions.addAll(searchResponsesUpdated);
-                            }
-
+                        if(wordForms != null && !wordForms.isEmpty()){
+                            response.put("wordForms", wordForms);
                         }
-
                         response.put("suggestion", updatedSuggestions);
 
                     } else {
                         List<String> suggestions = spellCheckerService.getSuggestions(query);
                         List<String> updatedSuggestions = new ArrayList<>();
+                        List<String> wordForms = null;
+
                         if (suggestions != null && !suggestions.isEmpty()) {
                             updatedSuggestions.addAll(spellCheckerService.updateSuggestions(query, suggestions));
                             response.put("term", query);
                         }
 
                         //Get word forms from Lexical database based query passed
-                        List<Map> wordNetServiceResponse = wordNetService.getResponse(query);
-                        if(wordNetServiceResponse != null && !wordNetServiceResponse.isEmpty()){
-                            for(Map wordMap : wordNetServiceResponse){
-
+                        if(includeWordForms) {
+                            List<Map> wordNetServiceResponse = wordNetService.getResponse(query);
+                            if (wordNetServiceResponse != null && !wordNetServiceResponse.isEmpty()) {
+                                wordForms = new ArrayList<>();
+                                for (Map wordMap : wordNetServiceResponse) {
+                                    if (wordMap.containsKey("wordForms")) {
+                                        Object arrWordForms = wordMap.get("wordForms");
+                                        if (arrWordForms instanceof String[]) {
+                                            wordForms.addAll(Arrays.asList((String[]) arrWordForms));
+                                        }
+                                    }
+                                }
                             }
                         }
 
@@ -1113,6 +1141,9 @@ public class Index {
                             }
                         }
 
+                        if(wordForms != null && !wordForms.isEmpty()){
+                            response.put("wordForms", wordForms);
+                        }
                         response.put("suggestion", updatedSuggestions);
                     }
                 }
