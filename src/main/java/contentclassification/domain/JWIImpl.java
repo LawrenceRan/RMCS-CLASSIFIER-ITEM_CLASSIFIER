@@ -67,47 +67,57 @@ public class JWIImpl {
         try{
             wordnetStemmer = new WordnetStemmer(dictionary);
         } catch (Exception e){
-            logger.debug("Error in getting wordnetStemmer. Message: "+ e.getMessage());
+            logger.debug("Error in getting WordNet Stemmer. Message: "+ e.getMessage());
         } finally {
-
+            dictionary.close();
         }
         return wordnetStemmer;
     }
 
     public List<Map> findStems(){
         List<Map> stems = new ArrayList<>();
-        List<POS> posList = Arrays.asList(POS.values());
-        if(!posList.isEmpty()){
-            for(POS pos : posList){
-                WordnetStemmer stemmer = wordnetStemmer();
-                if(stemmer != null) {
-                    List<String> stemmers = stemmer.findStems(this.query, pos);
-                    if(stemmers != null && !stemmers.isEmpty()) {
-                        Map<Integer, Object> map = new HashMap<>();
-                        map.put(pos.getNumber(), stemmers.get(0));
-                        if (!map.isEmpty()) {
-                            stems.add(map);
+        IDictionary dictionary = database();
+        try {
+            List<POS> posList = Arrays.asList(POS.values());
+            if(!posList.isEmpty()){
+                for(POS pos : posList){
+                        WordnetStemmer stemmer = new WordnetStemmer(dictionary);
+                        List<String> stemmers = stemmer.findStems(this.query, pos);
+                        if (stemmers != null && !stemmers.isEmpty()) {
+                            Map<Integer, Object> map = new HashMap<>();
+                            map.put(pos.getNumber(), stemmers.get(0));
+                            if (!map.isEmpty()) {
+                                stems.add(map);
+                            }
                         }
-                    }
                 }
             }
+        } catch (Exception e){
+            logger.debug("Error in finding stems. Message : "+ e.getMessage());
+        } finally {
+            dictionary.close();
         }
         return stems;
     }
 
     public String getStem(){
         String stem = null;
-        List<POS> posList = Arrays.asList(POS.values());
-        if(!posList.isEmpty()){
-            for(POS pos : posList){
-                WordnetStemmer stemmer = wordnetStemmer();
-                if(stemmer != null) {
+        IDictionary dictionary = database();
+        try {
+            List<POS> posList = Arrays.asList(POS.values());
+            if (!posList.isEmpty()) {
+                for (POS pos : posList) {
+                    WordnetStemmer stemmer = new WordnetStemmer(dictionary);
                     List<String> stemmers = stemmer.findStems(this.query, pos);
-                    if(stemmers != null && !stemmers.isEmpty()) {
+                    if (stemmers != null && !stemmers.isEmpty()) {
                         stem = stemmers.get(0);
                     }
                 }
             }
+        } catch (Exception e){
+            logger.debug("Error in finding stems. Message : "+ e.getMessage());
+        } finally {
+            dictionary.close();
         }
         return stem;
     }
@@ -117,25 +127,31 @@ public class JWIImpl {
         List<Map> stemmers = findStems();
         if(!stemmers.isEmpty()){
             IDictionary dictionary = database();
-            for(Map map : stemmers){
-                Map<String, Object> resultsMap = new HashMap<>();
+            try {
+                for (Map map : stemmers) {
+                    Map<String, Object> resultsMap = new HashMap<>();
 
-                for(Object keySet : map.keySet()){
-                    Integer posInt = (Integer) keySet;
-                    POS pos = POS.getPartOfSpeech(posInt);
-                    String value = map.get(keySet).toString();
-                    IIndexWord iIndexWord = dictionary.getIndexWord(value, pos);
-                    if(iIndexWord != null) {
-                        IWordID iWordID = iIndexWord.getWordIDs().get(0);
-                        IWord iWord = dictionary.getWord(iWordID);
+                    for (Object keySet : map.keySet()) {
+                        Integer posInt = (Integer) keySet;
+                        POS pos = POS.getPartOfSpeech(posInt);
+                        String value = map.get(keySet).toString();
+                        IIndexWord iIndexWord = dictionary.getIndexWord(value, pos);
+                        if (iIndexWord != null) {
+                            IWordID iWordID = iIndexWord.getWordIDs().get(0);
+                            IWord iWord = dictionary.getWord(iWordID);
 
-                        //resultsMap.put("wordId", iWordID);
-                        resultsMap.put("lemma", iWord.getLemma());
-                        resultsMap.put("gloss", iWord.getSynset().getGloss());
-                        resultsMap.put("type", POS.getPartOfSpeech(iWord.getSynset().getType()).toString());
-                        glosses.add(resultsMap);
+                            //resultsMap.put("wordId", iWordID);
+                            resultsMap.put("lemma", iWord.getLemma());
+                            resultsMap.put("gloss", iWord.getSynset().getGloss());
+                            resultsMap.put("type", POS.getPartOfSpeech(iWord.getSynset().getType()).toString());
+                            glosses.add(resultsMap);
+                        }
                     }
                 }
+            } catch (Exception e){
+                logger.debug("Error in getting glosses. Message : "+ e.getMessage());
+            } finally {
+                dictionary.close();
             }
         }
         return glosses;
@@ -144,7 +160,13 @@ public class JWIImpl {
     public List<Map> search(){
         List<Map> resultsMap = null;
         IDictionary iDictionary = database();
+        try{
 
+        } catch (Exception e){
+            logger.debug("Error in searching dictionary. Message : "+ e.getMessage());
+        } finally {
+            iDictionary.close();
+        }
         return resultsMap;
     }
 }

@@ -9,15 +9,24 @@ import java.util.List;
  * Created by rsl_prod_005 on 10/12/16.
  */
 public enum Languages {
-    EN("English"), ES("Spanish"), FR("French");
+    EN("English", "en"), ES("Spanish", "es"), FR("French", "fr");
 
     private final String language;
+    private final String initial;
 
-    Languages(String language){ this.language = language; }
+    Languages(String language, String initial)
+    {
+        this.language = language;
+        this.initial = initial;
+    }
 
     @Override
     public String toString(){
         return this.language;
+    }
+
+    public String toInitial(){
+        return this.initial;
     }
 
     public static Languages fromString(String language){

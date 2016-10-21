@@ -153,6 +153,12 @@
                     <include>en-gender-groupings</include>
                     <include>words.utf-8.txt</include>
                     <include>language-dictionaries-config.yml</include>
+                    <include>en-punctuations.yml</include>
+                    <include>en-ner-organization.bin</include>
+                    <include>en-ner-money.bin</include>
+                    <include>en-ner-location.bin</include>
+                    <include>en-ner-person.bin</include>
+                    <include>en-ner-time.bin</include>
                 </includes>
             </resource>
         </resources>
@@ -192,14 +198,6 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>javaml</groupId>
-            <artifactId>javaml</artifactId>
-            <version>0.1.5</version>
-            <scope>system</scope>
-            <systemPath>${pom.basedir}/libs/javaml-0.1.5.jar</systemPath>
-            <type>jar</type>
-        </dependency>
-        <dependency>
             <groupId>Jama</groupId>
             <artifactId>Jama</artifactId>
             <version>1.2.0</version>
@@ -213,14 +211,6 @@
             <scope>system</scope>
             <version>3.21</version>
             <systemPath>${pom.basedir}/libs/libsvm.jar</systemPath>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>weka</groupId>
-            <artifactId>weka</artifactId>
-            <scope>system</scope>
-            <version>3.6</version>
-            <systemPath>${pom.basedir}/libs/weka.jar</systemPath>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -385,6 +375,16 @@
             <groupId>net.sf.jazzy</groupId>
             <artifactId>jazzy</artifactId>
             <version>0.5.2-rtext-1.4.1-2</version>
+        </dependency>
+        <dependency>
+            <groupId>javaml</groupId>
+            <artifactId>javaml</artifactId>
+            <version>0.1.5</version>
+        </dependency>
+        <dependency>
+            <groupId>nz.ac.waikato.cms.weka</groupId>
+            <artifactId>weka-stable</artifactId>
+            <version>3.6.12</version>
         </dependency>
     </dependencies>
 </project>

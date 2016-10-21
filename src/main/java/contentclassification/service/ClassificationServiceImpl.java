@@ -1,21 +1,50 @@
 package contentclassification.service;
 
 import contentclassification.config.TermsScoringConfig;
-import contentclassification.domain.*;
+import contentclassification.domain.AppUtils;
+import contentclassification.domain.Categories;
+import contentclassification.domain.Classification;
+import contentclassification.domain.Color;
+import contentclassification.domain.ColorsDescription;
+import contentclassification.domain.CombinationMatrix;
+import contentclassification.domain.ContentAreaGroupings;
+import contentclassification.domain.FabricName;
+import contentclassification.domain.Gender;
+import contentclassification.domain.JWIImpl;
+import contentclassification.domain.JsoupImpl;
+import contentclassification.domain.NameAndContentMetaData;
+import contentclassification.domain.POSRESPONSES;
+import contentclassification.domain.RegExManager;
+import contentclassification.domain.ResponseCategoryToAttribute;
+import contentclassification.domain.ResponseToAttributeClusterScore;
+import contentclassification.domain.RuleEngineDataSetEnum;
+import contentclassification.domain.RuleEngineInput;
+import contentclassification.domain.RulesEngineDataSet;
+import contentclassification.domain.RulesEngineTask;
+import contentclassification.domain.Size;
+import contentclassification.domain.SizeProperties;
+import contentclassification.domain.Symbols;
+import contentclassification.domain.TFIDFWeightedScore;
+import contentclassification.domain.TermToGroupScore;
+import contentclassification.domain.TotalTermToGroup;
+import contentclassification.domain.ValueComparator;
+import contentclassification.domain.WebMetaName;
 import contentclassification.model.RulesEngineModel;
 import contentclassification.utilities.BM25;
 import contentclassification.utilities.HelperUtility;
 import edu.mit.jwi.item.POS;
 import net.sf.javaml.clustering.Clusterer;
-import net.sf.javaml.clustering.evaluation.*;
+import net.sf.javaml.clustering.evaluation.AICScore;
+import net.sf.javaml.clustering.evaluation.BICScore;
+import net.sf.javaml.clustering.evaluation.ClusterEvaluation;
+import net.sf.javaml.clustering.evaluation.SumOfAveragePairwiseSimilarities;
+import net.sf.javaml.clustering.evaluation.SumOfCentroidSimilarities;
 import net.sf.javaml.core.Dataset;
 import net.sf.javaml.core.DefaultDataset;
 import net.sf.javaml.core.DenseInstance;
 import net.sf.javaml.core.Instance;
 import net.sf.javaml.tools.weka.WekaClusterer;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.atteo.evo.inflector.English;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -27,7 +56,19 @@ import org.springframework.stereotype.Service;
 import weka.clusterers.XMeans;
 
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -2257,6 +2298,67 @@ public class ClassificationServiceImpl implements ClassificationService{
         }
         return groupedPos;
     }
+
+    @Override
+    public List<String> getPersons(String tokens){
+        List<String> names = null;
+        if(StringUtils.isNotBlank(tokens)){
+            classification = new Classification(tokens);
+            names = classification.getPersons();
+        }
+        return names;
+    }
+
+    @Override
+    public List<String> getLocations(String text) {
+        List<String> locations = null;
+        if(StringUtils.isNotBlank(text)){
+            classification = new Classification(text);
+            locations = classification.getLocations();
+        }
+        return locations;
+    }
+
+    @Override
+    public List<String> getTime(String text) {
+        List<String> times = null;
+        if(StringUtils.isNotBlank(text)){
+            classification = new Classification(text);
+            times = classification.getTimes();
+        }
+        return times;
+    }
+
+    @Override
+    public List<String> getOrganizations(String text) {
+        List<String> organizations = null;
+        if(StringUtils.isNotBlank(text)){
+            classification = new Classification(text);
+            organizations = classification.getOrganizations();
+        }
+        return organizations;
+    }
+
+    @Override
+    public List<String> getMoney(String text) {
+        List<String> monies = null;
+        if(StringUtils.isNotBlank(text)) {
+            classification = new Classification(text);
+            monies = classification.getMonies();
+        }
+        return monies;
+    }
+
+    @Override
+    public List<String> getPercentage(String text) {
+        List<String> percentages = null;
+        if(StringUtils.isNotBlank(text)){
+            classification = new Classification(text);
+            percentages = classification.getPercentages();
+        }
+        return percentages;
+    }
+
 
     public POSRESPONSES getPOSRESPONSES(String pos){
         POSRESPONSES posresponses = null;

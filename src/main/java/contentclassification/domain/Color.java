@@ -1,12 +1,6 @@
 package contentclassification.domain;
 
 import info.debatty.java.stringsimilarity.Jaccard;
-import info.debatty.java.stringsimilarity.KShingling;
-import info.debatty.java.stringsimilarity.StringSet;
-import net.sf.javaml.core.DenseInstance;
-import net.sf.javaml.core.Instance;
-import net.sf.javaml.distance.JaccardIndexSimilarity;
-import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;

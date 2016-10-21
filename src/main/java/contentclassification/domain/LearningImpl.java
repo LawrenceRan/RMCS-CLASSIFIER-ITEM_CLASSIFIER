@@ -2,10 +2,9 @@ package contentclassification.domain;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hp.hpl.jena.query.*;
-import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
-import contentclassification.controller.Languages;
+import contentclassification.domain.Languages;
 import contentclassification.controller.LearningResponseKeys;
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;
@@ -16,13 +15,11 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URLEncoder;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -251,9 +248,9 @@ public class LearningImpl {
                                                                             = (Map<String, Object>) description;
                                                                     if (!descriptionMap.isEmpty()) {
                                                                         if(descriptionMap
-                                                                                .containsKey(Languages.ENGLISH.toString())) {
+                                                                                .containsKey(Languages.EN.toInitial())) {
                                                                             Object englishValue
-                                                                                    = descriptionMap.get(Languages.ENGLISH.toString());
+                                                                                    = descriptionMap.get(Languages.EN.toInitial());
                                                                             if(englishValue instanceof Map) {
                                                                                 Map<String, Object> objectMap =
                                                                                         (Map<String, Object>) englishValue;

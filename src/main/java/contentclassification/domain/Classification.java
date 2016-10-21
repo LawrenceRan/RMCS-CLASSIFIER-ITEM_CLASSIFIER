@@ -8,6 +8,8 @@ import net.sf.javaml.core.DefaultDataset;
 import net.sf.javaml.core.DenseInstance;
 import net.sf.javaml.core.Instance;
 import opennlp.tools.cmdline.postag.POSModelLoader;
+import opennlp.tools.namefind.NameFinderME;
+import opennlp.tools.namefind.TokenNameFinderModel;
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;
 import opennlp.tools.sentdetect.SentenceDetectorME;
@@ -16,17 +18,28 @@ import opennlp.tools.tokenize.Tokenizer;
 import opennlp.tools.tokenize.TokenizerME;
 import opennlp.tools.tokenize.TokenizerModel;
 import opennlp.tools.util.InvalidFormatException;
+import opennlp.tools.util.Span;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.*;
-import java.net.URL;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -473,13 +486,17 @@ public class Classification {
                         String[] tags = posTaggerME.tag(tokens);
                         int x = 0;
                         for (String t : tags) {
-                            Map<String, Object> map = new HashMap<>();
-                            map.put("token", tokens[x]);
-                            map.put("pos", t);
-                            POSRESPONSES posresponses = POSRESPONSES.valueOf(t);
-                            map.put("initial", posresponses != null ? posresponses.toString() : "");
-                            pos.add(map);
-                            x++;
+                            try {
+                                Map<String, Object> map = new HashMap<>();
+                                map.put("token", tokens[x]);
+                                map.put("pos", t);
+                                POSRESPONSES posresponses = POSRESPONSES.valueOf(t);
+                                map.put("initial", posresponses != null ? posresponses.toString() : "");
+                                pos.add(map);
+                                x++;
+                            } catch (Exception e){
+                                logger.warn("Error in getting enum for parts-of-speech.  Term : "+ t +" Message: "+ e.getMessage());
+                            }
                         }
                     } else {
                         logger.info("en-pos-maxent.bin file not found or is not readable.");
@@ -568,5 +585,206 @@ public class Classification {
             }
         }
         return isPresent;
+    }
+
+    public List<String> getPersons(){
+        List<String> persons = null;
+        if(StringUtils.isNotBlank(title)){
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            InputStream inputStream = classLoader.getResourceAsStream("en-ner-person.bin");
+            if(inputStream != null){
+                try {
+                    TokenNameFinderModel nameFinder = new TokenNameFinderModel(inputStream);
+                    NameFinderME nameFinderME = new NameFinderME(nameFinder);
+
+                    String[] tokens = getTokens();
+                    Span[] spans = nameFinderME.find(tokens);
+
+                    if(spans != null && spans.length > 0){
+                        persons = new ArrayList<>();
+                        for(int x=0; x < spans.length; x++){
+                            String object = tokens[spans[x].getStart()] + " " + tokens[spans[x].getStart() + 1];
+                            persons.add(object.trim());
+                        }
+                    }
+                    nameFinderME.clearAdaptiveData();
+
+                } catch (Exception e){
+                    logger.debug("Error in getting persons or entities. Message : "+ e.getMessage());
+                } finally {
+                    try {
+                        inputStream.close();
+                    } catch (Exception e){
+                        logger.debug("Error in closing input stream in get persons. Message : "+ e.getMessage());
+                    }
+                }
+            }
+        }
+        return persons;
+    }
+
+    public List<String> getLocations(){
+        List<String> locations = null;
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        InputStream inputStream = classLoader.getResourceAsStream("en-ner-location.bin");
+        if(inputStream != null){
+            try{
+                TokenNameFinderModel nameFinder = new TokenNameFinderModel(inputStream);
+                NameFinderME nameFinderME = new NameFinderME(nameFinder);
+
+                String[] tokens = getTokens();
+                Span[] spans = nameFinderME.find(tokens);
+
+                if(spans != null && spans.length > 0){
+                    locations = new ArrayList<>();
+                    for(int x=0; x < spans.length; x++){
+                        String object = tokens[spans[x].getStart()] + " " + tokens[spans[x].getStart() + 1];
+                        locations.add(object.trim());
+                    }
+                }
+                nameFinderME.clearAdaptiveData();
+            } catch (Exception e){
+                logger.debug("Error in get location out of content. Message : "+ e.getMessage());
+            } finally {
+                try{
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.debug("Error in closing input stream. Message : "+ e.getMessage());
+                }
+            }
+        }
+        return locations;
+    }
+
+    public List<String> getTimes(){
+        List<String> times = null;
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        InputStream inputStream = classLoader.getResourceAsStream("en-ner-time.bin");
+        if(inputStream != null) {
+            try {
+                TokenNameFinderModel nameFinder = new TokenNameFinderModel(inputStream);
+                NameFinderME nameFinderME = new NameFinderME(nameFinder);
+
+                String[] tokens = getTokens();
+                Span[] spans = nameFinderME.find(tokens);
+
+                if(spans != null && spans.length > 0){
+                    times = new ArrayList<>();
+                    for(int x=0; x < spans.length; x++){
+                        String object = tokens[spans[x].getStart()] + " " + tokens[spans[x].getStart() + 1];
+                        times.add(object.trim());
+                    }
+                }
+                nameFinderME.clearAdaptiveData();
+            } catch (Exception e){
+                logger.debug("Error in get times out of content. Message : "+ e.getMessage());
+            } finally {
+                try{
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.debug("Error in closing input stream. Message : "+ e.getMessage());
+                }
+            }
+        }
+        return times;
+    }
+
+    public List<String> getOrganizations(){
+        List<String> organizations = null;
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        InputStream inputStream = classLoader.getResourceAsStream("en-ner-organization.bin");
+        if(inputStream != null) {
+            try {
+                TokenNameFinderModel nameFinder = new TokenNameFinderModel(inputStream);
+                NameFinderME nameFinderME = new NameFinderME(nameFinder);
+
+                String[] tokens = getTokens();
+                Span[] spans = nameFinderME.find(tokens);
+
+                if(spans != null && spans.length > 0){
+                    organizations = new ArrayList<>();
+                    for(int x=0; x < spans.length; x++){
+                        String object = tokens[spans[x].getStart()] + " " + tokens[spans[x].getStart() + 1];
+                        organizations.add(object.trim());
+                    }
+                }
+                nameFinderME.clearAdaptiveData();
+            } catch (Exception e){
+                logger.debug("Error in get times out of content. Message : "+ e.getMessage());
+            } finally {
+                try{
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.debug("Error in closing input stream. Message : "+ e.getMessage());
+                }
+            }
+        }
+        return organizations;
+    }
+
+    public List<String> getMonies(){
+        List<String> monies = null;
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        InputStream inputStream = classLoader.getResourceAsStream("en-ner-money.bin");
+        if(inputStream != null) {
+            try {
+                TokenNameFinderModel nameFinder = new TokenNameFinderModel(inputStream);
+                NameFinderME nameFinderME = new NameFinderME(nameFinder);
+
+                String[] tokens = getTokens();
+                Span[] spans = nameFinderME.find(tokens);
+
+                if(spans != null && spans.length > 0){
+                    monies = new ArrayList<>();
+                    for(int x=0; x < spans.length; x++){
+                        String object = tokens[spans[x].getStart()] + " " + tokens[spans[x].getStart() + 1];
+                        monies.add(object.trim());
+                    }
+                }
+                nameFinderME.clearAdaptiveData();
+            } catch (Exception e){
+                logger.debug("Error in get times out of content. Message : "+ e.getMessage());
+            } finally {
+                try{
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.debug("Error in closing input stream. Message : "+ e.getMessage());
+                }
+            }
+        }
+        return monies;
+    }
+
+    public List<String> getPercentages(){
+        List<String> percentages = null;
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        InputStream inputStream = classLoader.getResourceAsStream("en-ner-percentage.bin");
+        if(inputStream != null) {
+            try {
+                TokenNameFinderModel nameFinder = new TokenNameFinderModel(inputStream);
+                NameFinderME nameFinderME = new NameFinderME(nameFinder);
+
+                String[] tokens = getTokens();
+                Span[] spans = nameFinderME.find(tokens);
+
+                if(spans != null && spans.length > 0){
+                    percentages = new ArrayList<>();
+                    for(int x=0; x < spans.length; x++){
+                        String object = tokens[spans[x].getStart()] + " " + tokens[spans[x].getStart() + 1];
+                        percentages.add(object.trim());
+                    }
+                }
+                nameFinderME.clearAdaptiveData();
+            } catch (Exception e){
+                logger.debug("Error in get times out of content. Message : "+ e.getMessage());
+            } finally {
+                try{
+                    inputStream.close();
+                } catch (Exception e){
+                    logger.debug("Error in closing input stream. Message : "+ e.getMessage());
+                }
+            }
+        }
+        return percentages;
     }
 }

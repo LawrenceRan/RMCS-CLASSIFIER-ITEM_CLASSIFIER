@@ -1,6 +1,7 @@
 package contentclassification.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Sets;
 import contentclassification.config.ClassificationConfig;
 import contentclassification.config.RequestProxy;
 import contentclassification.config.WordNetDictConfig;
@@ -9,6 +10,8 @@ import contentclassification.domain.Categories;
 import contentclassification.domain.Color;
 import contentclassification.domain.ContentAreaGroupings;
 import contentclassification.domain.FabricName;
+import contentclassification.domain.LanguageSymbols;
+import contentclassification.domain.Languages;
 import contentclassification.domain.LearningImpl;
 import contentclassification.domain.NameAndContentMetaData;
 import contentclassification.domain.POSRESPONSES;
@@ -27,6 +30,7 @@ import contentclassification.service.SpellCheckerServiceImpl;
 import contentclassification.service.ThirdPartyProviderService;
 import contentclassification.service.WordNetService;
 import contentclassification.utilities.HelperUtility;
+import edu.mit.jwi.item.POS;
 import org.apache.commons.lang3.StringUtils;
 import org.atteo.evo.inflector.English;
 import org.jsoup.nodes.Document;
@@ -34,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -43,6 +48,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 
+import javax.servlet.http.HttpServletRequest;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,6 +60,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 ;
 
@@ -1313,6 +1321,489 @@ public class Index {
             }
         } else {
             response.put("message", "Invalid or empty query passed.");
+        }
+        modelAndView.addAllObjects(response);
+        return modelAndView;
+    }
+
+    @RequestMapping(value = "/v1/text/keywords", method = RequestMethod.POST, produces = "application/json")
+    public ModelAndView getKeywordsFromText(@RequestParam(name = "text", required = false) String text,
+                                            @RequestBody(required = true) String body){
+        ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
+        Map<String, Object> response = new HashMap<>();
+        body = StringUtils.isNotBlank(body) ? body : text;
+        if(StringUtils.isNotBlank(body)){
+
+            body = body.replace("\\n", " ")
+                    .replace(")", "")
+                    .replace("(","")
+                    .replace("”", "")
+                    .replace("“", "")
+                    .replace("|", "")
+                    .replace("/"," ")
+                    .replace("\\", "")
+                    .replace("[", "")
+                    .replace("]", "");
+
+            String[] tokens = classificationService.tokenize(body.toLowerCase().trim());
+
+            //Get default language symbol to be used to remove symbols from tokens.
+            Languages languages = Languages.EN;
+            LanguageSymbols symbols = LanguageSymbols.loadLanguageSymbols(languages);
+            if(symbols != null) {
+                tokens = LanguageSymbols.removeSymbolsFromList(tokens, symbols);
+            }
+
+            Set<String> cleanUpTokens = new HashSet<>();
+            cleanUpTokens.addAll(Arrays.asList(tokens));
+            tokens = cleanUpTokens.toArray(new String[cleanUpTokens.size()]);
+
+//            Set<String> tokenWithoutStem = new HashSet<>();
+//            tokenWithoutStem.addAll(Arrays.asList(tokens));
+
+            //Get all the stems of the tokens.
+            List<String> stemTokens = classificationService.getStems(tokens);
+            Collections.sort(stemTokens);
+
+            tokens = stemTokens.toArray(new String[stemTokens.size()]);
+
+//            Set<String> stemFoundTokens = new HashSet<>();
+//            stemFoundTokens.addAll(Arrays.asList(tokens));
+//            tokens = stemFoundTokens.toArray(new String[stemFoundTokens.size()]);
+
+//            Set<String> diff = Sets.difference(tokenWithoutStem, stemFoundTokens);
+//            logger.info("Diff");
+
+            List<String> listTokens = Arrays.asList(tokens);
+            if(!listTokens.isEmpty()){
+                List<String> supportedTokens = new ArrayList<>();
+
+                Set<String> adjectives = new HashSet<>();
+                Set<String> nouns = new HashSet<>();
+                Set<String> nnNouns = new HashSet<>();
+                Set<String> verbs = new HashSet<>();
+//                Set<String> conjunctions = new HashSet<>();
+
+                List<Map> posMapList = classificationService.getPos(tokens);
+                if(posMapList != null && !posMapList.isEmpty()) {
+                    for (Map posMap: posMapList){
+                        String token = null;
+                        if(posMap.containsKey("token")){
+                            token = posMap.get("token").toString();
+                        }
+
+                        if(posMap.containsKey("pos")){
+                            String pos = posMap.get("pos").toString();
+                            POSRESPONSES posresponses = POSRESPONSES.valueOf(pos);
+                            if(posresponses != null) {
+                                switch (posresponses){
+                                    case JJ:
+                                        adjectives.add(token);
+                                        supportedTokens.add(token);
+                                        break;
+                                    case NN:
+                                        nouns.add(token);
+                                        nnNouns.add(token);
+                                        supportedTokens.add(token);
+                                        break;
+                                    case NNS:
+                                        nouns.add(token);
+                                        supportedTokens.add(token);
+                                        break;
+                                    case NNP:
+                                        nnNouns.add(token);
+                                        nouns.add(token);
+                                        supportedTokens.add(token);
+                                        break;
+                                    case NNPS:
+                                        nouns.add(token);
+                                        supportedTokens.add(token);
+                                        break;
+                                    case VB:
+                                        verbs.add(token);
+                                        supportedTokens.add(token);
+                                        break;
+                                    case VBD:
+                                        verbs.add(token);
+                                        supportedTokens.add(token);
+                                        break;
+                                    case VBG:
+                                        verbs.add(token);
+                                        supportedTokens.add(token);
+                                        break;
+                                    case VBN:
+                                        verbs.add(token);
+                                        supportedTokens.add(token);
+                                        break;
+                                    case VBP:
+                                        verbs.add(token);
+                                        supportedTokens.add(token);
+                                        break;
+                                    case VBZ:
+                                        verbs.add(token);
+                                        supportedTokens.add(token);
+                                        break;
+                                    case CC:
+                                        //conjunctions.add(token);
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //The adjective phrase can be placed before, or after, the noun or pronoun in the sentence.
+                //Get visual content JJ+NN1530
+                List<String> jjAndNN = new ArrayList<>();
+                for(String adjective : adjectives){
+                    for(String nnNoun : nouns){
+                        StringBuilder stringBuilder = new StringBuilder();
+                        stringBuilder.append(adjective);
+                        stringBuilder.append(" ");
+                        stringBuilder.append(nnNoun);
+                        jjAndNN.add(stringBuilder.toString());
+                    }
+                }
+
+
+                //An adjective phrase is a group of words that describe a noun or pronoun in a sentence.
+//                List<String> nnAndJJ = new ArrayList<>();
+//                for(String nn : nouns){
+//                    for(String adj : adjectives){
+//                        StringBuilder stringBuilder = new StringBuilder();
+//                        stringBuilder.append(nn);
+//                        stringBuilder.append(" ");
+//                        stringBuilder.append(adj);
+//                        nnAndJJ.add(stringBuilder.toString());
+//                    }
+//                }
+
+                //Potential names
+                List<String> nnAndNN = new ArrayList<>();
+                for(String nn : nnNouns){
+                    for(String nn1 : nnNouns){
+                        StringBuilder stringBuilder = new StringBuilder();
+                        stringBuilder.append(nn);
+                        stringBuilder.append(" ");
+                        stringBuilder.append(nn1);
+                        nnAndNN.add(stringBuilder.toString());
+                    }
+                }
+
+                //compute potential verb phrases from verbs and all the tokens.
+//                List<String> vbPhrasesCombination = new ArrayList<>();
+//                for(String vb : verbs){
+//                    for(String vbAndToken : tokens){
+//                        StringBuilder stringBuilder = new StringBuilder();
+//                        stringBuilder.append(vb);
+//                        stringBuilder.append(" ");
+//                        stringBuilder.append(vbAndToken);
+//                        vbPhrasesCombination.add(stringBuilder.toString());
+//                    }
+//                }
+
+
+                //Compute potential noun phrases from nouns and all available tokens.
+//                List<String> npPhrasesCombination = new ArrayList<>();
+//                for(String noun : nouns){
+//                    for(String token : tokens){
+//                        StringBuilder stringBuilder = new StringBuilder();
+//                        stringBuilder.append(noun);
+//                        stringBuilder.append(" ");
+//                        stringBuilder.append(token);
+//                        npPhrasesCombination.add(stringBuilder.toString());
+//                    }
+//                }
+//
+//
+                Set<String> adjectivalPhrases = new HashSet<>();
+                if(!jjAndNN.isEmpty()){
+                    for(String phrase : jjAndNN){
+                        Pattern pattern = Pattern.compile(phrase);
+                        Matcher matcher = pattern.matcher(body);
+                        while (matcher.find()){
+                            adjectivalPhrases.add(phrase);
+                        }
+                    }
+                }
+//
+//                if(!nnAndJJ.isEmpty()){
+//                    for(String phrase : nnAndJJ){
+//                        Pattern pattern = Pattern.compile(phrase);
+//                        Matcher matcher = pattern.matcher(body);
+//                        while (matcher.find()){
+//                            adjectivalPhrases.add(phrase);
+//                        }
+//                    }
+//                }
+//
+                Set<String> nounPhrasesFound = new HashSet<>();
+                if(!nnAndNN.isEmpty()){
+                    for(String phrase : nnAndNN){
+                        Pattern pattern = Pattern.compile(phrase);
+                        Matcher matcher = pattern.matcher(body);
+                        while (matcher.find()){
+                            nounPhrasesFound.add(phrase);
+                        }
+                    }
+                }
+
+
+                //a verb with another word or words indicating tense, mood, or person.
+//                Set<String> verbPhrases = new HashSet<>();
+//                if(!vbPhrasesCombination.isEmpty()){
+//                    for(String phrase : vbPhrasesCombination){
+//                        Pattern pattern = Pattern.compile(phrase);
+//                        Matcher matcher = pattern.matcher(body);
+//                        while (matcher.find()){
+//                            verbPhrases.add(phrase);
+//                        }
+//                    }
+//                }
+
+                //
+//                Set<String> nounPhrases = new HashSet<>();
+//                if(!npPhrasesCombination.isEmpty()){
+//                    for(String phrase : npPhrasesCombination){
+//                        Pattern pattern = Pattern.compile(phrase);
+//                        Matcher matcher = pattern.matcher(body);
+//                        while (matcher.find()){
+//                            nounPhrases.add(phrase);
+//                        }
+//                    }
+//                }
+
+                Set<String> mergeAllPOSPhrases = new HashSet<>();
+                mergeAllPOSPhrases.addAll(adjectivalPhrases);
+                mergeAllPOSPhrases.addAll(nounPhrasesFound);
+//                mergeAllPOSPhrases.addAll(verbPhrases);
+//                mergeAllPOSPhrases.addAll(nounPhrases);
+//
+                Set<String> uniqueTokens = new HashSet<>();
+                if(!mergeAllPOSPhrases.isEmpty()){
+                    for(String phrase : mergeAllPOSPhrases){
+                        String[] phraseToToken = phrase.split(" ");
+                        uniqueTokens.addAll(Arrays.asList(phraseToToken));
+                    }
+                }
+
+                posMapList = classificationService.getPos(uniqueTokens.toArray(new String[uniqueTokens.size()]));
+
+                //Clean out POS that are not need
+                if(!posMapList.isEmpty()){
+                    for(Map posMap : posMapList){
+                        String token = null;
+                        if(posMap.containsKey("token")){
+                            token = posMap.get("token").toString();
+                        }
+
+                        if(posMap.containsKey("pos")) {
+                            String pos = posMap.get("pos").toString();
+                            POSRESPONSES posresponses = POSRESPONSES.valueOf(pos);
+                            switch (posresponses){
+                                case DT:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case CD:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case CC:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case IN:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case RB:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case RBR:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case RBS:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case WRB:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case PRP:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case PRP$:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case WP:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case WP$:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case VBZ:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case VBN:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case VBG:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case VBD:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case VBP:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case TO:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case VB:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case SYM:
+                                    uniqueTokens.remove(token);
+                                    break;
+                                case UH:
+                                    uniqueTokens.remove(token);
+                                    break;
+                            }
+                        }
+                    }
+                }
+
+
+//                Set<String> visualContent = new HashSet<>();
+//                Set<String> contentMarketing = new HashSet<>();
+//
+//                Map<String, List<POSRESPONSES>> tokenWithPOSTags = new HashMap<>();
+//                Map<String, Object> tokenWithStems = new HashMap<>();
+//                for(String uniqueToken : uniqueTokens){
+//                    //List<Map> lexicalResponse = wordNetService.getResponse(uniqueToken);
+//                    //List<Map> lexicalGlosses = wordNetService.glosses(uniqueToken);
+//                    List<Map> stem = wordNetService.findStemmers(uniqueToken);
+//                    List<POSRESPONSES> posresponsesList = new ArrayList<>();
+//                    if(!stem.isEmpty()){
+//                        for(Map<Integer, String> stemMap : stem){
+//                            for(Map.Entry<Integer, String> entry : stemMap.entrySet()){
+//                                POSRESPONSES posresponses = null;
+//                                Integer posOrdinal = entry.getKey();
+//                                POS posWordNet = POS.getPartOfSpeech(posOrdinal);
+//                                switch (posWordNet) {
+//                                    case NOUN:
+//                                        posresponses = POSRESPONSES.NN;
+//                                        break;
+//                                    case VERB:
+//                                        posresponses = POSRESPONSES.VB;
+//                                        break;
+//                                    case ADJECTIVE:
+//                                        posresponses = POSRESPONSES.JJ;
+//                                        break;
+//                                    case ADVERB:
+//                                        posresponses = POSRESPONSES.RB;
+//                                        break;
+//                                }
+//                                posresponsesList.add(posresponses);
+//                            }
+//                        }
+//                    }
+//                    tokenWithPOSTags.put(uniqueToken, posresponsesList);
+//                    tokenWithStems.put(uniqueToken, stem);
+////                    for(String adjPhrase : adjectivalPhrases){
+////                        Pattern pattern = Pattern.compile(uniqueToken);
+////                        Matcher matcher = pattern.matcher(adjPhrase);
+////                        while (matcher.find()){
+////                            visualContent.add(uniqueToken);
+////                        }
+////                    }
+////
+////                    for(String nn : nounPhrases){
+////                        Pattern pattern = Pattern.compile(uniqueToken);
+////                        Matcher matcher = pattern.matcher(nn);
+////                        while (matcher.find()){
+////                            contentMarketing.add(nn);
+////                        }
+////                    }
+//                }
+//
+//
+//                if(!tokenWithPOSTags.isEmpty()){
+//                    uniqueTokens.clear();
+//                    for(Map.Entry<String, List<POSRESPONSES>> entry : tokenWithPOSTags.entrySet()){
+//                        String uniqueToken = entry.getKey();
+//
+//                        if(entry.getValue().size() == 1) { uniqueTokens.add(uniqueToken);}
+//
+//                        if(entry.getValue().size() > 1) {
+//                            boolean isPresent = false;
+//                            for(String adjPhrase : adjectivalPhrases){
+//                                Pattern pattern = Pattern.compile(uniqueToken);
+//                                Matcher matcher = pattern.matcher(adjPhrase);
+//                                while (matcher.find()){
+//                                    isPresent = true;
+//                                }
+//                            }
+//
+//                            isPresent = false;
+//                            for(String nounPhrase : nounPhrasesFound){
+//                                Pattern pattern = Pattern.compile(uniqueToken);
+//                                Matcher matcher = pattern.matcher(nounPhrase);
+//                                while (matcher.find()){
+//                                    isPresent = true;
+//                                }
+//                            }
+//
+//                            if(isPresent){ uniqueTokens.add(uniqueToken); }
+//                        }
+//                    }
+//                }
+//
+//                logger.info("Lexical response: ");
+
+                //Compute TF-IDF on merged phrases.
+                List<TFIDFWeightedScore> weightedScoreList = new ArrayList<>();
+                String[] posTokens = uniqueTokens.toArray(new String[uniqueTokens.size()]);
+
+                for(String token : posTokens){
+                    TFIDFWeightedScore tfidfWeightedScore = classificationService.getTfIdfWeightedScore(tokens, token);
+                    weightedScoreList.add(tfidfWeightedScore);
+                }
+
+                Collections.sort(weightedScoreList, TFIDFWeightedScore.tfidfWeightedScoreComparator);
+
+                List<String> keywords = new LinkedList<>();
+
+                if(!weightedScoreList.isEmpty()){
+                    for(TFIDFWeightedScore tfidfWeightedScore : weightedScoreList){
+                        keywords.add(tfidfWeightedScore.getTerm());
+                    }
+                    //response.put("keywords", keywords);
+                }
+
+                //Get name and entities
+                List<String> namesAndEntities = classificationService.getPersons(body);
+                if(namesAndEntities != null && !namesAndEntities.isEmpty()){ keywords.addAll(namesAndEntities); }
+
+                List<String> dates = classificationService.getTime(body);
+                if(dates != null && !dates.isEmpty()){ keywords.addAll(dates); }
+
+                List<String> locations = classificationService.getLocations(body);
+                if(locations != null && !locations.isEmpty()){ keywords.addAll(locations); }
+
+                List<String> organizations = classificationService.getOrganizations(body);
+                if(organizations != null && !organizations.isEmpty()){ keywords.addAll(organizations); }
+
+                List<String> monies = classificationService.getMoney(body);
+                if(monies != null && !monies.isEmpty()){ keywords.addAll(monies); }
+
+                List<String> percentages = classificationService.getPercentage(body);
+                if(percentages != null && !percentages.isEmpty()){ keywords.addAll(percentages); }
+
+                logger.info("Entities...");
+
+//                if(!adjectivalPhrases.isEmpty()){
+//                    keywords.addAll(adjectivalPhrases);
+//                }
+
+                response.put("keywords", keywords);
+            }
         }
         modelAndView.addAllObjects(response);
         return modelAndView;

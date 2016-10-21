@@ -51,12 +51,12 @@ public class TFIDFWeightedScore implements Comparable<TFIDFWeightedScore> {
         public int compare(TFIDFWeightedScore o1, TFIDFWeightedScore o2) {
             double d1 = o1.getScore();
             double d2 = o2.getScore();
-            int value;
-            if(d1 >= d2){
-                value = -1;
-            } else {
-                value = 1;
-            }
+            int value = 0;
+
+            if(d1 > d2){ value = -1; }
+
+            if(d1 < d2){ value = 1; }
+
             return value;
         }
     };

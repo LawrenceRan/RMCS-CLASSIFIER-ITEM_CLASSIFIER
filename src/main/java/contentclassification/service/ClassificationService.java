@@ -66,4 +66,10 @@ public interface ClassificationService {
     public String getBrand(String text, String possibleTitle);
     public List<Map<String, Object>> getTermToBICScoreFromCluster(List<String> unionOfTerms, List<String> sentences);
     public List<Map> groupByPos(List<Map> pos);
+    public List<String> getPersons(String tokens);
+    public List<String> getLocations(String text);
+    public List<String> getTime(String text);
+    public List<String> getOrganizations(String text);
+    public List<String> getMoney(String text);
+    public List<String> getPercentage(String text);
 }
