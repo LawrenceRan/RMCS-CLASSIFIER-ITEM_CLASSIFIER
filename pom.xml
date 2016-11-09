@@ -377,9 +377,11 @@
             <version>0.5.2-rtext-1.4.1-2</version>
         </dependency>
         <dependency>
-            <groupId>net.sf</groupId>
+            <groupId>javaml</groupId>
             <artifactId>javaml</artifactId>
             <version>0.1.5</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/javaml-0.1.5.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>nz.ac.waikato.cms.weka</groupId>
