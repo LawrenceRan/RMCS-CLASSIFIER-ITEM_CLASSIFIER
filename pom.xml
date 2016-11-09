@@ -377,7 +377,7 @@
             <version>0.5.2-rtext-1.4.1-2</version>
         </dependency>
         <dependency>
-            <groupId>javaml</groupId>
+            <groupId>net.sf.javaml</groupId>
             <artifactId>javaml</artifactId>
             <version>0.1.5</version>
         </dependency>
