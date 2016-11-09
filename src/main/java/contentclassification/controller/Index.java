@@ -240,6 +240,29 @@ public class Index {
                 }
             }
 
+            if(terms.isEmpty()){
+                ResponseCategoryToAttribute responseCategoryToAttribute =
+                        new ResponseCategoryToAttribute();
+
+                List<String> attributesList = new ArrayList<>();
+                responseCategoryToAttribute.setAttributes(attributesList);
+
+                responseCategoryToAttribute.setPricing(null);
+                responseCategoryToAttribute.setSizes(null);
+                responseCategoryToAttribute.setMaterials(materials);
+                responseCategoryToAttribute.setBrand(null);
+                responseCategoryToAttribute.setColors(validColor);
+                responseCategoryToAttribute.setIsLuxury(null);
+
+                if(!gender.isEmpty()) {
+                    if(gender.containsKey("gender")) {
+                        responseCategoryToAttribute.setGender((Map) gender.get("gender"));
+                    }
+                }
+
+                responseCategoryToAttributes.add(responseCategoryToAttribute);
+            }
+
             response.put(ResponseMap.CLASSIFICATION.toString(), responseCategoryToAttributes);
         }
 
