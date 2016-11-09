@@ -114,6 +114,7 @@ public class Color {
             ClassLoader classLoader = Color.class.getClassLoader();
             InputStream inputStream = classLoader.getResourceAsStream(COLORS);
             if (inputStream != null) {
+                @SuppressWarnings("unchecked")
                 List<String> ymlContent = (List<String>) yaml.load(inputStream);
                 if (!ymlContent.isEmpty()) {
                     for (String c : ymlContent) {

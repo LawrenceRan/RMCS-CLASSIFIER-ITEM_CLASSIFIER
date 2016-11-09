@@ -1,7 +1,6 @@
 package contentclassification.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Sets;
 import contentclassification.config.ClassificationConfig;
 import contentclassification.config.RequestProxy;
 import contentclassification.config.WordNetDictConfig;
@@ -30,7 +29,6 @@ import contentclassification.service.SpellCheckerServiceImpl;
 import contentclassification.service.ThirdPartyProviderService;
 import contentclassification.service.WordNetService;
 import contentclassification.utilities.HelperUtility;
-import edu.mit.jwi.item.POS;
 import org.apache.commons.lang3.StringUtils;
 import org.atteo.evo.inflector.English;
 import org.jsoup.nodes.Document;
@@ -48,7 +46,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 
-import javax.servlet.http.HttpServletRequest;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -121,7 +118,132 @@ public class Index {
     @RequestMapping(value = "/v1/text", method = RequestMethod.GET)
     public ModelAndView analyzeText(@RequestParam(required = true) String text) {
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
+        Map<String, Object> response = new HashMap<>();
 
+        ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+        String sessionId = attr.getSessionId();
+
+        if(StringUtils.isNotBlank(text)){
+            logger.info("[ "+ sessionId +" ] About to get tokens of text.");
+            String[] tokens = classificationService.tokenize(text);
+            logger.info("[ "+ sessionId +" ] Done generating tokens text.");
+
+            logger.info("About to detect sentences.");
+            String[] sentences = classificationService.sentenceDetection(text.trim());
+            logger.info("Done detecting sentences. Length: "+ sentences.length + " ID: "+ sessionId);
+
+            List<String> tokensAsList = null;
+
+            List<String> validColor = new ArrayList<>();
+            if(tokens != null && tokens.length > 0){
+                tokensAsList = Arrays.asList(tokens);
+                for(String token : tokensAsList){
+                    boolean isValid = Color.isExisting(token);
+                    if(isValid){ validColor.add(token); }
+                }
+            }
+
+            //About to get fabric names
+            List<String> materials = new ArrayList<>();
+            List<FabricName> fabricNames = classificationService.getFabricsFromContent(text);
+            if(fabricNames != null && !fabricNames.isEmpty()){
+                for(FabricName fabricName : fabricNames){
+                    materials.add(fabricName.getName());
+                }
+            }
+            //end of getting fabric by name
+
+            List<Categories> categoriesList = classificationService.getCategories();
+
+            List<String> categories = null;
+            List<String> attributes = null;
+
+            if(categoriesList != null && !categoriesList.isEmpty()){
+                categories = new ArrayList<>();
+                attributes = new ArrayList<>();
+                for(Categories category : categoriesList){
+                    categories.add(category.getCategory());
+                    attributes.addAll(category.getAttributes());
+                }
+            }
+
+            List<Map> scoredTermsFromContent = new ArrayList<>();
+            if(categories != null && !attributes.isEmpty()){
+                List<String> intersect = classificationService.getIntersection(tokensAsList, attributes);
+                if(intersect.isEmpty()) {
+                    intersect = classificationService.getIntersection(tokensAsList, categories);
+                }
+
+                if (intersect != null && !intersect.isEmpty()) {
+                    List<TFIDFWeightedScore> tfIdfWeightedScores = new ArrayList<>();
+                    for (String i : intersect) {
+                        TFIDFWeightedScore tfidfWeightedScore =
+                                classificationService.getTfIdfWeightedScore(tokens, i);
+                        tfIdfWeightedScores.add(tfidfWeightedScore);
+                    }
+
+                    Collections.sort(tfIdfWeightedScores, TFIDFWeightedScore.tfidfWeightedScoreComparator);
+
+                    if (!tfIdfWeightedScores.isEmpty()) {
+                        List<Map> tfIdfWeightedScoresMap = new ArrayList<>();
+                        for (TFIDFWeightedScore tfidfWeightedScore : tfIdfWeightedScores) {
+                            tfIdfWeightedScoresMap.add(tfidfWeightedScore.toMap());
+                        }
+                        scoredTermsFromContent.addAll(tfIdfWeightedScoresMap);
+                    }
+                }
+            }
+
+            /**
+             * The method is to help determine whether a given content is gender specific or neutral. If former is
+             * is found it should be surfaced and otherwise that should be surfaced as well.
+             */
+            logger.info("About to get gender for a given URL. ID: "+ sessionId);
+            Map<String, Object> gender = classificationService.getGender(sentences, null, null);
+            logger.info("Done getting gender. Gender: "+ gender.toString() + "ID: "+ sessionId);
+            //end of get gender.
+
+            Set<String> terms = new HashSet<>();
+            if(!scoredTermsFromContent.isEmpty()){
+                for(Map scoredMap : scoredTermsFromContent){
+                    terms.add(scoredMap.get("term").toString());
+                }
+            }
+
+            List<ResponseCategoryToAttribute> responseCategoryToAttributes = new ArrayList<>();
+            if(!terms.isEmpty()){
+                for(String term : terms){
+                    term = classificationService.getStem(term);
+                    ResponseCategoryToAttribute responseCategoryToAttribute =
+                            new ResponseCategoryToAttribute();
+                    responseCategoryToAttribute.setCategory(classificationService
+                            .getCategoryByTerm(English.plural(term, 1)));
+                    responseCategoryToAttribute.setPricing(null);
+                    responseCategoryToAttribute.setSizes(null);
+                    responseCategoryToAttribute.setMaterials(materials);
+                    responseCategoryToAttribute.setBrand(null);
+                    responseCategoryToAttribute.setColors(validColor);
+                    responseCategoryToAttribute.setIsLuxury(null);
+
+                    List<String> attributesList = new ArrayList<>();
+                    attributesList.add(English.plural(term, 1));
+
+                    responseCategoryToAttribute.setAttributes(attributesList);
+
+                    if(!gender.isEmpty()) {
+                        if(gender.containsKey("gender")) {
+                            responseCategoryToAttribute.setGender((Map) gender.get("gender"));
+                        }
+                    }
+
+                    responseCategoryToAttributes.add(responseCategoryToAttribute);
+                }
+            }
+
+            response.put(ResponseMap.CLASSIFICATION.toString(), responseCategoryToAttributes);
+        }
+
+        modelAndView.addAllObjects(response);
         return modelAndView;
     }
 
@@ -168,8 +290,8 @@ public class Index {
     @RequestMapping(value = "/v1/url", method = RequestMethod.GET, produces = "application/json;charset=utf-8")
     @ResponseBody
     public String generateTagsByUrl(@RequestParam(required = true, name = "url") String url,
-                                          @RequestParam(required = false, name = "showScore", defaultValue = "false")
-                                          boolean showScore )  {
+                                    @RequestParam(required = false, name = "showScore", defaultValue = "false")
+                                            boolean showScore)  {
         ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
         String sessionId = attr.getSessionId();
 
