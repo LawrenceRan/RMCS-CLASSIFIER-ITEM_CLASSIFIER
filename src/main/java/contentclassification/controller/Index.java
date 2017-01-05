@@ -2500,4 +2500,30 @@ public class Index {
         return modelAndView;
     }
 
+    @RequestMapping(value = "/v1/synonyms", method = RequestMethod.GET)
+    public ModelAndView getSynonyms(@RequestParam(name = "query") String query){
+        ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
+        Map<String, Object> response = new HashMap<>();
+        if(StringUtils.isNotBlank(query)){
+            List<Map> posList = classificationService.getPos(classificationService.tokenize(query));
+            List<POSRESPONSES> posresponses = null;
+            if(posList != null){
+                posresponses = new ArrayList<>();
+                for(Map map : posList){
+                    if(map.containsKey("pos")){
+                        String posStr = map.get("pos").toString();
+                        if(StringUtils.isNotBlank(posStr)) {
+                            POSRESPONSES posresponses1 = POSRESPONSES.valueOf(posStr);
+                            posresponses.add(posresponses1);
+                        }
+                    }
+                }
+            }
+            List<String> synonyms = wordNetService.getSynonyms(query, posresponses.get(0));
+            response.put("synonyms", synonyms);
+        }
+        modelAndView.addAllObjects(response);
+        return modelAndView;
+    }
+
 }
