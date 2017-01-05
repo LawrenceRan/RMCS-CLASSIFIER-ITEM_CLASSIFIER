@@ -19,6 +19,7 @@ import contentclassification.domain.ResponseMap;
 import contentclassification.domain.RestResponseKeys;
 import contentclassification.domain.RulesEngineDataSet;
 import contentclassification.domain.TFIDFWeightedScore;
+import contentclassification.domain.TermSimilarityToList;
 import contentclassification.domain.TermToGroupScore;
 import contentclassification.domain.TotalTermToGroup;
 import contentclassification.domain.WebMetaName;
@@ -45,7 +46,16 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
+import weka.classifiers.Classifier;
+import weka.classifiers.Evaluation;
+import weka.classifiers.bayes.NaiveBayesMultinomial;
+import weka.classifiers.evaluation.NominalPrediction;
+import weka.core.Attribute;
+import weka.core.FastVector;
+import weka.core.Instance;
+import weka.core.Instances;
 
+import javax.servlet.http.HttpServletRequest;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -174,7 +184,23 @@ public class Index {
                     intersect = classificationService.getIntersection(tokensAsList, categories);
                 }
 
-                if (intersect != null && !intersect.isEmpty()) {
+                //About to compute for similarity between the given terms and existing attributes.
+                if(intersect.isEmpty()){
+                    if(tokensAsList != null && !tokensAsList.isEmpty()) {
+                        List<Map> scoreSimilarity = new ArrayList<>();
+                        for (String token : tokensAsList) {
+                            TermSimilarityToList termSimilarityToList = new TermSimilarityToList(token, attributes);
+                            Map<String, Object> highestScore = termSimilarityToList.highestScore();
+                            scoreSimilarity.add(highestScore);
+                        }
+
+                        logger.info("error...");
+                    }
+                }
+
+
+
+                if (!intersect.isEmpty()) {
                     List<TFIDFWeightedScore> tfIdfWeightedScores = new ArrayList<>();
                     for (String i : intersect) {
                         TFIDFWeightedScore tfidfWeightedScore =
@@ -213,7 +239,8 @@ public class Index {
             List<ResponseCategoryToAttribute> responseCategoryToAttributes = new ArrayList<>();
             if(!terms.isEmpty()){
                 for(String term : terms){
-                    term = classificationService.getStem(term);
+                    String stemmedTerm = classificationService.getStem(term);
+                    term = StringUtils.isNotBlank(stemmedTerm) ? stemmedTerm : term;
                     ResponseCategoryToAttribute responseCategoryToAttribute =
                             new ResponseCategoryToAttribute();
                     responseCategoryToAttribute.setCategory(classificationService
@@ -1040,7 +1067,7 @@ public class Index {
     }
 
     @RequestMapping("/v1/parts-of-speech")
-    public ModelAndView getPOSByTerms(@RequestParam(required = true) String query){
+        public ModelAndView getPOSByTerms(@RequestParam(required = true) String query){
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
         if(StringUtils.isNotBlank(query)){
@@ -1948,6 +1975,525 @@ public class Index {
 //                }
 
                 response.put("keywords", keywords);
+            }
+        }
+        modelAndView.addAllObjects(response);
+        return modelAndView;
+    }
+
+
+    @RequestMapping(value = "/v1/testing", method = RequestMethod.GET, produces = "application/json;charset=utf-8")
+    public ModelAndView getMNB(HttpServletRequest request, @RequestBody String requestBody){
+        ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
+        Map<String, Object> response = new HashMap<>();
+
+        String term = "navigating genesis";
+        List<String> titles = new ArrayList<>();
+        titles.add("The Bible: Scientific fact vs. blind Faith ( For Agnostics, Non-Theists, and those with an open Mind)");
+        titles.add("NAVIGATING GENESIS STUDY GUIDE");
+        titles.add("Navigating Genesis: A Scientist's Journey through Genesis 1-11 by Hugh Ross (2014-03-01)");
+        titles.add("Why the Universe Is the Way It Is");
+        titles.add("Navigating Genesis: A Scientist's Journey through Genesis 1-11");
+        titles.add("ANDROID TV BOX Ghost Box Pro PLUS (V2) The ultimate android streaming media player WATCH ANYTHING | Kodi / Xbmc fully loaded and unlocked");
+        titles.add("Power Acoustik PTID-8920B In-Dash DVD AM/FM Receiver with 7-Inch Flip-Out Touchscreen Monitor and USB/SD Input");
+
+        String[] termTokens = classificationService.tokenize(term.toLowerCase().trim());
+        List<String> termTokensAsList = Arrays.asList(termTokens);
+
+        Set<String> setB = new HashSet<>();
+        setB.addAll(termTokensAsList);
+        termTokensAsList = new ArrayList<>();
+        termTokensAsList.addAll(setB);
+
+
+        List<String> titleAsTokens = new ArrayList<>();
+
+        Map<String, Boolean> foundInText = new HashMap<>();
+
+        List<Map> titleToScores = new LinkedList<>();
+
+        if(!titles.isEmpty()){
+            for(String title : titles){
+                Map<String, Object> map = new HashMap<>();
+                String[] titleToken = classificationService.tokenize(title.toLowerCase().trim());
+                List<String> titleTokenList = Arrays.asList(titleToken);
+                Set<String> setA = new HashSet<>();
+                setA.addAll(titleTokenList);
+                titleTokenList = new ArrayList<>();
+                titleTokenList.addAll(setA);
+
+                List<Map> termToTokenMap = new ArrayList<>();
+                double total = 0;
+                double presenceCounter = 0d;
+
+                for(String t : termTokensAsList) {
+                    Map<String, Object> m = new HashMap<>();
+                    double weightedScore = classificationService.getTfIdfWeightScore(titleToken, t);
+                    m.put("term", t);
+                    m.put("weightedScore", weightedScore);
+                    total += (Double.isNaN(weightedScore)) ? 0 : weightedScore;
+
+                    Pattern pattern = Pattern.compile(t, Pattern.CASE_INSENSITIVE);
+                    Matcher matcher = pattern.matcher(title);
+                    while (matcher.find()){
+                        presenceCounter += 1;
+                    }
+
+                    termToTokenMap.add(m);
+                }
+
+                double presenceScore = (presenceCounter > 0) ? (presenceCounter/termTokensAsList.size()) : 0;
+
+                map.put("presenceScore", presenceScore);
+                map.put("scores", termToTokenMap);
+                map.put("total", total);
+                map.put("title", title);
+                map.put("isPresent", (presenceScore > 0));
+
+                titleToScores.add(map);
+            }
+        }
+
+        //Numeric values
+        Attribute attributeWeightedFrequencyScore = new Attribute("weightedFrequencyScore");
+
+//        Attribute attributePresenceScore = new Attribute("presenceScore");
+//
+//        //Nominal values
+//        FastVector nominalIsPresence = new FastVector();
+//        nominalIsPresence.addElement(1);
+//        nominalIsPresence.addElement(0);
+//        nominalIsPresence.addElement("0.5");
+//        Attribute attributeIsPresence = new Attribute("isPresenceAttributeLabel", nominalIsPresence);
+//        logger.info("is nominal : "+ attributeIsPresence.isNominal());
+
+        //Class attribute
+        FastVector rankingClassValue = new FastVector(3);
+        rankingClassValue.addElement("high");
+        rankingClassValue.addElement("moderate");
+        rankingClassValue.addElement("low");
+
+        Attribute classAttribute = new Attribute("rankingClass", rankingClassValue);
+
+        //Declare a vector attribute
+        FastVector trainingVector = new FastVector(2);
+        trainingVector.addElement(attributeWeightedFrequencyScore);
+//        trainingVector.addElement(attributeIsPresence);
+        //trainingVector.addElement(attributeIsPresence);
+        trainingVector.addElement(classAttribute);
+
+
+        Instances trainingInstances = new Instances("trainingRel", trainingVector, 10);
+        trainingInstances.setClassIndex(trainingVector.size() - 1);
+
+        Instance trainingInstance = new Instance(trainingVector.size());
+        trainingInstance.setValue((Attribute) trainingVector.elementAt(0), 0.8);
+//        trainingInstance.setValue((Attribute) trainingVector.elementAt(1),  1);
+        //trainingInstance.setValue((Attribute) trainingVector.elementAt(2), "yes");
+        trainingInstance.setValue((Attribute) trainingVector.elementAt(1), "high");
+
+
+        Instance trainingInstance2 = new Instance(trainingVector.size());
+        trainingInstance2.setValue((Attribute) trainingVector.elementAt(0), 0);
+//        trainingInstance2.setValue((Attribute) trainingVector.elementAt(1), 0);
+//        trainingInstance2.setValue((Attribute) trainingVector.elementAt(2), "no");
+        trainingInstance2.setValue((Attribute) trainingVector.elementAt(1), "low");
+//
+        Instance trainingInstance3 = new Instance(trainingVector.size());
+        trainingInstance3.setValue((Attribute) trainingVector.elementAt(0), 0.5);
+//        trainingInstance3.setValue((Attribute) trainingVector.elementAt(1), 1);
+//        trainingInstance3.setValue((Attribute) trainingVector.elementAt(2), "no");
+        trainingInstance3.setValue((Attribute) trainingVector.elementAt(1), "moderate");
+
+        trainingInstances.add(trainingInstance);
+        trainingInstances.add(trainingInstance2);
+        trainingInstances.add(trainingInstance3);
+
+
+        Instances isTestingSet = new Instances("trainingData", trainingVector, 10);
+        isTestingSet.setClassIndex(trainingVector.size() - 1);
+
+
+        List<Instance> instanceList = null;
+        if(!titleToScores.isEmpty()) {
+
+            instanceList = new ArrayList<>();
+
+            for(Map map : titleToScores) {
+                Double total = 0D;
+                boolean isPresent = false;
+
+                if(map.containsKey("total")){
+                    Object object = map.get("total");
+                    if(object instanceof Double) {
+                        total = (Double) object;
+                    }
+                }
+
+                if(map.containsKey("isPresent")){
+                    Object object = map.get("isPresent");
+                    if(object instanceof Boolean){
+                        isPresent = (Boolean) object;
+                    }
+                }
+
+                Instance instance = new Instance(trainingVector.size());
+                instance.setValue((Attribute) trainingVector.elementAt(0), total);
+//                instance.setValue((Attribute) trainingVector.elementAt(1), (isPresent) ? 1 : 0);
+//                instance.setValue((Attribute) trainingVector.elementAt(2), "yes");
+
+                if(total >= 0.8D) {
+                    instance.setValue((Attribute) trainingVector.elementAt(1), "high");
+                }
+
+                if(total >= 0.5D && total < 0.8D){
+                    instance.setValue((Attribute) trainingVector.elementAt(1), "moderate");
+                }
+
+                if(total < 0.4){
+                    instance.setValue((Attribute) trainingVector.elementAt(1), "low");
+                }
+
+                instance.setDataset(trainingInstances);
+
+                isTestingSet.add(instance);
+                instanceList.add(instance);
+            }
+        }
+
+
+        Classifier multinomial = (Classifier) new NaiveBayesMultinomial();
+        try {
+            multinomial.buildClassifier(isTestingSet );
+            Evaluation evaluation = new Evaluation(isTestingSet);
+
+            if(instanceList != null && !instanceList.isEmpty()) {
+                for (Instance instance : instanceList) {
+                    double[] distribution = multinomial.distributionForInstance(instance);
+                    double d = evaluation.evaluateModelOnce(distribution, instance);
+                    double s = multinomial.classifyInstance(instance);
+                    logger.info("Status");
+                }
+            }
+            double[]  evaluationResults = evaluation.evaluateModel(multinomial, isTestingSet);
+            evaluation.KBMeanInformation();
+            FastVector predictions = evaluation.predictions();
+
+            int size = predictions.size();
+
+            if(size > 0){
+                for(int x = 0; x < size; x++){
+                    Object object = predictions.elementAt(x);
+                    logger.info("Ob"+ object.toString());
+                }
+            }
+
+            String summary = evaluation.toSummaryString();
+            double weightedFMeasure = evaluation.weightedFMeasure();
+            double[][] confusionMatrix = evaluation.confusionMatrix();
+            logger.info("Summary : "+ summary);
+        } catch (Exception e){
+            logger.warn("Error in computing multinominal naive bayes. Message : "+ e.getMessage());
+        }
+
+        modelAndView.addAllObjects(response);
+        return modelAndView;
+    }
+
+
+    @RequestMapping(value = "/v1/sort/", method = RequestMethod.POST, produces = "application/json;charset=utf-8")
+    public ModelAndView sortByReleaveToSearchTerm(HttpServletRequest request,
+                                                  @RequestParam(name = "searchTerm", required = true) String term,
+                                                  @RequestBody(required = true) String requestBody){
+        ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
+        Map<String, Object> response = new HashMap<>();
+
+        List<String> titles = new ArrayList<>();
+
+        if(StringUtils.isNotBlank(requestBody)) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            try {
+                @SuppressWarnings("uncheched")
+                List<String> requestTitles = objectMapper.readValue(requestBody, List.class);
+                if(requestTitles != null && !requestTitles.isEmpty()){
+                    titles.addAll(requestTitles);
+                }
+            } catch (Exception e) {
+                logger.warn("Error in parsing JSON body. Message : " + e.getMessage());
+            }
+        }
+
+        String[] termTokens = classificationService.tokenize(term.toLowerCase().trim());
+        List<String> termTokensAsList = Arrays.asList(termTokens);
+
+        Set<String> setB = new HashSet<>();
+        setB.addAll(termTokensAsList);
+        termTokensAsList = new ArrayList<>();
+        termTokensAsList.addAll(setB);
+
+
+        List<String> titleAsTokens = new ArrayList<>();
+
+        Map<String, Boolean> foundInText = new HashMap<>();
+
+        List<Map> titleToScores = new LinkedList<>();
+
+        List<String> orderedTitles = new ArrayList<>();
+
+        if(!titles.isEmpty()){
+            for(String title : titles){
+                Map<String, Object> map = new HashMap<>();
+                String[] titleToken = classificationService.tokenize(title.toLowerCase().trim());
+                List<String> titleTokenList = Arrays.asList(titleToken);
+                Set<String> setA = new HashSet<>();
+                setA.addAll(titleTokenList);
+                titleTokenList = new ArrayList<>();
+                titleTokenList.addAll(setA);
+
+                List<Map> termToTokenMap = new ArrayList<>();
+                double total = 0;
+                double presenceCounter = 0d;
+
+                for(String t : termTokensAsList) {
+                    Map<String, Object> m = new HashMap<>();
+                    double weightedScore = classificationService.getTfIdfWeightScore(titleToken, t);
+                    m.put("term", t);
+                    m.put("weightedScore", weightedScore);
+                    total += (Double.isNaN(weightedScore)) ? 0 : weightedScore;
+
+                    Pattern pattern = Pattern.compile(t, Pattern.CASE_INSENSITIVE);
+                    Matcher matcher = pattern.matcher(title);
+                    while (matcher.find()){
+                        presenceCounter += 1;
+                    }
+
+                    termToTokenMap.add(m);
+                }
+
+                double presenceScore = (presenceCounter > 0) ? (presenceCounter/termTokensAsList.size()) : 0;
+
+                map.put("presenceScore", presenceScore);
+                map.put("scores", termToTokenMap);
+                map.put("total", total);
+                map.put("title", title);
+                map.put("isPresent", (presenceScore > 0));
+
+                titleToScores.add(map);
+            }
+        }
+
+        //Numeric values
+        Attribute attributeWeightedFrequencyScore = new Attribute("weightedFrequencyScore");
+
+//        Attribute attributePresenceScore = new Attribute("presenceScore");
+//
+//        //Nominal values
+//        FastVector nominalIsPresence = new FastVector();
+//        nominalIsPresence.addElement(1);
+//        nominalIsPresence.addElement(0);
+//        nominalIsPresence.addElement("0.5");
+//        Attribute attributeIsPresence = new Attribute("isPresenceAttributeLabel", nominalIsPresence);
+//        logger.info("is nominal : "+ attributeIsPresence.isNominal());
+
+        //Class attribute
+        FastVector rankingClassValue = new FastVector(3);
+        rankingClassValue.addElement("high");
+        rankingClassValue.addElement("moderate");
+        rankingClassValue.addElement("low");
+
+        Attribute classAttribute = new Attribute("rankingClass", rankingClassValue);
+
+        //Declare a vector attribute
+        FastVector trainingVector = new FastVector(2);
+        trainingVector.addElement(attributeWeightedFrequencyScore);
+//        trainingVector.addElement(attributeIsPresence);
+        //trainingVector.addElement(attributeIsPresence);
+        trainingVector.addElement(classAttribute);
+
+
+        Instances trainingInstances = new Instances("trainingRel", trainingVector, 10);
+        trainingInstances.setClassIndex(trainingVector.size() - 1);
+
+        Instance trainingInstance = new Instance(trainingVector.size());
+        trainingInstance.setValue((Attribute) trainingVector.elementAt(0), 0.8);
+//        trainingInstance.setValue((Attribute) trainingVector.elementAt(1),  1);
+        //trainingInstance.setValue((Attribute) trainingVector.elementAt(2), "yes");
+        trainingInstance.setValue((Attribute) trainingVector.elementAt(1), "high");
+
+
+        Instance trainingInstance2 = new Instance(trainingVector.size());
+        trainingInstance2.setValue((Attribute) trainingVector.elementAt(0), 0);
+//        trainingInstance2.setValue((Attribute) trainingVector.elementAt(1), 0);
+//        trainingInstance2.setValue((Attribute) trainingVector.elementAt(2), "no");
+        trainingInstance2.setValue((Attribute) trainingVector.elementAt(1), "low");
+//
+        Instance trainingInstance3 = new Instance(trainingVector.size());
+        trainingInstance3.setValue((Attribute) trainingVector.elementAt(0), 0.5);
+//        trainingInstance3.setValue((Attribute) trainingVector.elementAt(1), 1);
+//        trainingInstance3.setValue((Attribute) trainingVector.elementAt(2), "no");
+        trainingInstance3.setValue((Attribute) trainingVector.elementAt(1), "moderate");
+
+        trainingInstances.add(trainingInstance);
+        trainingInstances.add(trainingInstance2);
+        trainingInstances.add(trainingInstance3);
+
+
+        Instances isTestingSet = new Instances("trainingData", trainingVector, 10);
+        isTestingSet.setClassIndex(trainingVector.size() - 1);
+
+
+        List<Instance> instanceList = null;
+        if(!titleToScores.isEmpty()) {
+
+            instanceList = new ArrayList<>();
+
+            for(Map map : titleToScores) {
+                Double total = 0D;
+                boolean isPresent = false;
+
+                if(map.containsKey("total")){
+                    Object object = map.get("total");
+                    if(object instanceof Double) {
+                        total = (Double) object;
+                    }
+                }
+
+                if(map.containsKey("isPresent")){
+                    Object object = map.get("isPresent");
+                    if(object instanceof Boolean){
+                        isPresent = (Boolean) object;
+                    }
+                }
+
+                Instance instance = new Instance(trainingVector.size());
+                instance.setValue((Attribute) trainingVector.elementAt(0), total);
+//                instance.setValue((Attribute) trainingVector.elementAt(1), (isPresent) ? 1 : 0);
+//                instance.setValue((Attribute) trainingVector.elementAt(2), "yes");
+
+                if(total >= 0.8D) {
+                    instance.setValue((Attribute) trainingVector.elementAt(1), "high");
+                }
+
+                if(total >= 0.5D && total < 0.8D){
+                    instance.setValue((Attribute) trainingVector.elementAt(1), "moderate");
+                }
+
+                if(total < 0.4){
+                    instance.setValue((Attribute) trainingVector.elementAt(1), "low");
+                }
+
+                instance.setDataset(trainingInstances);
+
+                isTestingSet.add(instance);
+                instanceList.add(instance);
+            }
+        }
+
+
+        Classifier multinomial = (Classifier) new NaiveBayesMultinomial();
+        try {
+            multinomial.buildClassifier(isTestingSet );
+            Evaluation evaluation = new Evaluation(isTestingSet);
+
+            if(instanceList != null && !instanceList.isEmpty()) {
+                for (Instance instance : instanceList) {
+                    double[] distribution = multinomial.distributionForInstance(instance);
+                    double d = evaluation.evaluateModelOnce(distribution, instance);
+                    double s = multinomial.classifyInstance(instance);
+                    logger.info("Status");
+                }
+            }
+            double[]  evaluationResults = evaluation.evaluateModel(multinomial, isTestingSet);
+            double kbMeansInfo = evaluation.KBMeanInformation();
+            FastVector predictions = evaluation.predictions();
+
+            int size = predictions.size();
+
+            if(size > 0){
+                List<Map> scoredMap = new ArrayList<>();
+                for(int x = 0; x < size; x++){
+                    Object object = predictions.elementAt(x);
+                    if(object instanceof NominalPrediction) {
+                        Map<String, Object> map = new HashMap<>();
+                        NominalPrediction nominalPrediction = (NominalPrediction) object;
+                        double actual = nominalPrediction.actual();
+                        map.put("actual", actual);
+                        double predicted = nominalPrediction.predicted();
+                        map.put("predicted", predicted);
+                        double margin = nominalPrediction.margin();
+                        map.put("margin", margin);
+                        String revision = nominalPrediction.getRevision();
+                        map.put("revision", revision);
+                        map.put("index", x);
+                        scoredMap.add(map);
+                    }
+                }
+
+                if(!scoredMap.isEmpty()){
+                    Collections.sort(scoredMap, new Comparator<Map>() {
+                        @Override
+                        public int compare(Map o1, Map o2) {
+                            int a = 0;
+                            Double d1 = (Double) o1.get("margin");
+                            Double d2 = (Double) o2.get("margin");
+
+                            if(d1 > d2){
+                                a = 1;
+                            }
+
+                            if(d1 < d2){
+                                a = -1;
+                            }
+                            return a;
+                        }
+                    });
+
+                    for(Map map : scoredMap){
+                        Integer index = null;
+                        if(map.containsKey("index")) {
+                            Object indexObj = map.get("index");
+                            if(indexObj instanceof Integer) {
+                                 index = (Integer) map.get("index");
+                            }
+                        }
+
+                        if(index != null){
+                            String title = titles.get(index);
+                            if(StringUtils.isNotBlank(title)){
+                                orderedTitles.add(title);
+                            }
+                        }
+                    }
+                }
+            }
+
+            String summary = evaluation.toSummaryString();
+            double weightedFMeasure = evaluation.weightedFMeasure();
+            double[][] confusionMatrix = evaluation.confusionMatrix();
+            logger.info("Summary : "+ summary);
+
+            if(!orderedTitles.isEmpty()){
+                response.put("orderedByTitles", orderedTitles);
+            }
+        } catch (Exception e){
+            logger.warn("Error in computing multi-nominal naive bayes. Message : "+ e.getMessage());
+        }
+
+        modelAndView.addAllObjects(response);
+        return modelAndView;
+    }
+
+    @RequestMapping(value = "/v1/tokenize", method = RequestMethod.GET, produces = "application/json;charset=utf-8")
+    public ModelAndView getTokens(@RequestParam(name = "query", required = true) String query){
+        ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
+        Map<String, Object> response = new HashMap<>();
+        if(StringUtils.isNotBlank(query)){
+            String[] tokens = classificationService.tokenize(query);
+            if(tokens != null && tokens.length > 0){
+                List<String> tokensAsList = Arrays.asList(tokens);
+                if(!tokensAsList.isEmpty()){
+                    response.put("tokens", tokensAsList);
+                }
             }
         }
         modelAndView.addAllObjects(response);
