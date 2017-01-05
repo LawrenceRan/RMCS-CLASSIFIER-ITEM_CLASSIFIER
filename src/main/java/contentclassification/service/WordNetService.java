@@ -1,8 +1,10 @@
 package contentclassification.service;
 
 import contentclassification.domain.JWIImpl;
+import contentclassification.domain.POSRESPONSES;
 import contentclassification.domain.WordAndDefinition;
 import contentclassification.domain.WordNetImpl;
+import edu.mit.jwi.item.POS;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,5 +60,33 @@ public class WordNetService {
                 + (StringUtils.isNotBlank(query) ? query : "None") + " Results : "
                 + ((responseMap != null && !responseMap.isEmpty()) ? responseMap.size() : 0));
         return responseMap;
+    }
+
+    public List<String> getSynonyms(String term, POSRESPONSES posresponses){
+        List<String> synonyms = null;
+        if(StringUtils.isNotBlank(term)){
+            POS pos = convertPOSRESPONSEStoPOS(posresponses);
+            JWIImpl jwi = new JWIImpl(term);
+            jwi.setPos(pos);
+            synonyms = jwi.synonyms();
+        }
+        return synonyms;
+    }
+
+    private POS convertPOSRESPONSEStoPOS(POSRESPONSES posresponses){
+        POS pos = null;
+        if(posresponses != null){
+            String posStr = posresponses.toString().toLowerCase();
+            List<POS> posList = Arrays.asList(POS.values());
+            if(!posList.isEmpty()){
+                for(POS pos1 : posList){
+                    if(posStr.contains(pos1.toString())) {
+                        pos = pos1;
+                        break;
+                    }
+                }
+            }
+        }
+        return pos;
     }
 }

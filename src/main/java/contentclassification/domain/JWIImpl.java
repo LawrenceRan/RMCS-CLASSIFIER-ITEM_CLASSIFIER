@@ -1,20 +1,25 @@
 package contentclassification.domain;
 
+import com.google.common.base.CaseFormat;
 import edu.mit.jwi.Dictionary;
 import edu.mit.jwi.IDictionary;
-import edu.mit.jwi.data.BinarySearchWordnetFile;
 import edu.mit.jwi.item.IIndexWord;
+import edu.mit.jwi.item.ISynsetID;
 import edu.mit.jwi.item.IWord;
 import edu.mit.jwi.item.IWordID;
 import edu.mit.jwi.item.POS;
+import edu.mit.jwi.item.Pointer;
+import edu.mit.jwi.item.Synset;
 import edu.mit.jwi.morph.WordnetStemmer;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by rsl_prod_005 on 5/13/16.
@@ -23,9 +28,18 @@ public class JWIImpl {
     private Logger logger = LoggerFactory.getLogger(JWIImpl.class);
 
     private String query;
+    private POS pos;
 
     public JWIImpl(String query){
         this.query = query;
+    }
+
+    public POS getPos() {
+        return pos;
+    }
+
+    public void setPos(POS pos) {
+        this.pos = pos;
     }
 
     private URL getDatabaseLocation(){
@@ -168,5 +182,43 @@ public class JWIImpl {
             iDictionary.close();
         }
         return resultsMap;
+    }
+
+    public List<String> synonyms(){
+        List<String> synonyms = null;
+        IDictionary dictionary = database();
+        try{
+            POS pos = (this.pos != null) ? this.pos : POS.NOUN;
+
+            IIndexWord iIndexWord = dictionary.getIndexWord(query, pos);
+            if(iIndexWord != null){
+                synonyms = new ArrayList<>();
+                List<IWordID> wordIDs = iIndexWord.getWordIDs();
+                if(wordIDs != null && !wordIDs.isEmpty()){
+                    for(IWordID wordID : wordIDs){
+                        IWord iWord = dictionary.getWord(wordID);
+                        String word = iWord.getLemma();
+                        List<ISynsetID> relatedSynsets = iWord.getSynset().getRelatedSynsets();
+                        if(relatedSynsets != null && !relatedSynsets.isEmpty()){
+                            for(ISynsetID synsetID : relatedSynsets){
+                                List<IWord> iWords = dictionary.getSynset(synsetID).getWords();
+                                if(iWords != null && !iWords.isEmpty()) {
+                                    for(IWord iWord1 : iWords) {
+                                        String synonym = iWord1.getLemma();
+                                        synonym = (synonym.contains("_")) ? synonym.replace("_", " ") : synonym;
+                                        synonyms.add(synonym);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                logger.info("Word : "+ query + " not found in dictionary as using pos : "+ pos);
+            }
+        } catch (Exception e){
+            logger.warn("Error in getting synonyms for term: "+ query + ". Message : "+ e.getMessage());
+        }
+        return synonyms;
     }
 }
