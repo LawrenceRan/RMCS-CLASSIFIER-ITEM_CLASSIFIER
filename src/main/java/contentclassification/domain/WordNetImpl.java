@@ -64,4 +64,14 @@ public class WordNetImpl {
         }
         return output;
     }
+
+    public String getStem(){
+        String stem = null;
+        Synset[] synsets = getSynsets();
+        if(synsets != null && synsets.length > 0){
+            for(Synset synset : synsets){
+            }
+        }
+        return stem;
+    }
 }

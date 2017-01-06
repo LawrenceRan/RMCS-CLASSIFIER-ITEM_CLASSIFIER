@@ -2505,6 +2505,10 @@ public class Index {
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
         if(StringUtils.isNotBlank(query)){
+            String checkedSpelling = spellCheckerService.getCorrectedLine(query);
+            boolean isSpellCorrected = (checkedSpelling.equalsIgnoreCase(query));
+            query = isSpellCorrected ? query : checkedSpelling;
+
             List<Map> posList = classificationService.getPos(classificationService.tokenize(query));
             List<POSRESPONSES> posresponses = null;
             if(posList != null){
@@ -2520,7 +2524,9 @@ public class Index {
                 }
             }
             List<String> synonyms = wordNetService.getSynonyms(query, posresponses.get(0));
+            response.put("query", query);
             response.put("synonyms", synonyms);
+            response.put("isCorrected", isSpellCorrected);
         }
         modelAndView.addAllObjects(response);
         return modelAndView;
