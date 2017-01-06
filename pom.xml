@@ -159,6 +159,7 @@
                     <include>en-ner-location.bin</include>
                     <include>en-ner-person.bin</include>
                     <include>en-ner-time.bin</include>
+                    <include>labels_en.ttl</include>
                 </includes>
             </resource>
         </resources>

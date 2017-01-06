@@ -1147,9 +1147,22 @@ public class Index {
         if(StringUtils.isNotBlank(query)){
             String[] tokens = classificationService.tokenize(query);
             if(tokens != null && tokens.length > 0) {
-                List<String> stems = classificationService.getStems(tokens);
-                if(stems != null && !stems.isEmpty()) {
-                    response.put("stems", stems);
+                String[] correctedTokens = new String[tokens.length];
+                int x = 0;
+
+                for(String token  : tokens){
+                    String corrected = spellCheckerService.getCorrectedLine(token);
+                    if(StringUtils.isNotBlank(corrected)) {
+                        correctedTokens[x] = corrected;
+                    }
+                    x++;
+                }
+
+                if(correctedTokens.length > 0) {
+                    List<String> stems = classificationService.getStems(correctedTokens);
+                    if (stems != null && !stems.isEmpty()) {
+                        response.put("stems", stems);
+                    }
                 }
             }
         }

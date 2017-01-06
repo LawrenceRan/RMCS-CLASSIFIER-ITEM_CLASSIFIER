@@ -1,6 +1,5 @@
 package contentclassification.domain;
 
-import com.google.common.base.CaseFormat;
 import edu.mit.jwi.Dictionary;
 import edu.mit.jwi.IDictionary;
 import edu.mit.jwi.item.IIndexWord;
@@ -8,8 +7,6 @@ import edu.mit.jwi.item.ISynsetID;
 import edu.mit.jwi.item.IWord;
 import edu.mit.jwi.item.IWordID;
 import edu.mit.jwi.item.POS;
-import edu.mit.jwi.item.Pointer;
-import edu.mit.jwi.item.Synset;
 import edu.mit.jwi.morph.WordnetStemmer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,12 +120,17 @@ public class JWIImpl {
         try {
             List<POS> posList = Arrays.asList(POS.values());
             if (!posList.isEmpty()) {
+                List<String> stems = new ArrayList<>();
                 for (POS pos : posList) {
                     WordnetStemmer stemmer = new WordnetStemmer(dictionary);
                     List<String> stemmers = stemmer.findStems(this.query, pos);
                     if (stemmers != null && !stemmers.isEmpty()) {
-                        stem = stemmers.get(0);
+                        stems.addAll(stemmers);
                     }
+                }
+
+                if(!stems.isEmpty()) {
+                    stem = stems.get(0);
                 }
             }
         } catch (Exception e){

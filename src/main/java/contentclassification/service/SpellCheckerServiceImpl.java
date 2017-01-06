@@ -57,7 +57,7 @@ public class SpellCheckerServiceImpl implements SpellCheckerService {
         }
     }
 
-    SpellCheckerServiceImpl(){
+    public SpellCheckerServiceImpl(){
         this.misspelledWords = new ArrayList<>();
         initialize();
     }
@@ -206,7 +206,7 @@ public class SpellCheckerServiceImpl implements SpellCheckerService {
         return updatedSuggestions;
     }
 
-    private List<String> rankBySimilarity(String term, List<String> words){
+    public List<String> rankBySimilarity(String term, List<String> words){
         List<String> ranked = null;
         if(words != null && !words.isEmpty()){
             ranked = new ArrayList<>();
