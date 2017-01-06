@@ -19,8 +19,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by rsl_prod_005 on 5/13/16.
@@ -215,6 +217,12 @@ public class JWIImpl {
                     }
 
                     if(!synonyms.isEmpty()){
+                        Set<String> cleanUp = new HashSet<>();
+                        cleanUp.addAll(synonyms);
+
+                        synonyms.clear();
+                        synonyms.addAll(cleanUp);
+
                         Collections.sort(synonyms);
                     }
                 }
