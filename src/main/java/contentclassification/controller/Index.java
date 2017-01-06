@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -2500,7 +2501,7 @@ public class Index {
         return modelAndView;
     }
 
-    @RequestMapping(value = "/v1/synonyms", method = RequestMethod.GET)
+    @RequestMapping(value = "/v1/synonyms", method = RequestMethod.GET, produces = "application/json;charset=utf-8")
     public ModelAndView getSynonyms(@RequestParam(name = "query") String query){
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
@@ -2532,4 +2533,38 @@ public class Index {
         return modelAndView;
     }
 
+    @RequestMapping(value = "/v1/synonyms", method = RequestMethod.POST, produces = "application/json;charset=utf-8")
+    public ModelAndView getSynonymsViaPost(@RequestBody String queryAsJsonStr){
+        ModelAndView modelAndView = null;
+        Map<String, Object> response = new HashMap<>();
+        if(StringUtils.isNotBlank(queryAsJsonStr)) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            try {
+                @SuppressWarnings("unchecked")
+                List<String> queryList = (List<String>) objectMapper.readValue(queryAsJsonStr, List.class);
+                if(queryList != null && !queryList.isEmpty()) {
+                    modelAndView = new ModelAndView(new MappingJackson2JsonView());
+                    for(String query : queryList) {
+                        if(StringUtils.isNotBlank(query)) {
+                            ModelMap modelMap = getSynonyms(query).getModelMap();
+                            if(modelMap != null && !modelMap.isEmpty()){
+                                response.put(query, modelMap);
+                            }
+                        }
+                    }
+                    modelAndView.addAllObjects(response);
+                } else {
+                    modelAndView = new ModelAndView(new MappingJackson2JsonView());
+                    response.put("message", "empty query list provided.");
+                }
+            } catch (Exception e){
+                logger.warn("Error occured while parsing json string in get synonyms. Message : "+ e.getMessage());
+            }
+        } else {
+            modelAndView = new ModelAndView(new MappingJackson2JsonView());
+            response.put("message", "empty or null json query string.");
+            modelAndView.addAllObjects(response);
+        }
+        return modelAndView;
+    }
 }
