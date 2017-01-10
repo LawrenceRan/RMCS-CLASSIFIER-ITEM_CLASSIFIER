@@ -1147,9 +1147,22 @@ public class Index {
         if(StringUtils.isNotBlank(query)){
             String[] tokens = classificationService.tokenize(query);
             if(tokens != null && tokens.length > 0) {
-                List<String> stems = classificationService.getStems(tokens);
-                if(stems != null && !stems.isEmpty()) {
-                    response.put("stems", stems);
+                String[] correctedTokens = new String[tokens.length];
+                int x = 0;
+
+                for(String token  : tokens){
+                    String corrected = spellCheckerService.getCorrectedLine(token);
+                    if(StringUtils.isNotBlank(corrected)) {
+                        correctedTokens[x] = corrected;
+                    }
+                    x++;
+                }
+
+                if(correctedTokens.length > 0) {
+                    List<String> stems = classificationService.getStems(correctedTokens);
+                    if (stems != null && !stems.isEmpty()) {
+                        response.put("stems", stems);
+                    }
                 }
             }
         }
@@ -2485,11 +2498,13 @@ public class Index {
     }
 
     @RequestMapping(value = "/v1/tokenize", method = RequestMethod.GET, produces = "application/json;charset=utf-8")
-    public ModelAndView getTokens(@RequestParam(name = "query", required = true) String query){
+    public ModelAndView getTokens(@RequestParam(name = "query", required = true) String query,
+                                  @RequestParam(name = "byWhitespace", defaultValue = "false") Boolean byWhitespace){
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
         if(StringUtils.isNotBlank(query)){
-            String[] tokens = classificationService.tokenize(query);
+            String[] tokens = (!byWhitespace) ? classificationService.tokenize(query) :
+                    classificationService.tokenize(query, " ");
             if(tokens != null && tokens.length > 0){
                 List<String> tokensAsList = Arrays.asList(tokens);
                 if(!tokensAsList.isEmpty()){
@@ -2524,7 +2539,8 @@ public class Index {
                     }
                 }
             }
-            List<String> synonyms = wordNetService.getSynonyms(query, posresponses.get(0));
+            List<String> synonyms = wordNetService.getSynonyms(query,
+                    ((posresponses != null && !posresponses.isEmpty()) ? posresponses.get(0) : null));
             response.put("query", query);
             response.put("synonyms", synonyms);
             response.put("isCorrected", isSpellCorrected);
@@ -2558,7 +2574,7 @@ public class Index {
                     response.put("message", "empty query list provided.");
                 }
             } catch (Exception e){
-                logger.warn("Error occured while parsing json string in get synonyms. Message : "+ e.getMessage());
+                logger.warn("Error occurred while parsing json string in get synonyms. Message : "+ e.getMessage());
             }
         } else {
             modelAndView = new ModelAndView(new MappingJackson2JsonView());
