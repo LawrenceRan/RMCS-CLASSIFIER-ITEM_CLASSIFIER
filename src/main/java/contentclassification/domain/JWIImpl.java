@@ -195,37 +195,57 @@ public class JWIImpl {
         try{
             POS pos = (this.pos != null) ? this.pos : POS.NOUN;
 
+            List<IIndexWord> iIndexWordList = new ArrayList<>();
+
             IIndexWord iIndexWord = dictionary.getIndexWord(query, pos);
             if(iIndexWord != null){
+                iIndexWordList.add(iIndexWord);
+            }
+
+            if(iIndexWordList.isEmpty()){
+                List<POS> posList = Arrays.asList(POS.values());
+                if(!posList.isEmpty()){
+                    for(POS posToUse : posList){
+                        IIndexWord indexWord = dictionary.getIndexWord(query, posToUse);
+                        if(indexWord != null) {
+                            iIndexWordList.add(indexWord);
+                        }
+                    }
+                }
+            }
+
+            if(!iIndexWordList.isEmpty()){
                 synonyms = new ArrayList<>();
-                List<IWordID> wordIDs = iIndexWord.getWordIDs();
-                if(wordIDs != null && !wordIDs.isEmpty()){
-                    for(IWordID wordID : wordIDs){
-                        IWord iWord = dictionary.getWord(wordID);
-                        String word = iWord.getLemma();
-                        List<ISynsetID> relatedSynsets = iWord.getSynset().getRelatedSynsets();
-                        if(relatedSynsets != null && !relatedSynsets.isEmpty()){
-                            for(ISynsetID synsetID : relatedSynsets){
-                                List<IWord> iWords = dictionary.getSynset(synsetID).getWords();
-                                if(iWords != null && !iWords.isEmpty()) {
-                                    for(IWord iWord1 : iWords) {
-                                        String synonym = iWord1.getLemma();
-                                        synonym = (synonym.contains("_")) ? synonym.replace("_", " ") : synonym;
-                                        synonyms.add(synonym);
+                for(IIndexWord indexWord : iIndexWordList) {
+                    List<IWordID> wordIDs = indexWord.getWordIDs();
+                    if (wordIDs != null && !wordIDs.isEmpty()) {
+                        for (IWordID wordID : wordIDs) {
+                            IWord iWord = dictionary.getWord(wordID);
+                            String word = iWord.getLemma();
+                            List<ISynsetID> relatedSynsets = iWord.getSynset().getRelatedSynsets();
+                            if (relatedSynsets != null && !relatedSynsets.isEmpty()) {
+                                for (ISynsetID synsetID : relatedSynsets) {
+                                    List<IWord> iWords = dictionary.getSynset(synsetID).getWords();
+                                    if (iWords != null && !iWords.isEmpty()) {
+                                        for (IWord iWord1 : iWords) {
+                                            String synonym = iWord1.getLemma();
+                                            synonym = (synonym.contains("_")) ? synonym.replace("_", " ") : synonym;
+                                            synonyms.add(synonym);
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    if(!synonyms.isEmpty()){
-                        Set<String> cleanUp = new HashSet<>();
-                        cleanUp.addAll(synonyms);
+                        if (!synonyms.isEmpty()) {
+                            Set<String> cleanUp = new HashSet<>();
+                            cleanUp.addAll(synonyms);
 
-                        synonyms.clear();
-                        synonyms.addAll(cleanUp);
+                            synonyms.clear();
+                            synonyms.addAll(cleanUp);
 
-                        Collections.sort(synonyms);
+                            Collections.sort(synonyms);
+                        }
                     }
                 }
             } else {
