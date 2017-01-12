@@ -2539,6 +2539,21 @@ public class Index {
                     }
                 }
             }
+
+            Map<String, Object> stemMap = getStemmers(query).getModel();
+            if(stemMap != null && !stemMap.isEmpty()){
+                if(stemMap.containsKey("stems")){
+                    Object stemList = stemMap.get("stems");
+                    if(stemList != null && (stemList instanceof List)){
+                        @SuppressWarnings("unchecked")
+                        List<String> stemsStringList = (List<String>) stemList;
+                        if(stemsStringList.size() > 0) {
+                            query = stemsStringList.get(0);
+                        }
+                    }
+                }
+            }
+
             List<String> synonyms = wordNetService.getSynonyms(query,
                     ((posresponses != null && !posresponses.isEmpty()) ? posresponses.get(0) : null));
             response.put("query", query);
