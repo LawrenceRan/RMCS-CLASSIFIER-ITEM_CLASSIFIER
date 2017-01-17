@@ -2237,11 +2237,22 @@ public class Index {
             }
         }
 
-        String[] termTokens = classificationService.tokenize(term.toLowerCase().trim());
+        String[] termTokens = classificationService.tokenize(term.toLowerCase().trim(), " ");
         List<String> termTokensAsList = Arrays.asList(termTokens);
 
         Set<String> setB = new HashSet<>();
         setB.addAll(termTokensAsList);
+
+        logger.info("About to stem all tokens in search term provided by user. Incoming search terms : "
+                + Arrays.toString(setB.toArray()));
+
+        Set<String> stemmedSet = getStemSet(setB);
+        setB.addAll(stemmedSet);
+
+        logger.info("Done stemming all tokens in search term provided. Unique terms : "
+                + Arrays.toString(setB.toArray()));
+
+
         termTokensAsList = new ArrayList<>();
         termTokensAsList.addAll(setB);
 
@@ -2257,10 +2268,20 @@ public class Index {
         if(!titles.isEmpty()){
             for(String title : titles){
                 Map<String, Object> map = new HashMap<>();
-                String[] titleToken = classificationService.tokenize(title.toLowerCase().trim());
+                String[] titleToken = classificationService.tokenize(title.toLowerCase().trim(), " ");
                 List<String> titleTokenList = Arrays.asList(titleToken);
                 Set<String> setA = new HashSet<>();
                 setA.addAll(titleTokenList);
+
+                logger.info("About to stem all tokens in title term provided by user. Incoming search terms : "
+                        + Arrays.toString(setA.toArray()));
+
+                stemmedSet = getStemSet(setA);
+                setA.addAll(stemmedSet);
+
+                logger.info("Done stemming all tokens in title term provided. Unique terms : "
+                        + Arrays.toString(setA.toArray()));
+
                 titleTokenList = new ArrayList<>();
                 titleTokenList.addAll(setA);
 
@@ -2517,7 +2538,9 @@ public class Index {
     }
 
     @RequestMapping(value = "/v1/synonyms", method = RequestMethod.GET, produces = "application/json;charset=utf-8")
-    public ModelAndView getSynonyms(@RequestParam(name = "query") String query){
+    public ModelAndView getSynonyms(@RequestParam(name = "query") String query,
+                                    @RequestParam(name = "enableTokens", required = false, defaultValue = "true")
+                                            Boolean enableTokens){
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
         if(StringUtils.isNotBlank(query)){
@@ -2525,7 +2548,9 @@ public class Index {
             boolean isSpellCorrected = (checkedSpelling.equalsIgnoreCase(query));
             query = isSpellCorrected ? query : checkedSpelling;
 
-            List<Map> posList = classificationService.getPos(classificationService.tokenize(query));
+            String[] tokens = enableTokens ? classificationService.tokenize(query) : new String[]{query};
+
+            List<Map> posList = classificationService.getPos(tokens);
             List<POSRESPONSES> posresponses = null;
             if(posList != null){
                 posresponses = new ArrayList<>();
@@ -2540,18 +2565,41 @@ public class Index {
                 }
             }
 
-            Map<String, Object> stemMap = getStemmers(query).getModel();
-            if(stemMap != null && !stemMap.isEmpty()){
-                if(stemMap.containsKey("stems")){
-                    Object stemList = stemMap.get("stems");
-                    if(stemList != null && (stemList instanceof List)){
-                        @SuppressWarnings("unchecked")
-                        List<String> stemsStringList = (List<String>) stemList;
-                        if(stemsStringList.size() > 0) {
-                            query = stemsStringList.get(0);
+            if(tokens != null && tokens.length > 0) {
+                StringBuilder queryBuilder = new StringBuilder();
+                List<String> queries = new ArrayList<>();
+                for(String token : tokens) {
+                    Map<String, Object> stemMap = getStemmers(token).getModel();
+                    if (stemMap != null && !stemMap.isEmpty()) {
+                        if (stemMap.containsKey("stems")) {
+                            Object stemList = stemMap.get("stems");
+                            if (stemList != null && (stemList instanceof List)) {
+                                @SuppressWarnings("unchecked")
+                                List<String> stemsStringList = (List<String>) stemList;
+                                if (stemsStringList.size() > 0) {
+                                    queries.add(stemsStringList.get(0));
+                                }
+                            }
                         }
+                    } else {
+                        queries.add(token);
                     }
                 }
+
+                if(!queries.isEmpty()){
+                    int x = 0;
+                    for(String stemmedQuery : queries){
+                        if(x < (queries.size() - 1)) {
+                            queryBuilder.append(stemmedQuery);
+                            queryBuilder.append(" ");
+                        } else {
+                            queryBuilder.append(stemmedQuery);
+                        }
+                        x++;
+                    }
+                }
+
+                query = queryBuilder.toString();
             }
 
             List<String> synonyms = wordNetService.getSynonyms(query,
@@ -2577,7 +2625,7 @@ public class Index {
                     modelAndView = new ModelAndView(new MappingJackson2JsonView());
                     for(String query : queryList) {
                         if(StringUtils.isNotBlank(query)) {
-                            ModelMap modelMap = getSynonyms(query).getModelMap();
+                            ModelMap modelMap = getSynonyms(query, true).getModelMap();
                             if(modelMap != null && !modelMap.isEmpty()){
                                 response.put(query, modelMap);
                             }
@@ -2597,5 +2645,27 @@ public class Index {
             modelAndView.addAllObjects(response);
         }
         return modelAndView;
+    }
+
+    private <T> Set<T> getStemSet(Set<T> setA){
+        if(!setA.isEmpty()){
+            List<T> stemmedWords = new ArrayList<>();
+            for(T termToStem : setA) {
+                Map<String, Object> stemMap = getStemmers(termToStem.toString()).getModel();
+                if(stemMap != null && !stemMap.isEmpty()){
+                    if(stemMap.containsKey("stems")) {
+                        Object obj = stemMap.get("stems");
+                        if(obj instanceof  List){
+                            stemmedWords.addAll((List<T>) obj);
+                        }
+                    }
+                }
+            }
+
+            if(!stemmedWords.isEmpty()){
+                setA.addAll(stemmedWords);
+            }
+        }
+        return setA;
     }
 }
