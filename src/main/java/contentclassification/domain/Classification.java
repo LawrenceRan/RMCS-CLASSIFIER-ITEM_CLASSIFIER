@@ -192,14 +192,14 @@ public class Classification {
 
     public String[] getTokens(){
         String[] tokens = new String[]{};
+        InputStream modelStream = null;
         try{
             ClassLoader classLoader = getClass().getClassLoader();
-            InputStream modelStream = classLoader.getResourceAsStream("en-token.bin");
+            modelStream = classLoader.getResourceAsStream("en-token.bin");
             if(modelStream != null) {
                 TokenizerModel tokenizerModel = new TokenizerModel(modelStream);
                 Tokenizer tokenizer = new TokenizerME(tokenizerModel);
                 tokens = tokenizer.tokenize(title);
-                modelStream.close();
             }
         } catch (FileNotFoundException e){
             logger.debug("File not found exception: "+ e.getMessage());
@@ -207,6 +207,14 @@ public class Classification {
             logger.debug("Invalid format exception: "+ e.getMessage());
         } catch (IOException e){
             logger.debug("IO exception: "+ e.getMessage());
+        } finally{
+            if(modelStream != null){
+                try{
+                    modelStream.close();
+                } catch (Exception e){
+                    logger.warn("Error in closing input stream. Message : "+ e.getMessage());
+                }
+            }
         }
         return tokens;
     }

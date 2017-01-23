@@ -30,6 +30,7 @@ import contentclassification.domain.TotalTermToGroup;
 import contentclassification.domain.ValueComparator;
 import contentclassification.domain.WebMetaName;
 import contentclassification.model.RulesEngineModel;
+import contentclassification.model.StemmedWords;
 import contentclassification.utilities.BM25;
 import contentclassification.utilities.HelperUtility;
 import edu.mit.jwi.item.POS;
@@ -52,6 +53,7 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import weka.clusterers.XMeans;
 
@@ -89,6 +91,10 @@ public class ClassificationServiceImpl implements ClassificationService{
 
     @Autowired
     private WordNetService wordNetService;
+
+
+    @Autowired
+    private StemmedWordsService stemmedWordsService;
 
     Classification classification = null;
 
@@ -129,11 +135,23 @@ public class ClassificationServiceImpl implements ClassificationService{
     public List<String> getStems(String[] tokens) {
         List<String> stems = new ArrayList<>();
         if(tokens != null && tokens.length > 0){
-            for(String s : tokens){
-                JWIImpl jwi = new JWIImpl(s);
-                String stem = jwi.getStem();
-                if(StringUtils.isNotBlank(stem)){
-                    stems.add(stem);
+            for(String token : tokens){
+                JWIImpl jwi = new JWIImpl(token);
+                StemmedWords stemmedWord = stemmedWordsService.findByTerm(token);
+                if(stemmedWord == null) {
+                    String stem = jwi.getStem();
+                    if (StringUtils.isNotBlank(stem)) {
+                        stems.add(stem);
+
+                        //Update stemmed words mongo model with result set from WordNet.
+                        updateStemmedWords(token, stem);
+                    } else {
+                        logger.info("Stem not found for term : "
+                                + (StringUtils.isNotBlank(token) ? token : "None"));
+                        stems.add(token);
+                    }
+                } else {
+                    stems.add(stemmedWord.getStem());
                 }
             }
         }
@@ -2370,5 +2388,25 @@ public class ClassificationServiceImpl implements ClassificationService{
             );
         }
         return posresponses;
+    }
+
+    @Async
+    private void updateStemmedWords(String term, String stem){
+        logger.info("About to set stemmed word into mongo db. Term : "+ term + " Stem : "+ stem);
+        try {
+            Thread.sleep(1000);
+            if(StringUtils.isNotBlank(term) && StringUtils.isNotBlank(stem)){
+                StemmedWords stemmedWords = new StemmedWords();
+                stemmedWords.setStem(stem);
+                stemmedWords.setTerm(term);
+                stemmedWords = stemmedWordsService.add(stemmedWords);
+                logger.info("Done setting stemmed term into mongo db. Term : "
+                        + term + " Stem : "+ stem + " Result : "
+                        + ((stemmedWords != null) ? stemmedWords.toString() : "None"));
+            }
+        } catch (Exception e){
+            logger.warn("Error occurred while setting stem in stemmed words. Term : "+ term + " Stem : "
+                    + stem + ". Message : "+ e.getMessage());
+        }
     }
 }
