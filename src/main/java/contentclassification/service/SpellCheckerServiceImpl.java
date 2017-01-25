@@ -55,7 +55,7 @@ public class SpellCheckerServiceImpl implements SpellCheckerService {
         }
     }
 
-    SpellCheckerServiceImpl(){
+    public SpellCheckerServiceImpl(){
         this.misspelledWords = new ArrayList<>();
         initialize();
     }
@@ -88,7 +88,7 @@ public class SpellCheckerServiceImpl implements SpellCheckerService {
     }
 
     @Override
-    public String getCorrectedLine(String line) {
+    public String   getCorrectedLine(String line) {
         StringBuilder stringBuilder = new StringBuilder();
         if(StringUtils.isNotBlank(line)){
             String[] tempWords = line.split(" ");
@@ -96,8 +96,11 @@ public class SpellCheckerServiceImpl implements SpellCheckerService {
                 if(!spellChecker.isCorrect(word)){
                     List<String> suggestions = getSuggestions(word);
                     if(suggestions != null && !suggestions.isEmpty()) {
-                        String correctedWord = suggestions.get(0);
-                        stringBuilder.append(correctedWord);
+                        List<String> rankedWords = rankBySimilarity(word, suggestions);
+                        if(rankedWords != null && !rankedWords.isEmpty()) {
+                            String correctedWord = rankedWords.get(0);
+                            stringBuilder.append(correctedWord);
+                        }
                     }
                 } else {
                     stringBuilder.append(word);
@@ -199,5 +202,38 @@ public class SpellCheckerServiceImpl implements SpellCheckerService {
         }
 
         return updatedSuggestions;
+    }
+
+    public List<String> rankBySimilarity(String term, List<String> words){
+        List<String> ranked = null;
+        if(words != null && !words.isEmpty()){
+            ranked = new ArrayList<>();
+            List<Map> scoredList = new ArrayList<>();
+            for(String word : words){
+                Map<String, Object> map = new HashMap<>();
+                double score = getSimilarityScore(term.toLowerCase().trim(), word.toLowerCase().trim());
+                map.put("word", word);
+                map.put("score", score);
+                scoredList.add(map);
+            }
+
+            if(!scoredList.isEmpty()){
+                Collections.sort(scoredList, new Comparator<Map>() {
+                    @Override
+                    public int compare(Map o1, Map o2) {
+                        Double d1 = (Double) o1.get("score");
+                        Double d2 = (Double) o2.get("score");
+                        return Double.compare(d1, d2);
+                    }
+                });
+
+                for(Map map : scoredList){
+                    if(map.containsKey("word")){
+                        ranked.add(map.get("word").toString());
+                    }
+                }
+            }
+        }
+        return ranked;
     }
 }
