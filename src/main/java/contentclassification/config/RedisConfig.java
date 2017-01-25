@@ -55,7 +55,6 @@ public class RedisConfig {
     @Bean
     public CacheManager cacheManager() {
         logger.info("About to load cache manager bean.");
-        RedisConnectionFactory redisConnectionFactory = null;
         RedisCacheManager redisCacheManager = new RedisCacheManager(getRedisTemplate());
         redisCacheManager.setDefaultExpiration(300);
         logger.info("Done loading cache manager bean. RedisCacheManager : "+ redisCacheManager.toString());
