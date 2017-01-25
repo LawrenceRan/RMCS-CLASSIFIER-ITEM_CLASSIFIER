@@ -161,7 +161,15 @@ public class ClassificationServiceImpl implements ClassificationService{
 
     @Override
     public List<Map> getPos(String[] tokens) {
-        return classification.getPos(tokens);
+        List<Map> posMap = null;
+        if(tokens != null && tokens.length > 0) {
+            posMap = new ArrayList<>();
+            for(String token : tokens) {
+                classification = new Classification(token);
+                posMap.addAll(classification.getPos(tokens));
+            }
+        }
+        return posMap;
     }
 
     @Override
