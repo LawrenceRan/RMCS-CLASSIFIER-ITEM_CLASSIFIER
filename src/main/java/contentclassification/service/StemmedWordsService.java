@@ -3,6 +3,7 @@ package contentclassification.service;
 import contentclassification.model.StemmedWords;
 import contentclassification.model.StemmedWordsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -13,6 +14,7 @@ public class StemmedWordsService {
     @Autowired
     private StemmedWordsRepository stemmedWordsRepository;
 
+    @Cacheable(value = "stemResults")
     public StemmedWords findByTerm(String term){
         return stemmedWordsRepository.findByTerm(term);
     }
