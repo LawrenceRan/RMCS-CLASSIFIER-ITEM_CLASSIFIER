@@ -2573,13 +2573,15 @@ public class Index {
                 for(String token : tokens) {
                     Map<String, Object> stemMap = getStemmers(token).getModel();
                     if (stemMap != null && !stemMap.isEmpty()) {
-                        if (stemMap.containsKey("stems")) {
-                            Object stemList = stemMap.get("stems");
-                            if (stemList != null && (stemList instanceof List)) {
-                                @SuppressWarnings("unchecked")
-                                List<String> stemsStringList = (List<String>) stemList;
-                                if (stemsStringList.size() > 0) {
-                                    queries.add(stemsStringList.get(0));
+                        for(Map.Entry<String, Object> stemmedMap : stemMap.entrySet()) {
+                            if (stemmedMap.getKey().equals("stems")) {
+                                Object stemList = stemmedMap.getValue();
+                                if (stemList != null && (stemList instanceof List)) {
+                                    @SuppressWarnings("unchecked")
+                                    List<String> stemsStringList = (List<String>) stemList;
+                                    if (!stemsStringList.isEmpty()) {
+                                        queries.addAll(stemsStringList);
+                                    }
                                 }
                             }
                         }

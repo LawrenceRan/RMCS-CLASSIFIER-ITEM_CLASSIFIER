@@ -14,7 +14,6 @@ public class StemmedWordsService {
     @Autowired
     private StemmedWordsRepository stemmedWordsRepository;
 
-    @Cacheable(value = "stemResults")
     public StemmedWords findByTerm(String term){
         return stemmedWordsRepository.findByTerm(term);
     }
