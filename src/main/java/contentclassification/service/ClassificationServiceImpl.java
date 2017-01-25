@@ -62,6 +62,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -2399,6 +2400,7 @@ public class ClassificationServiceImpl implements ClassificationService{
                 StemmedWords stemmedWords = new StemmedWords();
                 stemmedWords.setStem(stem);
                 stemmedWords.setTerm(term);
+                stemmedWords.setCreatedOn(new Date());
                 stemmedWords = stemmedWordsService.add(stemmedWords);
                 logger.info("Done setting stemmed term into mongo db. Term : "
                         + term + " Stem : "+ stem + " Result : "
