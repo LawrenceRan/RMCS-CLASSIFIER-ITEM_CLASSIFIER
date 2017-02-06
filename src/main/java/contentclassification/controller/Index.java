@@ -1778,7 +1778,7 @@ public class Index {
                 posMapList = classificationService.getPos(uniqueTokens.toArray(new String[uniqueTokens.size()]));
 
                 //Clean out POS that are not need
-                if(!posMapList.isEmpty()){
+                if(posMapList != null && !posMapList.isEmpty()){
                     for(Map posMap : posMapList){
                         String token = null;
                         if(posMap.containsKey("token")){
@@ -1967,22 +1967,40 @@ public class Index {
 
                 //Get name and entities
                 List<String> namesAndEntities = classificationService.getPersons(body);
-                if(namesAndEntities != null && !namesAndEntities.isEmpty()){ keywords.addAll(namesAndEntities); }
+                if(namesAndEntities != null && !namesAndEntities.isEmpty()){
+                    keywords.addAll(namesAndEntities);
+                    response.put("namesAndEntities", namesAndEntities);
+                }
 
                 List<String> dates = classificationService.getTime(body);
-                if(dates != null && !dates.isEmpty()){ keywords.addAll(dates); }
+                if(dates != null && !dates.isEmpty()){
+                    keywords.addAll(dates);
+                    response.put("dates", dates);
+                }
 
                 List<String> locations = classificationService.getLocations(body);
-                if(locations != null && !locations.isEmpty()){ keywords.addAll(locations); }
+                if(locations != null && !locations.isEmpty()){
+                    keywords.addAll(locations);
+                    response.put("location", locations);
+                }
 
                 List<String> organizations = classificationService.getOrganizations(body);
-                if(organizations != null && !organizations.isEmpty()){ keywords.addAll(organizations); }
+                if(organizations != null && !organizations.isEmpty()){
+                    keywords.addAll(organizations);
+                    response.put("organizations", organizations);
+                }
 
                 List<String> monies = classificationService.getMoney(body);
-                if(monies != null && !monies.isEmpty()){ keywords.addAll(monies); }
+                if(monies != null && !monies.isEmpty()){
+                    keywords.addAll(monies);
+                    response.put("monies", monies);
+                }
 
                 List<String> percentages = classificationService.getPercentage(body);
-                if(percentages != null && !percentages.isEmpty()){ keywords.addAll(percentages); }
+                if(percentages != null && !percentages.isEmpty()){
+                    keywords.addAll(percentages);
+                    response.put("percentages", percentages);
+                }
 
                 logger.info("Entities...");
 
@@ -2229,7 +2247,7 @@ public class Index {
         if(StringUtils.isNotBlank(requestBody)) {
             ObjectMapper objectMapper = new ObjectMapper();
             try {
-                @SuppressWarnings("uncheched")
+                @SuppressWarnings("unchecked")
                 List<String> requestTitles = objectMapper.readValue(requestBody, List.class);
                 if(requestTitles != null && !requestTitles.isEmpty()){
                     titles.addAll(requestTitles);
