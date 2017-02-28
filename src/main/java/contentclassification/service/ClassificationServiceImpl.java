@@ -179,11 +179,12 @@ public class ClassificationServiceImpl implements ClassificationService{
             List<PartsOfSpeech> cachedPartsOfSpeechList = new ArrayList<>();
 
             for(String token : tokens) {
-                PartsOfSpeech partsOfSpeech = partsOfSpeechService.findByTokenAndLanguages(token, DEFAULT_LANGUAGE);
+                PartsOfSpeech partsOfSpeech = partsOfSpeechService.findByTokenAndLanguages(token.toLowerCase().trim(),
+                        DEFAULT_LANGUAGE);
                 if(partsOfSpeech != null){
                     cachedPartsOfSpeechList.add(partsOfSpeech);
                 } else {
-                    nonCachedPartsOfSpeechList.add(token);
+                    nonCachedPartsOfSpeechList.add(token.toLowerCase().trim());
                 }
             }
 
