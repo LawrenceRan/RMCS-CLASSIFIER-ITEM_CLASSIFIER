@@ -16,15 +16,11 @@ public class AdminController {
 
     @RequestMapping(value = "/admin", method = RequestMethod.GET)
     public String getAdminPage(ModelMap modelMap){
-        Map<String, Object> response = new HashedMap();
-
-
         return "admin/index";
     }
 
     @RequestMapping(value = "/signin", method = RequestMethod.GET)
     public String getSignIn(ModelMap modelMap){
-
         return "admin/signin";
     }
 }

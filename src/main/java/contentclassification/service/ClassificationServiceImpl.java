@@ -12,6 +12,7 @@ import contentclassification.domain.FabricName;
 import contentclassification.domain.Gender;
 import contentclassification.domain.JWIImpl;
 import contentclassification.domain.JsoupImpl;
+import contentclassification.domain.Languages;
 import contentclassification.domain.NameAndContentMetaData;
 import contentclassification.domain.POSRESPONSES;
 import contentclassification.domain.RegExManager;
@@ -29,6 +30,7 @@ import contentclassification.domain.TermToGroupScore;
 import contentclassification.domain.TotalTermToGroup;
 import contentclassification.domain.ValueComparator;
 import contentclassification.domain.WebMetaName;
+import contentclassification.model.PartsOfSpeech;
 import contentclassification.model.RulesEngineModel;
 import contentclassification.model.StemmedWords;
 import contentclassification.utilities.BM25;
@@ -81,6 +83,9 @@ import java.util.regex.Pattern;
 @Service
 public class ClassificationServiceImpl implements ClassificationService{
     private static final Logger logger = LoggerFactory.getLogger(ClassificationServiceImpl.class);
+
+    private static Languages DEFAULT_LANGUAGE = Languages.EN;
+
     @Autowired
     private TermsScoringConfig termsScoringConfig;
 
@@ -96,6 +101,10 @@ public class ClassificationServiceImpl implements ClassificationService{
 
     @Autowired
     private StemmedWordsService stemmedWordsService;
+
+    @Autowired
+    private PartsOfSpeechService partsOfSpeechService;
+
 
     Classification classification = null;
 
@@ -164,9 +173,66 @@ public class ClassificationServiceImpl implements ClassificationService{
         List<Map> posMap = null;
         if(tokens != null && tokens.length > 0) {
             posMap = new ArrayList<>();
+
+            List<PartsOfSpeech> partsOfSpeechList = new ArrayList<>();
+            List<String> nonCachedPartsOfSpeechList = new ArrayList<>();
+            List<PartsOfSpeech> cachedPartsOfSpeechList = new ArrayList<>();
+
             for(String token : tokens) {
-                classification = new Classification(token);
-                posMap.addAll(classification.getPos(tokens));
+                PartsOfSpeech partsOfSpeech = partsOfSpeechService.findByTokenAndLanguages(token, DEFAULT_LANGUAGE);
+                if(partsOfSpeech != null){
+                    cachedPartsOfSpeechList.add(partsOfSpeech);
+                } else {
+                    nonCachedPartsOfSpeechList.add(token);
+                }
+            }
+
+            if (!nonCachedPartsOfSpeechList.isEmpty()) {
+                classification = new Classification();
+                tokens = nonCachedPartsOfSpeechList.toArray(new String[]{});
+                List<Map> pos = classification.getPos(tokens);
+                if (pos != null && !pos.isEmpty()) {
+                    for(Map map : pos){
+                        String responsePos = (map.containsKey("pos")) ? map.get("pos").toString() : null;
+                        String responseInitial = (map.containsKey("initial")) ? map.get("initial").toString() : null;
+                        String responseToken = (map.containsKey("token")) ? map.get("token").toString() : null;
+
+                        PartsOfSpeech partsOfSpeech = new PartsOfSpeech();
+                        if(StringUtils.isNotBlank(responsePos)){
+                            partsOfSpeech.setPos(responsePos);
+                        }
+
+                        if(StringUtils.isNotBlank(responseInitial)){
+                            partsOfSpeech.setInitial(responseInitial);
+                        }
+
+                        if(StringUtils.isNotBlank(responseToken)){
+                            partsOfSpeech.setToken(responseToken);
+                        }
+
+                        //Todo: to be handled properly when other languages come to play.
+                        partsOfSpeech.setLanguages(DEFAULT_LANGUAGE);
+
+                        partsOfSpeechList.add(partsOfSpeech);
+                    }
+
+                    //About to send it to caching model for persisting.
+                    if(!partsOfSpeechList.isEmpty()){
+                        partsOfSpeechService.processPartsOfSpeech(partsOfSpeechList);
+                    }
+                }
+            }
+
+            if(!cachedPartsOfSpeechList.isEmpty()){
+                for(PartsOfSpeech partsOfSpeech : cachedPartsOfSpeechList){
+                    posMap.add(partsOfSpeech.toMap());
+                }
+            }
+
+            if(!partsOfSpeechList.isEmpty()) {
+                for(PartsOfSpeech partsOfSpeech : partsOfSpeechList) {
+                    posMap.add(partsOfSpeech.toMap());
+                }
             }
         }
         return posMap;

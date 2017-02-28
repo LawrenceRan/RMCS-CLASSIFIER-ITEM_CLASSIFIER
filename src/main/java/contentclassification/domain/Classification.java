@@ -56,6 +56,8 @@ public class Classification {
         this.title = title;
     }
 
+    public Classification(){}
+
     public String getUri() {
         return uri;
     }
