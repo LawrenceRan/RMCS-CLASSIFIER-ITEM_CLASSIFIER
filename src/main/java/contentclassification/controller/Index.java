@@ -2316,10 +2316,15 @@ public class Index {
                     m.put("weightedScore", weightedScore);
                     total += (Double.isNaN(weightedScore)) ? 0 : weightedScore;
 
-                    Pattern pattern = Pattern.compile(t, Pattern.CASE_INSENSITIVE);
-                    Matcher matcher = pattern.matcher(title);
-                    while (matcher.find()){
-                        presenceCounter += 1;
+                    try {
+                        Pattern pattern = Pattern.compile(t, Pattern.CASE_INSENSITIVE);
+                        Matcher matcher = pattern.matcher(title);
+                        while (matcher.find()) {
+                            presenceCounter += 1;
+                        }
+                    } catch(Exception e){
+                        logger.warn("Error in presence count. term : "
+                                + (StringUtils.isNotBlank(title) ? title : "None") + " Message : "+ e.getMessage());
                     }
 
                     termToTokenMap.add(m);
