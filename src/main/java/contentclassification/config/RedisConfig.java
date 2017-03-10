@@ -57,7 +57,8 @@ public class RedisConfig {
     public CacheManager cacheManager() {
         logger.info("About to load cache manager bean.");
         RedisCacheManager redisCacheManager = new RedisCacheManager(getRedisTemplate());
-        redisCacheManager.setDefaultExpiration(300);
+        //Todo : move default expiration to config.
+        redisCacheManager.setDefaultExpiration(60000);
         logger.info("Done loading cache manager bean. RedisCacheManager : "+ redisCacheManager.toString());
         return redisCacheManager;
     }
