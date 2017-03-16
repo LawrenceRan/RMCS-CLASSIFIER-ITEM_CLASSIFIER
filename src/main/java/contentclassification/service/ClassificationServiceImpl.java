@@ -178,14 +178,13 @@ public class ClassificationServiceImpl implements ClassificationService{
             List<String> nonCachedPartsOfSpeechList = new ArrayList<>();
             List<PartsOfSpeech> cachedPartsOfSpeechList = new ArrayList<>();
 
-            for(String token : tokens) {
-                PartsOfSpeech partsOfSpeech = partsOfSpeechService.findByTokenAndLanguages(token.toLowerCase().trim(),
-                        DEFAULT_LANGUAGE);
-                if(partsOfSpeech != null){
-                    cachedPartsOfSpeechList.add(partsOfSpeech);
-                } else {
-                    nonCachedPartsOfSpeechList.add(token.toLowerCase().trim());
-                }
+            String tokensAsString = StringUtils.join(tokens, " ");
+            List<PartsOfSpeech> cachedPartsOfSpeech = partsOfSpeechService.findBySentenceAndLanguage(tokensAsString,
+                    DEFAULT_LANGUAGE);
+            if (cachedPartsOfSpeech != null && !cachedPartsOfSpeech.isEmpty()) {
+                cachedPartsOfSpeechList.addAll(cachedPartsOfSpeech);
+            } else {
+                nonCachedPartsOfSpeechList.addAll(Arrays.asList(tokens));
             }
 
             if (!nonCachedPartsOfSpeechList.isEmpty()) {
@@ -210,6 +209,8 @@ public class ClassificationServiceImpl implements ClassificationService{
                         if(StringUtils.isNotBlank(responseToken)){
                             partsOfSpeech.setToken(responseToken);
                         }
+
+                        partsOfSpeech.setSentence(tokensAsString);
 
                         //Todo: to be handled properly when other languages come to play.
                         partsOfSpeech.setLanguages(DEFAULT_LANGUAGE);
@@ -2455,7 +2456,7 @@ public class ClassificationServiceImpl implements ClassificationService{
 
     @Override
     public List<Map> getPosByPosResponses(List<Map> posTagged, List<POSRESPONSES> posresponses) {
-        Map<Integer, Map<String, Object>> posToTagged = new HashMap<>();
+        List<Map> posToTags = new ArrayList<>();
         if(posTagged != null && !posTagged.isEmpty()){
             for(Map pos : posTagged){
                 if(pos.containsKey("pos")) {
@@ -2463,30 +2464,39 @@ public class ClassificationServiceImpl implements ClassificationService{
                     POSRESPONSES posresponses1 = (StringUtils.isNotBlank(posValue))
                             ? POSRESPONSES.valueOf(posValue) : null;
                     if(posresponses1 != null) {
-                        posToTagged.put(posresponses1.ordinal(), pos);
+                        Map<Integer, Map<String, Object>> posTag = new HashMap<>();
+                        posTag.put(posresponses1.ordinal(), pos);
+                        if(!posTag.isEmpty()){
+                            posToTags.add(posTag);
+                        }
                     }
                 }
             }
         }
 
-        if(!posToTagged.isEmpty()){
+        if (!posToTags.isEmpty()) {
 
-            if(posTagged == null){
+            if (posTagged == null) {
                 posTagged = new ArrayList<>();
             } else {
                 posTagged.clear();
             }
 
-            for(POSRESPONSES pos : posresponses){
+            for (POSRESPONSES pos : posresponses) {
                 Integer posOrdinal = pos.ordinal();
-                if(posToTagged.containsKey(posOrdinal)){
-                    Map<String, Object> selectedPos = posToTagged.get(posOrdinal);
-                    if(selectedPos != null && !selectedPos.isEmpty()){
-                        posTagged.add(selectedPos);
+                for (Map map : posToTags) {
+
+                    if (map.containsKey(posOrdinal)) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> selectedPos = (Map) map.get(posOrdinal);
+                        if (selectedPos != null && !selectedPos.isEmpty()) {
+                            posTagged.add(selectedPos);
+                        }
                     }
                 }
             }
         }
+
         return posTagged;
     }
 

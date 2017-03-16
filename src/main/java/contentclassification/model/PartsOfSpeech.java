@@ -28,6 +28,9 @@ public class PartsOfSpeech{
     @Indexed
     private String token;
 
+    @Indexed
+    private String sentence;
+
     public String getId() {
         return id;
     }
@@ -68,6 +71,14 @@ public class PartsOfSpeech{
         this.token = token;
     }
 
+    public String getSentence() {
+        return sentence;
+    }
+
+    public void setSentence(String sentence) {
+        this.sentence = sentence;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -82,6 +93,7 @@ public class PartsOfSpeech{
                 .append(pos, that.pos)
                 .append(initial, that.initial)
                 .append(token, that.token)
+                .append(sentence, that.sentence)
                 .isEquals();
     }
 
@@ -93,6 +105,7 @@ public class PartsOfSpeech{
                 .append(pos)
                 .append(initial)
                 .append(token)
+                .append(sentence)
                 .toHashCode();
     }
 
@@ -104,6 +117,7 @@ public class PartsOfSpeech{
                 ", pos='" + pos + '\'' +
                 ", initial='" + initial + '\'' +
                 ", token='" + token + '\'' +
+                ", token='" + sentence + '\'' +
                 '}';
     }
 
@@ -114,6 +128,7 @@ public class PartsOfSpeech{
         map.put("pos", this.pos);
         map.put("initial", this.initial);
         map.put("token", this.token);
+        map.put("sentence", this.sentence);
         return map;
     }
 }
