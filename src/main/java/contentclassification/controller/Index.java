@@ -1095,8 +1095,10 @@ public class Index {
         if(StringUtils.isNotBlank(query)){
             String[] tokens = classificationService.tokenize(query);
             if(tokens != null && tokens.length > 0){
+                List<Map> posTagged = classificationService.getPos(tokens);
                 List<Map> posResults = null;
                 List<POSRESPONSES> posresponsesList = null;
+
                 if(StringUtils.isNotBlank(pos)) {
                     List<String> requestPos = Arrays.asList(pos.split(","));
                     if (!requestPos.isEmpty()) {
@@ -1123,8 +1125,8 @@ public class Index {
                     response.put("massage", message);
                 }
 
-                posResults = StringUtils.isNotBlank(pos) && posresponsesList != null ?
-                        classificationService.getPos(tokens, posresponsesList) : classificationService.getPos(tokens);
+                posResults = (StringUtils.isNotBlank(pos) && posresponsesList != null) ?
+                        classificationService.getPosByPosResponses(posTagged, posresponsesList) : posTagged;
 
                 if(groupByPos && !posResults.isEmpty()){
                     List<Map> groupedPos = classificationService.groupByPos(posResults);
@@ -1133,7 +1135,7 @@ public class Index {
                     logger.info("Group by pos passed.");
                 }
 
-                if(!groupByPos) { response.put("parts-of-speech", posResults); }
+                if(!groupByPos) { response.put("parts-of-speech", posTagged); }
             }
         } else {
             response.put("message", "Query parameter is missing or empty.");
