@@ -2453,6 +2453,43 @@ public class ClassificationServiceImpl implements ClassificationService{
         return percentages;
     }
 
+    @Override
+    public List<Map> getPosByPosResponses(List<Map> posTagged, List<POSRESPONSES> posresponses) {
+        Map<Integer, Map<String, Object>> posToTagged = new HashMap<>();
+        if(posTagged != null && !posTagged.isEmpty()){
+            for(Map pos : posTagged){
+                if(pos.containsKey("pos")) {
+                    String posValue = pos.get("pos").toString();
+                    POSRESPONSES posresponses1 = (StringUtils.isNotBlank(posValue))
+                            ? POSRESPONSES.valueOf(posValue) : null;
+                    if(posresponses1 != null) {
+                        posToTagged.put(posresponses1.ordinal(), pos);
+                    }
+                }
+            }
+        }
+
+        if(!posToTagged.isEmpty()){
+
+            if(posTagged == null){
+                posTagged = new ArrayList<>();
+            } else {
+                posTagged.clear();
+            }
+
+            for(POSRESPONSES pos : posresponses){
+                Integer posOrdinal = pos.ordinal();
+                if(posToTagged.containsKey(posOrdinal)){
+                    Map<String, Object> selectedPos = posToTagged.get(posOrdinal);
+                    if(selectedPos != null && !selectedPos.isEmpty()){
+                        posTagged.add(selectedPos);
+                    }
+                }
+            }
+        }
+        return posTagged;
+    }
+
 
     public POSRESPONSES getPOSRESPONSES(String pos){
         POSRESPONSES posresponses = null;
