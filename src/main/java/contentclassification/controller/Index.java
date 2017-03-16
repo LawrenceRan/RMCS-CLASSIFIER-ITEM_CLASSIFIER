@@ -64,6 +64,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -1089,7 +1090,12 @@ public class Index {
     @RequestMapping("/v2/parts-of-speech")
     public ModelAndView getPOSByTerms(@RequestParam(required = true) String query,
                                       @RequestParam(required = false) String pos,
-                                      @RequestParam(required = false, defaultValue = "false") Boolean groupByPos){
+                                      @RequestParam(required = false, defaultValue = "false") Boolean groupByPos,
+                                      HttpServletRequest request){
+        Long startTime = new Date().getTime();
+        String sessionId = request.getSession().getId();
+        logger.info("[" + sessionId+ "] About to get parts-of-speech for query : "
+                + (StringUtils.isNotBlank(query) ? query : "None"));
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
         if(StringUtils.isNotBlank(query)){
@@ -1148,6 +1154,12 @@ public class Index {
             response.put("message", "Query parameter is missing or empty.");
         }
         modelAndView.addAllObjects(response);
+
+        Long endTime = new Date().getTime();
+        Double diff = (endTime - startTime) * 0.001;
+
+        logger.info("["+ sessionId +"] Done getting parts-of-speech for query : "
+                + ((StringUtils.isNotBlank(query)) ? query : "None") + " Time elapse : "+ diff + "s");
         return modelAndView;
     }
 
