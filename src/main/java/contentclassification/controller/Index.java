@@ -1095,7 +1095,7 @@ public class Index {
         if(StringUtils.isNotBlank(query)){
             String[] tokens = classificationService.tokenize(query);
             if(tokens != null && tokens.length > 0){
-                List<Map> posTagged = classificationService.getPos(tokens);
+                List<Map> posTagged = null;
                 List<Map> posResults = null;
                 List<POSRESPONSES> posresponsesList = null;
 
@@ -1117,6 +1117,10 @@ public class Index {
                             response.put("supportsPartsOfSpeech", supportedPos);
                             response.put("massage", message);
                         }
+
+                        if(posresponsesList != null && !posresponsesList.isEmpty()){
+                            posTagged = classificationService.getPos(tokens);
+                        }
                     }
                 } else {
                     String message = "Supported part-of-speech initial passed.";
@@ -1126,7 +1130,8 @@ public class Index {
                 }
 
                 posResults = (StringUtils.isNotBlank(pos) && posresponsesList != null) ?
-                        classificationService.getPosByPosResponses(posTagged, posresponsesList) : posTagged;
+                        classificationService.getPosByPosResponses(posTagged, posresponsesList)
+                        : classificationService.getPos(tokens);
 
                 if(groupByPos && !posResults.isEmpty()){
                     List<Map> groupedPos = classificationService.groupByPos(posResults);
@@ -1135,7 +1140,9 @@ public class Index {
                     logger.info("Group by pos passed.");
                 }
 
-                if(!groupByPos) { response.put("parts-of-speech", posTagged); }
+                if(!groupByPos) {
+                    response.put("parts-of-speech", posResults);
+                }
             }
         } else {
             response.put("message", "Query parameter is missing or empty.");

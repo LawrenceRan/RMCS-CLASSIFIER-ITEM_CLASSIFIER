@@ -30,6 +30,14 @@ public class PartsOfSpeechService {
         return partsOfSpeech;
     }
 
+    public List<PartsOfSpeech> findBySentenceAndLanguage(String sentence, Languages languages){
+        List<PartsOfSpeech> partsOfSpeech = null;
+        if(StringUtils.isNotBlank(sentence) && languages != null){
+            partsOfSpeech = partsOfSpeechRepository.findBySentenceAndLanguages(sentence, languages);
+        }
+        return partsOfSpeech;
+    }
+
     public PartsOfSpeech add(Languages languages, String token, String pos, String initial){
         PartsOfSpeech partsOfSpeech = null;
         if(languages != null && StringUtils.isNotBlank(token)
