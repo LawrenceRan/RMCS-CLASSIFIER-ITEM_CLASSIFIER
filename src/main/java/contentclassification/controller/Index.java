@@ -64,6 +64,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -1089,14 +1090,21 @@ public class Index {
     @RequestMapping("/v2/parts-of-speech")
     public ModelAndView getPOSByTerms(@RequestParam(required = true) String query,
                                       @RequestParam(required = false) String pos,
-                                      @RequestParam(required = false, defaultValue = "false") Boolean groupByPos){
+                                      @RequestParam(required = false, defaultValue = "false") Boolean groupByPos,
+                                      HttpServletRequest request){
+        Long startTime = new Date().getTime();
+        String sessionId = request.getSession().getId();
+        logger.info("[" + sessionId+ "] About to get parts-of-speech for query : "
+                + (StringUtils.isNotBlank(query) ? query : "None"));
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
         if(StringUtils.isNotBlank(query)){
             String[] tokens = classificationService.tokenize(query);
             if(tokens != null && tokens.length > 0){
+                List<Map> posTagged = null;
                 List<Map> posResults = null;
                 List<POSRESPONSES> posresponsesList = null;
+
                 if(StringUtils.isNotBlank(pos)) {
                     List<String> requestPos = Arrays.asList(pos.split(","));
                     if (!requestPos.isEmpty()) {
@@ -1115,6 +1123,10 @@ public class Index {
                             response.put("supportsPartsOfSpeech", supportedPos);
                             response.put("massage", message);
                         }
+
+                        if(posresponsesList != null && !posresponsesList.isEmpty()){
+                            posTagged = classificationService.getPos(tokens);
+                        }
                     }
                 } else {
                     String message = "Supported part-of-speech initial passed.";
@@ -1123,8 +1135,9 @@ public class Index {
                     response.put("massage", message);
                 }
 
-                posResults = StringUtils.isNotBlank(pos) && posresponsesList != null ?
-                        classificationService.getPos(tokens, posresponsesList) : classificationService.getPos(tokens);
+                posResults = (StringUtils.isNotBlank(pos) && posresponsesList != null) ?
+                        classificationService.getPosByPosResponses(posTagged, posresponsesList)
+                        : classificationService.getPos(tokens);
 
                 if(groupByPos && !posResults.isEmpty()){
                     List<Map> groupedPos = classificationService.groupByPos(posResults);
@@ -1133,12 +1146,20 @@ public class Index {
                     logger.info("Group by pos passed.");
                 }
 
-                if(!groupByPos) { response.put("parts-of-speech", posResults); }
+                if(!groupByPos) {
+                    response.put("parts-of-speech", posResults);
+                }
             }
         } else {
             response.put("message", "Query parameter is missing or empty.");
         }
         modelAndView.addAllObjects(response);
+
+        Long endTime = new Date().getTime();
+        Double diff = (endTime - startTime) * 0.001;
+
+        logger.info("["+ sessionId +"] Done getting parts-of-speech for query : "
+                + ((StringUtils.isNotBlank(query)) ? query : "None") + " Time elapse : "+ diff + "s");
         return modelAndView;
     }
 
@@ -2316,10 +2337,15 @@ public class Index {
                     m.put("weightedScore", weightedScore);
                     total += (Double.isNaN(weightedScore)) ? 0 : weightedScore;
 
-                    Pattern pattern = Pattern.compile(t, Pattern.CASE_INSENSITIVE);
-                    Matcher matcher = pattern.matcher(title);
-                    while (matcher.find()){
-                        presenceCounter += 1;
+                    try {
+                        Pattern pattern = Pattern.compile(t, Pattern.CASE_INSENSITIVE);
+                        Matcher matcher = pattern.matcher(title);
+                        while (matcher.find()) {
+                            presenceCounter += 1;
+                        }
+                    } catch(Exception e){
+                        logger.warn("Error in presence count. term : "
+                                + (StringUtils.isNotBlank(title) ? title : "None") + " Message : "+ e.getMessage());
                     }
 
                     termToTokenMap.add(m);

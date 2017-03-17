@@ -72,4 +72,5 @@ public interface ClassificationService {
     public List<String> getOrganizations(String text);
     public List<String> getMoney(String text);
     public List<String> getPercentage(String text);
+    public List<Map> getPosByPosResponses(List<Map> posTagged, List<POSRESPONSES> posresponses);
 }

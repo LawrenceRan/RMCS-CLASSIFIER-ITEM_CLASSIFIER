@@ -56,6 +56,8 @@ public class Classification {
         this.title = title;
     }
 
+    public Classification(){}
+
     public String getUri() {
         return uri;
     }
@@ -493,17 +495,18 @@ public class Classification {
                         POSTaggerME posTaggerME = new POSTaggerME(posModel);
                         String[] tags = posTaggerME.tag(tokens);
                         int x = 0;
-                        for (String t : tags) {
+                        for (String tag : tags) {
                             try {
                                 Map<String, Object> map = new HashMap<>();
                                 map.put("token", tokens[x]);
-                                map.put("pos", t);
-                                POSRESPONSES posresponses = POSRESPONSES.valueOf(t);
-                                map.put("initial", posresponses != null ? posresponses.toString() : "");
+                                map.put("pos", tag);
+                                POSRESPONSES posresponses = POSRESPONSES.valueOf(tag);
+                                map.put("initial", posresponses.toString());
                                 pos.add(map);
                                 x++;
                             } catch (Exception e){
-                                logger.warn("Error in getting enum for parts-of-speech.  Term : "+ t +" Message: "+ e.getMessage());
+                                logger.warn("Error in getting enum for parts-of-speech.  Term : "+ tag +" Message: "
+                                        + e.getMessage());
                             }
                         }
                     } else {
