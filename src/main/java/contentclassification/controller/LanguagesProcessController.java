@@ -107,7 +107,8 @@ public class LanguagesProcessController {
 
             Integer totalCount = counter;
             TermsPositionByPosResponse termsPositionByPosResponse
-                    = getTermsPositionByPosResponse(tokenToPossiblePartsOfSpeech, totalCount, tokenToPosition, orderedTokens);
+                    = getTermsPositionByPosResponse(tokenToPossiblePartsOfSpeech, totalCount, tokenToPosition,
+                    orderedTokens);
             response.put("query", query);
             response.put("suggestions", termsPositionByPosResponse.getSuggestions());
 
