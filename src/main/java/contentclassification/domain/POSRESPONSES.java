@@ -43,4 +43,17 @@ public enum POSRESPONSES {
         }
         return posresponses;
     }
+
+    public static POSRESPONSES fromOrdinal(Integer ordinal){
+        POSRESPONSES posresponses = null;
+        List<POSRESPONSES> pos = Arrays.asList(POSRESPONSES.values());
+        if(ordinal != null){
+            for(POSRESPONSES p : pos){
+                if(ordinal.equals(p.ordinal())){
+                    posresponses = p;
+                }
+            }
+        }
+        return posresponses;
+    }
 }

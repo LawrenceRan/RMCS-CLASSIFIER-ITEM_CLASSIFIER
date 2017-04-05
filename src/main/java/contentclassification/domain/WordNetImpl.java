@@ -57,6 +57,7 @@ public class WordNetImpl {
                 SynsetType synsetType = synsets[x].getType();
 
                 map.put("type", synsetType.toString());
+                map.put("typeInitial", getSynsetTypeInitial(synsetType));
                 String[] wordForms = synsets[x].getWordForms();
                 map.put("wordForms", wordForms);
                 output.add(map);
@@ -73,5 +74,67 @@ public class WordNetImpl {
             }
         }
         return stem;
+    }
+
+    public Integer getSynsetTypeInitial(SynsetType synsetType){
+        Integer initial = null;
+        if(synsetType != null){
+            switch (synsetType.getCode()){
+                case 1:
+                    //CODE_NOUN = 1;
+                    initial = POSRESPONSES.fromString("Noun singular or mass").ordinal();
+                    break;
+                case 2:
+                    //CODE_VERB = 2;
+                    initial = POSRESPONSES.fromString("Verb, base form").ordinal();
+                    break;
+                case 3:
+                    //CODE_ADJECTIVE = 3;
+                    initial = POSRESPONSES.fromString("Adjective").ordinal();
+                    break;
+                case 4:
+                    //CODE_ADVERB = 4;
+                    initial = POSRESPONSES.fromString("Wh­adverb").ordinal();
+                    break;
+                case 5:
+                    //CODE_ADJECTIVE_SATELLITE = 5;
+                    initial = POSRESPONSES.fromString("Adjective").ordinal();
+                    break;
+                default:
+                    break;
+            }
+        }
+        return initial;
+    }
+
+    public static String getSynsetTypeInitialByCode(Integer code){
+        String initial = null;
+        if(code != null){
+            switch (code){
+                case 1:
+                    //CODE_NOUN = 1;
+                    initial = "Noun singular or mass";
+                    break;
+                case 2:
+                    //CODE_VERB = 2;
+                    initial = "Verb, base form";
+                    break;
+                case 3:
+                    //CODE_ADJECTIVE = 3;
+                    initial = "Adjective";
+                    break;
+                case 4:
+                    //CODE_ADVERB = 4;
+                    initial = "Wh­adverb";
+                    break;
+                case 5:
+                    //CODE_ADJECTIVE_SATELLITE = 5;
+                    initial = "Adjective";
+                    break;
+                default:
+                    break;
+            }
+        }
+        return initial;
     }
 }

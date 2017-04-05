@@ -89,4 +89,8 @@ public class WordNetService {
         }
         return pos;
     }
+
+    public String getSynsetTypeInitialByCode(Integer integer){
+        return WordNetImpl.getSynsetTypeInitialByCode(integer);
+    }
 }
