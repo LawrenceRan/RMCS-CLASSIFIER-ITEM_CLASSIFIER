@@ -1,6 +1,5 @@
 package contentclassification.controller;
 
-import com.github.jsonldjava.utils.Obj;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import contentclassification.domain.Classification;
@@ -9,11 +8,8 @@ import contentclassification.domain.TermsPositionByPos;
 import contentclassification.domain.TermsPositionByPosResponse;
 import contentclassification.service.ClassificationServiceImpl;
 import contentclassification.service.WordNetService;
-import org.apache.commons.collections.map.HashedMap;
-import org.apache.commons.collections.map.LinkedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.kie.api.runtime.StatelessKieSession;
-import org.neo4j.cypher.internal.compiler.v2_2.ast.In;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
