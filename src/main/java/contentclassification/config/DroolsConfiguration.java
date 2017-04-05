@@ -1,5 +1,6 @@
 package contentclassification.config;
 
+import org.apache.commons.lang3.StringUtils;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
@@ -61,6 +62,11 @@ public class DroolsConfiguration {
                 KieRepository kieRepository = kieServices.getRepository();
                 KieContainer kieContainer = kieServices.newKieContainer(kieRepository.getDefaultReleaseId());
                 kieSession = kieContainer.newStatelessKieSession();
+                logger.info("New stateless drool session bean created"
+                        + ((kieSession != null) ? kieSession.toString() : "None"));
+            } else {
+                logger.info("Unable to open stream for DRL files. Path : "
+                        + ((StringUtils.isNotBlank(path)) ? path : "None"));
             }
 
             if (inputStream != null) {
