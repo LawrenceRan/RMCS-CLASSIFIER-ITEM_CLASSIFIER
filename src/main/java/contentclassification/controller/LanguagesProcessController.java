@@ -201,7 +201,7 @@ public class LanguagesProcessController {
 
             try {
 
-                List<String> posTags = getPosTagsForSentence(termsToPos);
+                List<Integer> posTags = getPosTagIdsForSentence(termsToPos);
                 TermsPositionByPos termsPositionByPos = new TermsPositionByPos(termsToPos, totalLength, positionToTerm,
                         posTags);
                 termsPositionByPos.setOrderedTokens(orderedTokens);
@@ -251,6 +251,39 @@ public class LanguagesProcessController {
 
         if(posTags != null && !posTags.isEmpty()){
             Set<String> cleaner = new HashSet<>();
+            cleaner.addAll(posTags);
+            posTags.clear();
+            posTags.addAll(cleaner);
+        }
+        return posTags;
+    }
+
+    private List<Integer> getPosTagIdsForSentence(Map<String, Object> termsToPos){
+        List<Integer> posTags = null;
+        if(termsToPos != null && !termsToPos.isEmpty()){
+            posTags = new ArrayList<>();
+            for(Map.Entry entry : termsToPos.entrySet()){
+                Object object = entry.getValue();
+                if(object != null && (object instanceof List)){
+                    @SuppressWarnings("unchecked")
+                    List<Map> posTagMaps = (List<Map>) object;
+                    if(!posTagMaps.isEmpty()){
+                        for(Map map : posTagMaps){
+                            if(map.containsKey("pos")){
+                                Integer posId = (map.get("pos") != null)
+                                        ? Integer.parseInt(map.get("pos").toString()) : null;
+                                if(posId != null){
+                                    posTags.add(posId);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if(posTags != null && !posTags.isEmpty()){
+            Set<Integer> cleaner = new HashSet<>();
             cleaner.addAll(posTags);
             posTags.clear();
             posTags.addAll(cleaner);

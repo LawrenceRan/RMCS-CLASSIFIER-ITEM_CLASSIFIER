@@ -8,7 +8,7 @@ global contentclassification.domain.TermsPositionByPosResponse termsToPosSuggest
 dialect "java"
 rule "Get the phrase after the first occurance of an adverb."
 when
-    $check : TermsPositionByPos(totalLength > 0, posTags contains "Wh­adverb");
+    $check : TermsPositionByPos(totalLength > 0, posTags contains 35);
 then
     com.google.common.collect.ListMultimap<String, Integer> positionToTerm = $check.getPositionToTerm();
     $check.setFoundPosTag(35);
@@ -25,7 +25,7 @@ end
 
 rule "Get the phrase after the first occurance of an prepositions."
 when
-    $check : TermsPositionByPos(totalLength > 0, posTags contains "Preposition or subordinating conjunction");
+    $check : TermsPositionByPos(totalLength > 0, posTags contains 5);
 then
     com.google.common.collect.ListMultimap<String, Integer> positionToTerm = $check.getPositionToTerm();
     $check.setFoundPosTag(5);
