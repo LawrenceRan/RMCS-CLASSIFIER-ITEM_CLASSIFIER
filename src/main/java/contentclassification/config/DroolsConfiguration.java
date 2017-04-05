@@ -27,7 +27,7 @@ import java.io.InputStream;
 public class DroolsConfiguration {
     private static Logger logger = LoggerFactory.getLogger(DroolsConfiguration.class);
 
-    private static String DRL_DIR = "drl/";
+    private static String DRL_DIR = "drl";
 
     @Bean
     public StatelessKieSession kieSession(){
@@ -38,7 +38,7 @@ public class DroolsConfiguration {
 
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
-            String path = DRL_DIR + "classification_rules.drl";
+            String path = DRL_DIR + "/classification_rules.drl";
 
             InputStream inputStream = classLoader.getResourceAsStream(path);
             if(inputStream != null) {
