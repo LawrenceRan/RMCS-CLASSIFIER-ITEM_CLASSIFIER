@@ -38,7 +38,7 @@ public class DroolsConfiguration {
 
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
-            String path = DRL_DIR + "/classification_rules.drl";
+            String path = DRL_DIR + "classification_rules.drl";
 
             InputStream inputStream = classLoader.getResourceAsStream(path);
             if(inputStream != null) {
