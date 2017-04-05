@@ -110,7 +110,10 @@ public class LanguagesProcessController {
                     = getTermsPositionByPosResponse(tokenToPossiblePartsOfSpeech, totalCount, tokenToPosition,
                     orderedTokens);
             response.put("query", query);
-            response.put("suggestions", termsPositionByPosResponse.getSuggestions());
+
+            if(termsPositionByPosResponse != null) {
+                response.put("suggestions", termsPositionByPosResponse.getSuggestions());
+            }
 
             if(showPos) {
                 response.put("possiblePos", tokenToPossiblePartsOfSpeech);
