@@ -203,20 +203,26 @@ public class LanguagesProcessController {
 
             List<Object> facts = new ArrayList<>();
 
-            List<String> posTags = getPosTagsForSentence(termsToPos);
-            TermsPositionByPos termsPositionByPos = new TermsPositionByPos(termsToPos, totalLength, positionToTerm,
-                    posTags);
-            termsPositionByPos.setOrderedTokens(orderedTokens);
+            try {
 
-            facts.add(termsPositionByPos);
+                List<String> posTags = getPosTagsForSentence(termsToPos);
+                TermsPositionByPos termsPositionByPos = new TermsPositionByPos(termsToPos, totalLength, positionToTerm,
+                        posTags);
+                termsPositionByPos.setOrderedTokens(orderedTokens);
 
-            if(!facts.isEmpty()) {
-                termsPositionByPosResponse = new TermsPositionByPosResponse();
-                kieSession.setGlobal("termsToPosSuggestion", termsPositionByPosResponse);
-                kieSession.execute(facts);
+                facts.add(termsPositionByPos);
 
-                List<String> suggestions = termsPositionByPosResponse.getSuggestions();
-                logger.info("Decision made on request pagination. Results : " + suggestions);
+                if (!facts.isEmpty()) {
+                    termsPositionByPosResponse = new TermsPositionByPosResponse();
+                    kieSession.setGlobal("termsToPosSuggestion", termsPositionByPosResponse);
+                    kieSession.execute(facts);
+
+                    List<String> suggestions = termsPositionByPosResponse.getSuggestions();
+                    logger.info("Decision made on request pagination. Results : " + suggestions);
+                }
+            } catch (Exception e){
+                logger.warn("Error in getting suggestion on pos tagging. "+ termsToPos.toString()
+                        + "Message : "+ e.getMessage());
             }
         }
         return termsPositionByPosResponse;
