@@ -1,8 +1,6 @@
 package contentclassification.domain;
 
 import com.google.common.collect.ListMultimap;
-import org.apache.commons.lang3.StringUtils;
-import org.neo4j.cypher.internal.compiler.v2_2.ast.In;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,8 +8,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by rsl_prod_005 on 4/3/17.

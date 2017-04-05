@@ -16,11 +16,12 @@ public class TermsPositionByPosResponse {
     }
 
     public List<String> getSuggestions() {
+        List<String> stringList = this.suggestions;
         Set<String> cleaner = new HashSet<>();
-        cleaner.addAll(suggestions);
-        suggestions.clear();
-        suggestions.addAll(cleaner);
-        return suggestions;
+        cleaner.addAll(stringList);
+        stringList.clear();
+        stringList.addAll(cleaner);
+        return stringList;
     }
 
     public void setSuggestions(List<String> suggestions) {
