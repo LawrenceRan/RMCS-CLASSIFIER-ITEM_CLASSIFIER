@@ -1,6 +1,8 @@
 package contentclassification.domain;
 
 import com.google.common.collect.ListMultimap;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,12 +20,12 @@ public class TermsPositionByPos {
     private Map<String, Object> termsToPos;
     private Integer totalLength;
     private ListMultimap<String, Integer> positionToTerm;
-    private List<String> posTags;
+    private List<Integer> posTags;
     private Integer foundPosTag;
     private LinkedList<String> orderedTokens;
 
     public TermsPositionByPos(Map<String, Object> termsToPos, Integer totalLength, ListMultimap<String, Integer> positionToTerm,
-                              List<String> posTags) {
+                              List<Integer> posTags) {
         this.termsToPos = termsToPos;
         this.totalLength = totalLength;
         this.positionToTerm = positionToTerm;
@@ -54,11 +56,11 @@ public class TermsPositionByPos {
         this.positionToTerm = positionToTerm;
     }
 
-    public List<String> getPosTags() {
+    public List<Integer> getPosTags() {
         return posTags;
     }
 
-    public void setPosTags(List<String> posTags) {
+    public void setPosTags(List<Integer> posTags) {
         this.posTags = posTags;
     }
 
@@ -108,6 +110,11 @@ public class TermsPositionByPos {
                 }
             }
         }
+
+        logger.info("Found parts of speech that matched rules. POS : "
+                + ((this.foundPosTag != null) ? this.foundPosTag : 0) + " Terms : "
+                + ((terms != null && !terms.isEmpty()) ? terms.toString() : "None"));
+
         return terms;
     }
 
@@ -128,5 +135,36 @@ public class TermsPositionByPos {
             }
         }
         return phrase;
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (!(o instanceof TermsPositionByPos)) return false;
+
+        TermsPositionByPos that = (TermsPositionByPos) o;
+
+        return new EqualsBuilder()
+                .append(termsToPos, that.termsToPos)
+                .append(totalLength, that.totalLength)
+                .append(positionToTerm, that.positionToTerm)
+                .append(posTags, that.posTags)
+                .append(foundPosTag, that.foundPosTag)
+                .append(orderedTokens, that.orderedTokens)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(termsToPos)
+                .append(totalLength)
+                .append(positionToTerm)
+                .append(posTags)
+                .append(foundPosTag)
+                .append(orderedTokens)
+                .toHashCode();
     }
 }
