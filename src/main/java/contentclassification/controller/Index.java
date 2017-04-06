@@ -1072,6 +1072,11 @@ public class Index {
 
     @RequestMapping("/v1/parts-of-speech")
         public ModelAndView getPOSByTerms(@RequestParam(required = true) String query){
+        logger.info("About to process a request for parts-of-speech tagging. Query : "
+                + (StringUtils.isNotBlank(query) ? query : "None"));
+
+        long startTime = new Date().getTime();
+
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
         if(StringUtils.isNotBlank(query)){
@@ -1083,7 +1088,13 @@ public class Index {
                 }
             }
         }
+        long endTime = new Date().getTime();
+
+        double diff = (endTime - startTime) * 0.001;
+
         modelAndView.addAllObjects(response);
+        logger.info("Done to process a request for parts-of-speech tagging. Query : "
+                + (StringUtils.isNotBlank(query) ? query : "None") +" Time elapse : "+ diff);
         return modelAndView;
     }
 
