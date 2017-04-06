@@ -1,0 +1,41 @@
+import contentclassification.domain.TermsPositionByPos
+import java.util.Map
+import java.util.List
+import org.apache.commons.lang3.StringUtils
+
+global contentclassification.domain.TermsPositionByPosResponse termsToPosSuggestion;
+
+dialect "java"
+rule "Get the phrase after the first occurance of an adverb."
+when
+    $check : TermsPositionByPos(totalLength > 0, posTags contains 35);
+then
+    com.google.common.collect.ListMultimap<String, Integer> positionToTerm = $check.getPositionToTerm();
+    $check.setFoundPosTag(35);
+    List<String> byPos = $check.getTermByPos($check.getTermsToPos());
+    if(byPos != null && !byPos.isEmpty()){
+        for(String posTerm : byPos){
+            String sentence = $check.getPhrase(posTerm, positionToTerm);
+            if(StringUtils.isNotBlank(sentence)){
+                termsToPosSuggestion.addSuggestions(sentence);
+            }
+        }
+    }
+end
+
+rule "Get the phrase after the first occurance of an prepositions."
+when
+    $check : TermsPositionByPos(totalLength > 0, posTags contains 5);
+then
+    com.google.common.collect.ListMultimap<String, Integer> positionToTerm = $check.getPositionToTerm();
+    $check.setFoundPosTag(5);
+    List<String> byPos = $check.getTermByPos($check.getTermsToPos());
+    if(byPos != null && !byPos.isEmpty()){
+        for(String posTerm : byPos){
+            String sentence = $check.getPhrase(posTerm, positionToTerm);
+            if(StringUtils.isNotBlank(sentence)){
+                termsToPosSuggestion.addSuggestions(sentence);
+            }
+        }
+    }
+end

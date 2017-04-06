@@ -13,7 +13,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
@@ -26,6 +25,7 @@ import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
+import org.elasticsearch.index.query.TermQueryParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +33,6 @@ import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -230,9 +229,7 @@ public class DictionaryIndexerService {
                     IndexReader reader = IndexReader.open(directory);
                     IndexSearcher searcher = new IndexSearcher(reader);
 
-                    QueryParser queryParser = new QueryParser(Version.LUCENE_36, "content",
-                            new StandardAnalyzer(Version.LUCENE_36));
-                    queryParser.setAllowLeadingWildcard(true);
+                    TermQueryParser queryParser = new TermQueryParser();
 
                     Term term = new Term("content", query);
                     Query searchQuery = new WildcardQuery(term);
@@ -246,7 +243,7 @@ public class DictionaryIndexerService {
                         for(ScoreDoc scoreDoc : scoreDocs){
                             int docId = scoreDoc.doc;
                             Document document = searcher.doc(docId);
-                            String value = document.getFieldable("content").stringValue();
+                            String value = document.getField("content").stringValue();
                             WordAndDefinition wordAndDefinition = new WordAndDefinition(value);
                             wordAndDefinitions.add(wordAndDefinition);
                             x++;
@@ -254,7 +251,7 @@ public class DictionaryIndexerService {
                     } else {
                         logger.info("No score docs found. Count : "+ ((scoreDocs != null) ? scoreDocs.length : 0));
                     }
-                    reader.clone();
+                    reader.close();
                 } catch (Exception e){
                     logger.debug("Error in opening indexer directory for searches. Message : "+ e.getMessage());
                 }
