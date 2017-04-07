@@ -1074,8 +1074,12 @@ public class Index {
         public ModelAndView getPOSByTerms(@RequestParam(required = true) String query,
                                           @RequestParam(value = "delimitedByWhitespace", required = false,
                                                   defaultValue = "true")
-                                                  Boolean delimitedByWhitespace){
-        logger.info("About to process a request for parts-of-speech tagging. Query : "
+                                                  Boolean delimitedByWhitespace,
+                                          HttpServletRequest request){
+
+        String sessionId = request.getSession().getId();
+
+        logger.info("["+ sessionId +"] About to process a request for parts-of-speech tagging. Query : "
                 + (StringUtils.isNotBlank(query) ? query : "None"));
 
         long startTime = new Date().getTime();
@@ -1096,11 +1100,13 @@ public class Index {
         }
         long endTime = new Date().getTime();
 
+        modelAndView.addAllObjects(response);
+
         double diff = (endTime - startTime) * 0.001;
 
-        modelAndView.addAllObjects(response);
-        logger.info("Done to process a request for parts-of-speech tagging. Query : "
+        logger.info("["+ sessionId +"] Done to process a request for parts-of-speech tagging. Query : "
                 + (StringUtils.isNotBlank(query) ? query : "None") +" Time elapse : "+ diff);
+
         return modelAndView;
     }
 
@@ -1108,15 +1114,22 @@ public class Index {
     public ModelAndView getPOSByTerms(@RequestParam(required = true) String query,
                                       @RequestParam(required = false) String pos,
                                       @RequestParam(required = false, defaultValue = "false") Boolean groupByPos,
+                                      @RequestParam(required = false, defaultValue = "true",
+                                              value = "delimitedByWhitespace") Boolean delimitedByWhitespace,
                                       HttpServletRequest request){
         Long startTime = new Date().getTime();
         String sessionId = request.getSession().getId();
-        logger.info("[" + sessionId+ "] About to get parts-of-speech for query : "
+
+        logger.info("[" + sessionId+ "] Parts-of-speech v2 : About to get parts-of-speech for query : "
                 + (StringUtils.isNotBlank(query) ? query : "None"));
+
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
         if(StringUtils.isNotBlank(query)){
-            String[] tokens = classificationService.tokenize(query);
+
+            String[] tokens = (delimitedByWhitespace) ? classificationService.tokenize(query, " ")
+                    : classificationService.tokenize(query);
+
             if(tokens != null && tokens.length > 0){
                 List<Map> posTagged = null;
                 List<Map> posResults = null;
@@ -1136,8 +1149,9 @@ public class Index {
                         if(posresponsesList.isEmpty()){
                             posresponsesList = null;
                             String message = "Unsupported part-of-speech initial passed. Request : "+ pos;
-                            List<POSRESPONSES> supportedPos = Arrays.asList(POSRESPONSES.values());
-                            response.put("supportsPartsOfSpeech", supportedPos);
+
+                            List<Map> supportedPosMap = getSupportedPosAsMap();
+                            response.put("supportsPartsOfSpeech", supportedPosMap);
                             response.put("massage", message);
                         }
 
@@ -1147,8 +1161,8 @@ public class Index {
                     }
                 } else {
                     String message = "Supported part-of-speech initial passed.";
-                    List<POSRESPONSES> supportedPos = Arrays.asList(POSRESPONSES.values());
-                    response.put("supportsPartsOfSpeech", supportedPos);
+                    List<Map> supportedPosMap = getSupportedPosAsMap();
+                    response.put("supportsPartsOfSpeech", supportedPosMap);
                     response.put("massage", message);
                 }
 
@@ -1160,7 +1174,8 @@ public class Index {
                     List<Map> groupedPos = classificationService.groupByPos(posResults);
                     response.clear();
                     response.put("groupedByPos", groupedPos);
-                    logger.info("Group by pos passed.");
+                    logger.info("[" + sessionId+ "] Parts-of-speech v2 : Group by pos passed. POS requested : "
+                            + groupByPos.toString());
                 }
 
                 if(!groupByPos) {
@@ -1175,7 +1190,7 @@ public class Index {
         Long endTime = new Date().getTime();
         Double diff = (endTime - startTime) * 0.001;
 
-        logger.info("["+ sessionId +"] Done getting parts-of-speech for query : "
+        logger.info("["+ sessionId +"] Parts-of-speech v2 : Done getting parts-of-speech for query : "
                 + ((StringUtils.isNotBlank(query)) ? query : "None") + " Time elapse : "+ diff + "s");
         return modelAndView;
     }
@@ -2716,5 +2731,20 @@ public class Index {
             }
         }
         return setA;
+    }
+
+    public List<Map> getSupportedPosAsMap(){
+        List<Map> supportedPosMap = new ArrayList<>();
+        List<POSRESPONSES> supportedPos = Arrays.asList(POSRESPONSES.values());
+        if(!supportedPos.isEmpty()) {
+            for (POSRESPONSES posresponses : supportedPos) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("initial", posresponses.toString());
+                map.put("pos", posresponses);
+                map.put("id", posresponses.ordinal());
+                supportedPosMap.add(map);
+            }
+        }
+        return supportedPosMap;
     }
 }
