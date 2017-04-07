@@ -1071,7 +1071,10 @@ public class Index {
     }
 
     @RequestMapping("/v1/parts-of-speech")
-        public ModelAndView getPOSByTerms(@RequestParam(required = true) String query){
+        public ModelAndView getPOSByTerms(@RequestParam(required = true) String query,
+                                          @RequestParam(value = "delimitedByWhitespace", required = false,
+                                                  defaultValue = "true")
+                                                  Boolean delimitedByWhitespace){
         logger.info("About to process a request for parts-of-speech tagging. Query : "
                 + (StringUtils.isNotBlank(query) ? query : "None"));
 
@@ -1080,7 +1083,10 @@ public class Index {
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
         if(StringUtils.isNotBlank(query)){
-            String[] tokens = classificationService.tokenize(query);
+
+            String[] tokens = (delimitedByWhitespace) ? classificationService.tokenize(query, " ")
+                    : classificationService.tokenize(query);
+
             if(tokens != null && tokens.length > 0) {
                 List<Map> pos = classificationService.getPos(tokens);
                 if(pos != null && !pos.isEmpty()){
