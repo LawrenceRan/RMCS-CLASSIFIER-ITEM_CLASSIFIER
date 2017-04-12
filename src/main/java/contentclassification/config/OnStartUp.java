@@ -2,6 +2,7 @@ package contentclassification.config;
 
 import contentclassification.service.DictionaryIndexerService;
 import contentclassification.service.NotificationService;
+import contentclassification.service.PreLoadTrainingDataFiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,9 @@ public class OnStartUp implements ApplicationListener<ContextRefreshedEvent> {
     @Autowired
     private DictionaryIndexerService dictionaryIndexerService;
 
+    @Autowired
+    private PreLoadTrainingDataFiles preLoadTrainingDataFiles;
+
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         System.setProperty(wordNetDictConfig.getValue(), wordNetDictConfig.getDict());
@@ -41,5 +45,9 @@ public class OnStartUp implements ApplicationListener<ContextRefreshedEvent> {
         logger.info("About to start indexing language dictionary into indexer.");
         dictionaryIndexerService.loadDefaultDictionaryIntoIndexer();
         logger.info("Done loading default language dictionary into indexer.");
+
+        logger.info("About to preload training data into temporary directory");
+        preLoadTrainingDataFiles.createTemp();
+        logger.info("Done setting training data into temporary directory");
     }
 }
