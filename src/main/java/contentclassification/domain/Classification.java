@@ -48,6 +48,10 @@ import java.util.regex.Pattern;
  */
 public class Classification {
     private static final Logger logger = LoggerFactory.getLogger(Classification.class);
+
+    private static String POS_FILE_PATH_PROPERTY = "enPosMaxentPath";
+    private static String POS_FILE_PATH = System.getProperty(POS_FILE_PATH_PROPERTY);
+
     private String title;
     private String uri;
     private String description;
@@ -482,13 +486,13 @@ public class Classification {
     public List<Map> getPos(String[] tokens){
         List<Map> pos = new ArrayList<>();
         if(tokens != null && tokens.length > 0){
-            ClassLoader classLoader = getClass().getClassLoader();
-            InputStream inputStream = classLoader.getResourceAsStream("en-pos-maxent.bin");
-            if(inputStream != null ) {
+//            ClassLoader classLoader = getClass().getClassLoader();
+//            InputStream inputStream = classLoader.getResourceAsStream("en-pos-maxent.bin");
+//            if(inputStream != null ) {
                 try {
-                    Path temp = Files.createTempFile("en-pos-maxent", ".bin");
-                    Files.copy(inputStream, temp, StandardCopyOption.REPLACE_EXISTING);
-                    File file = temp.toFile();
+//                    Path temp = Files.createTempFile("en-pos-maxent", ".bin");
+//                    Files.copy(inputStream, temp, StandardCopyOption.REPLACE_EXISTING);
+                    File file = new File(POS_FILE_PATH); //temp.toFile();
 
                     if(file.exists() && file.canRead()) {
                         POSModel posModel = new POSModelLoader().load(file);
@@ -514,14 +518,14 @@ public class Classification {
                     }
                 } catch (Exception e){
                     logger.debug("IO Exception: "+ e.getMessage());
-                } finally {
-                    try {
-                        inputStream.close();
-                    } catch (Exception e){
-                        logger.warn("Error in closing file. Message : "+ e.getMessage());
-                    }
-                }
-            }
+                } //finally {
+//                    try {
+//                        inputStream.close();
+//                    } catch (Exception e){
+//                        logger.warn("Error in closing file. Message : "+ e.getMessage());
+//                    }
+//                }
+//            }
         }
         return pos;
     }
