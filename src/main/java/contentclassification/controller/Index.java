@@ -2307,6 +2307,11 @@ public class Index {
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
 
+        response.put("orderedByTitles", new ArrayList<>());
+
+        boolean isSearchTermProvidedAndValid = StringUtils.isNotBlank(term);
+        boolean isRequestBodyValid = false;
+
         List<String> titles = new ArrayList<>();
 
         if(StringUtils.isNotBlank(requestBody)) {
@@ -2316,13 +2321,15 @@ public class Index {
                 List<String> requestTitles = objectMapper.readValue(requestBody, List.class);
                 if(requestTitles != null && !requestTitles.isEmpty()){
                     titles.addAll(requestTitles);
+                    isRequestBodyValid = true;
                 }
             } catch (Exception e) {
                 logger.warn("Error in parsing JSON body. Message : " + e.getMessage());
             }
         }
 
-        String[] termTokens = classificationService.tokenize(term.toLowerCase().trim(), " ");
+        String[] termTokens = (isSearchTermProvidedAndValid) ? classificationService.tokenize(term.toLowerCase().trim(), " ") : new String[]{};
+
         List<String> termTokensAsList = Arrays.asList(termTokens);
 
         Set<String> setB = new HashSet<>();
@@ -2350,7 +2357,7 @@ public class Index {
 
         List<String> orderedTitles = new ArrayList<>();
 
-        if(!titles.isEmpty()){
+        if(!titles.isEmpty() && isRequestBodyValid && isSearchTermProvidedAndValid){
             for(String title : titles){
                 Map<String, Object> map = new HashMap<>();
                 String[] titleToken = classificationService.tokenize(title.toLowerCase().trim(), " ");
@@ -2601,7 +2608,9 @@ public class Index {
                 response.put("orderedByTitles", orderedTitles);
             }
         } catch (Exception e){
-            logger.warn("Error in computing multi-nominal naive bayes. Message : "+ e.getMessage());
+            logger.warn("Error in computing multi-nominal naive bayes. Search term : "
+                    + ((StringUtils.isNotBlank(term)) ? term : "None") +" Message : "
+                    + e.getMessage());
         }
 
         modelAndView.addAllObjects(response);
