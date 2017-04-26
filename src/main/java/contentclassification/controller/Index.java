@@ -2270,10 +2270,22 @@ public class Index {
     }
 
 
+    /**
+     * sort
+     * @param request
+     * @param term
+     * @param requestBody
+     * @return
+     */
     @RequestMapping(value = "/v1/sort/", method = RequestMethod.POST, produces = "application/json;charset=utf-8")
-    public ModelAndView sortByReleaveToSearchTerm(HttpServletRequest request,
+    public ModelAndView sortByRelevanceToSearchTerm(HttpServletRequest request,
                                                   @RequestParam(name = "searchTerm", required = true) String term,
                                                   @RequestBody(required = true) String requestBody){
+        long startDate = new Date().getTime();
+        logger.info("About to process relevance to search terms. Search Term : "
+                + (StringUtils.isNotBlank(term) ? term : "None") + " Body : "
+                + (StringUtils.isNotBlank(requestBody) ? requestBody : "None"));
+
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
 
@@ -2301,7 +2313,7 @@ public class Index {
         logger.info("About to stem all tokens in search term provided by user. Incoming search terms : "
                 + Arrays.toString(setB.toArray()));
 
-        Set<String> stemmedSet = getStemSet(setB);
+        List<String> stemmedSet = classificationService.getStems(setB.toArray(new String[setB.size()]));
         setB.addAll(stemmedSet);
 
         logger.info("Done stemming all tokens in search term provided. Unique terms : "
@@ -2331,7 +2343,7 @@ public class Index {
                 logger.info("About to stem all tokens in title term provided by user. Incoming search terms : "
                         + Arrays.toString(setA.toArray()));
 
-                stemmedSet = getStemSet(setA);
+                stemmedSet = classificationService.getStems(setA.toArray(new String[setB.size()]));
                 setA.addAll(stemmedSet);
 
                 logger.info("Done stemming all tokens in title term provided. Unique terms : "
@@ -2575,6 +2587,13 @@ public class Index {
         }
 
         modelAndView.addAllObjects(response);
+        long endTime = new Date().getTime();
+        double diff = (endTime - startDate) * 0.001;
+
+        logger.info("Done process relevance to search terms. Search Term : "
+                + (StringUtils.isNotBlank(term) ? term : "None") + " Time elapse : "
+                + diff + "s");
+
         return modelAndView;
     }
 
