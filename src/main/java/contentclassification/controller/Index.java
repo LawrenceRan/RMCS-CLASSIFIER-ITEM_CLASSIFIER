@@ -2443,7 +2443,7 @@ public class Index {
         trainingVector.addElement(classAttribute);
 
 
-        Instances trainingInstances = new Instances("trainingRel", trainingVector, 10);
+        Instances trainingInstances = new Instances("trainingData", trainingVector, 10);
         trainingInstances.setClassIndex(trainingVector.size() - 1);
 
         Instance trainingInstance = new Instance(trainingVector.size());
@@ -2465,12 +2465,19 @@ public class Index {
 //        trainingInstance3.setValue((Attribute) trainingVector.elementAt(2), "no");
         trainingInstance3.setValue((Attribute) trainingVector.elementAt(1), "moderate");
 
+        Instance trainingInstance4 = new Instance(trainingVector.size());
+        trainingInstance4.setValue((Attribute) trainingVector.elementAt(0), 1.0);
+//        trainingInstance3.setValue((Attribute) trainingVector.elementAt(1), 1);
+//        trainingInstance3.setValue((Attribute) trainingVector.elementAt(2), "no");
+        trainingInstance4.setValue((Attribute) trainingVector.elementAt(1), "high");
+
         trainingInstances.add(trainingInstance);
         trainingInstances.add(trainingInstance2);
         trainingInstances.add(trainingInstance3);
+        trainingInstances.add(trainingInstance4);
 
 
-        Instances isTestingSet = new Instances("trainingData", trainingVector, 10);
+        Instances isTestingSet = new Instances("factualData", trainingVector, 10);
         isTestingSet.setClassIndex(trainingVector.size() - 1);
 
 
@@ -2524,7 +2531,7 @@ public class Index {
 
         Classifier multinomial = (Classifier) new NaiveBayesMultinomial();
         try {
-            multinomial.buildClassifier(isTestingSet );
+            multinomial.buildClassifier(trainingInstances);
             Evaluation evaluation = new Evaluation(isTestingSet);
 
             if(instanceList != null && !instanceList.isEmpty()) {
@@ -2570,11 +2577,11 @@ public class Index {
                             Double d2 = (Double) o2.get("margin");
 
                             if(d1 > d2){
-                                a = 1;
+                                a = -1;
                             }
 
                             if(d1 < d2){
-                                a = -1;
+                                a = 1;
                             }
                             return a;
                         }
@@ -2600,9 +2607,16 @@ public class Index {
             }
 
             String summary = evaluation.toSummaryString();
+            logger.info("Search term : "+ ((StringUtils.isNotBlank(term) ? term : "None")) +"Summary : "+ summary);
+
             double weightedFMeasure = evaluation.weightedFMeasure();
+            logger.info("Search term :"+ ((StringUtils.isNotBlank(term) ? term : "None"))
+                    +" Weighted Measure : "+ weightedFMeasure + ".");
+
             double[][] confusionMatrix = evaluation.confusionMatrix();
-            logger.info("Summary : "+ summary);
+            logger.info("Search term :"+ ((StringUtils.isNotBlank(term) ? term : "None"))
+                    +" Confusion matrix : "+ ((confusionMatrix != null
+                    && confusionMatrix.length > 0) ? confusionMatrix.toString() : "None")+ ".");
 
             if(!orderedTitles.isEmpty()){
                 response.put("orderedByTitles", orderedTitles);
