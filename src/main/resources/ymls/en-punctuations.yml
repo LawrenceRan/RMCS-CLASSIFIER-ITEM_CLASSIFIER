@@ -1,0 +1,11 @@
+## Language : English
+## Comments : This is a list of punctuations found in English language
+## Reference Link : http://www.really-learn-english.com/punctuation-marks.html
+
+- { typeId : 0, signs : [{name : "period", value : "."}, {name : "question mark", value : "?"}, {name : "exclamation mark", value : "!"}, {name : "ellipsis", value : "..."}], comment : "To end a sentence" }
+- { typeId : 1, signs : [{name : "comma", value : ","},{name : "semicolon", value : ";"}], comment : "To separate phrases or items" }
+- { typeId : 2, signs : [{name : "colon", value : ":"}], comment : "To begin a list" }
+- { typeId : 3, signs : [{name : "single quotation marks", value : "&#39; &#39;"}, {name : "double quotation marks", value : "&#34; &#34;"}], comment : "To quote or indicate a title" }
+- { typeId : 4, signs : [{name : "parentheses", value : "( )"}, {name : "brackets", value : "[ ]"}, {name : "braces", value : "{ }"}, {name : "em dash", value : " - "}], comment : "To indicate extra information" }
+- { typeId : 5, signs : [{name : "slash", value : "/"}], comment : "To show alternatives" }
+- { typeId : 6, signs : [{name : "ampersand", value : "&"}, {name : "asterisk", value : "*"}, {name : "at sign", value : "@"}, { name : "bullet", value : "•"}, { name : "degree symbol", value : "°"}, { name : "number sign", value : "#"}, { name : "percent sign", value : "%"}, {name : "underscore symbol", value : "_"}, { name : "copyright symbol", value : "©"}, { name  : "registered trademark symbol" , value : "®"}, { name : "trademark symbol", value : "™"}, {name : "dollar sign", value : "$"}]}
