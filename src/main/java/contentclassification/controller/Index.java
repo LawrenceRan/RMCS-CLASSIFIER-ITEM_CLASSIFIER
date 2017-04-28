@@ -9,11 +9,13 @@ import contentclassification.domain.Categories;
 import contentclassification.domain.Color;
 import contentclassification.domain.ContentAreaGroupings;
 import contentclassification.domain.FabricName;
+import contentclassification.domain.LanguagePunctuations;
 import contentclassification.domain.LanguageSymbols;
 import contentclassification.domain.Languages;
 import contentclassification.domain.LearningImpl;
 import contentclassification.domain.NameAndContentMetaData;
 import contentclassification.domain.POSRESPONSES;
+import contentclassification.domain.PunctuationSign;
 import contentclassification.domain.ResponseCategoryToAttribute;
 import contentclassification.domain.ResponseMap;
 import contentclassification.domain.RestResponseKeys;
@@ -25,6 +27,7 @@ import contentclassification.domain.TotalTermToGroup;
 import contentclassification.domain.WebMetaName;
 import contentclassification.service.ClassificationServiceImpl;
 import contentclassification.service.JsoupService;
+import contentclassification.service.LanguagePunctuationService;
 import contentclassification.service.LearningService;
 import contentclassification.service.SpellCheckerServiceImpl;
 import contentclassification.service.ThirdPartyProviderService;
@@ -109,6 +112,9 @@ public class Index {
 
     @Autowired
     private LearningService learningService;
+
+    @Autowired
+    private LanguagePunctuationService languagePunctuationService;
 
 //    @Autowired
 //    private DomainGraphDBImpl domainGraphDB;
@@ -2307,6 +2313,9 @@ public class Index {
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
 
+        List<PunctuationSign> punctuationSignList
+                = languagePunctuationService.getPunctuationSignsByLanguageAndType(Languages.EN, 0L);
+
         response.put("orderedByTitles", new ArrayList<>());
 
         boolean isSearchTermProvidedAndValid = StringUtils.isNotBlank(term);
@@ -2320,6 +2329,8 @@ public class Index {
                 @SuppressWarnings("unchecked")
                 List<String> requestTitles = objectMapper.readValue(requestBody, List.class);
                 if(requestTitles != null && !requestTitles.isEmpty()){
+                    requestTitles = languagePunctuationService.removePunctuationsFromList(requestTitles,
+                            punctuationSignList);
                     titles.addAll(requestTitles);
                     isRequestBodyValid = true;
                 }
@@ -2327,6 +2338,16 @@ public class Index {
                 logger.warn("Error in parsing JSON body. Message : " + e.getMessage());
             }
         }
+
+        //Get punctuation marks with type id : 0 from search term.
+        logger.info("About to remove punctuation marks with type id : 0 from term. Term : "
+                + (StringUtils.isNotBlank(term) ? term : "None"));
+        if(punctuationSignList != null && !punctuationSignList.isEmpty() && isSearchTermProvidedAndValid){
+            term = languagePunctuationService.removePunctuations(term, punctuationSignList);
+        }
+
+        logger.info("Done removing punctuation marks with type id : 0 from term. Result : "
+                + (StringUtils.isNotBlank(term) ? term : "None"));
 
         String[] termTokens = (isSearchTermProvidedAndValid) ? classificationService.tokenize(term.toLowerCase().trim(), " ") : new String[]{};
 
