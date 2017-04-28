@@ -23,6 +23,7 @@ import contentclassification.domain.RulesEngineDataSet;
 import contentclassification.domain.TFIDFWeightedScore;
 import contentclassification.domain.TermSimilarityToList;
 import contentclassification.domain.TermToGroupScore;
+import contentclassification.domain.TextModificationIndex;
 import contentclassification.domain.TotalTermToGroup;
 import contentclassification.domain.WebMetaName;
 import contentclassification.service.ClassificationServiceImpl;
@@ -76,8 +77,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-;
 
 /**
  * Created by rsl_prod_005 on 5/6/16.
@@ -2323,14 +2322,40 @@ public class Index {
 
         List<String> titles = new ArrayList<>();
 
+        List<TextModificationIndex> textModificationIndices = null;
         if(StringUtils.isNotBlank(requestBody)) {
             ObjectMapper objectMapper = new ObjectMapper();
             try {
                 @SuppressWarnings("unchecked")
                 List<String> requestTitles = objectMapper.readValue(requestBody, List.class);
                 if(requestTitles != null && !requestTitles.isEmpty()){
-                    requestTitles = languagePunctuationService.removePunctuationsFromList(requestTitles,
+                    List<Map> modifiedRequestTitles = languagePunctuationService.removePunctuationsFromList(requestTitles,
                             punctuationSignList);
+
+                    if(!modifiedRequestTitles.isEmpty()){
+
+                        textModificationIndices = new ArrayList<>();
+                        requestTitles.clear();
+
+                        for(Map map : modifiedRequestTitles){
+                            if(map.containsKey("text")){
+                                Object textObj = map.get("text");
+                                if(textObj != null) {
+                                    requestTitles.add(textObj.toString());
+                                }
+                            }
+
+                            if(map.containsKey("modificationIndex")){
+                                Object modificationIndex = map.get("modificationIndex");
+                                if(modificationIndex instanceof TextModificationIndex){
+                                    TextModificationIndex termModification
+                                            = (TextModificationIndex) modificationIndex;
+                                    textModificationIndices.add(termModification);
+                                }
+                            }
+                        }
+                    }
+
                     titles.addAll(requestTitles);
                     isRequestBodyValid = true;
                 }
@@ -2340,10 +2365,28 @@ public class Index {
         }
 
         //Get punctuation marks with type id : 0 from search term.
+        TextModificationIndex termModification = null;
         logger.info("About to remove punctuation marks with type id : 0 from term. Term : "
                 + (StringUtils.isNotBlank(term) ? term : "None"));
+
         if(punctuationSignList != null && !punctuationSignList.isEmpty() && isSearchTermProvidedAndValid){
-            term = languagePunctuationService.removePunctuations(term, punctuationSignList);
+
+            Map<String, Object> termModificationResults
+                    = languagePunctuationService.removePunctuations(term, punctuationSignList);
+
+            if(!termModificationResults.isEmpty()){
+
+                if(termModificationResults.containsKey("text")){
+                    term = termModificationResults.get("text").toString();
+                }
+
+                if(termModificationResults.containsKey("modificationIndex")){
+                    Object modificationIndex = termModificationResults.get("modificationIndex");
+                    if(modificationIndex instanceof TextModificationIndex){
+                        termModification = (TextModificationIndex) modificationIndex;
+                    }
+                }
+            }
         }
 
         logger.info("Done removing punctuation marks with type id : 0 from term. Result : "
@@ -2558,11 +2601,16 @@ public class Index {
             if(instanceList != null && !instanceList.isEmpty()) {
                 for (Instance instance : instanceList) {
                     double[] distribution = multinomial.distributionForInstance(instance);
-                    double d = evaluation.evaluateModelOnce(distribution, instance);
-                    double s = multinomial.classifyInstance(instance);
-                    logger.info("Status");
+                    double evaluateModelOnce = evaluation.evaluateModelOnce(distribution, instance);
+                    double classifyInstance = multinomial.classifyInstance(instance);
+
+                    logger.info("Classifier status : Distribution : "
+                            + Arrays.toString(distribution)
+                            + " Evaluation model once : "+ evaluateModelOnce
+                            + " Classify Instance : "+ classifyInstance);
                 }
             }
+
             double[]  evaluationResults = evaluation.evaluateModel(multinomial, isTestingSet);
             double kbMeansInfo = evaluation.KBMeanInformation();
             FastVector predictions = evaluation.predictions();
@@ -2635,13 +2683,19 @@ public class Index {
                     +" Weighted Measure : "+ weightedFMeasure + ".");
 
             double[][] confusionMatrix = evaluation.confusionMatrix();
+
             logger.info("Search term :"+ ((StringUtils.isNotBlank(term) ? term : "None"))
                     +" Confusion matrix : "+ ((confusionMatrix != null
-                    && confusionMatrix.length > 0) ? confusionMatrix.toString() : "None")+ ".");
+                    && confusionMatrix.length > 0) ? Arrays.toString(confusionMatrix) : "None")+ ".");
+
 
             if(!orderedTitles.isEmpty()){
-                response.put("orderedByTitles", orderedTitles);
+                response.put("term", (termModification != null) ? termModification.getPreValue() : null);
+                List<String> updatedOrderedTitles
+                        = TextModificationIndex.restorePreValue(orderedTitles, textModificationIndices);
+                response.put("orderedByTitles", updatedOrderedTitles);
             }
+
         } catch (Exception e){
             logger.warn("Error in computing multi-nominal naive bayes. Search term : "
                     + ((StringUtils.isNotBlank(term)) ? term : "None") +" Message : "

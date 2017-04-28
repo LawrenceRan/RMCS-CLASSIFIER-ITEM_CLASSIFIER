@@ -3,6 +3,7 @@ package contentclassification.service;
 import contentclassification.domain.LanguagePunctuations;
 import contentclassification.domain.Languages;
 import contentclassification.domain.PunctuationSign;
+import contentclassification.domain.TextModificationIndex;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.util.StringUtil;
 import org.slf4j.Logger;
@@ -13,6 +14,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -141,16 +143,24 @@ public class LanguagePunctuationService {
      * @param punctuationSigns
      * @return
      */
-    public String removePunctuations(String text, List<PunctuationSign> punctuationSigns){
+    public Map<String, Object> removePunctuations(String text, List<PunctuationSign> punctuationSigns){
+        Map<String, Object> updatedMap = new HashMap<>();
         if(punctuationSigns != null && !punctuationSigns.isEmpty()){
+            String incomingText = text;
+
             for(PunctuationSign punctuationSign : punctuationSigns){
                 String value = punctuationSign.getValue();
                 if(StringUtils.isNotBlank(value)){
                     text = text.replace(value, "");
                 }
             }
+
+            TextModificationIndex textModificationIndex = new TextModificationIndex(incomingText, text);
+
+            updatedMap.put("text", text);
+            updatedMap.put("modificationIndex", textModificationIndex);
         }
-        return text;
+        return updatedMap;
     }
 
     /**
@@ -159,12 +169,12 @@ public class LanguagePunctuationService {
      * @param punctuationSigns
      * @return
      */
-    public List<String> removePunctuationsFromList(List<String> texts, List<PunctuationSign> punctuationSigns){
-        List<String> updatedText = new ArrayList<>();
+    public List<Map> removePunctuationsFromList(List<String> texts, List<PunctuationSign> punctuationSigns){
+        List<Map> updatedText = new ArrayList<>();
         if(!texts.isEmpty() && !punctuationSigns.isEmpty()){
             for(String text : texts){
-                text = removePunctuations(text, punctuationSigns);
-                updatedText.add(text);
+                Map<String, Object> updateTextMap = removePunctuations(text, punctuationSigns);
+                updatedText.add(updateTextMap);
             }
         }
         return updatedText;
