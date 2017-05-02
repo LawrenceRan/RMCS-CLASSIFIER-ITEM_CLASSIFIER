@@ -1,6 +1,7 @@
 package contentclassification.config;
 
 import contentclassification.service.DictionaryIndexerService;
+import contentclassification.service.LanguagePunctuationService;
 import contentclassification.service.NotificationService;
 import contentclassification.service.PreLoadTrainingDataFiles;
 import org.slf4j.Logger;
@@ -32,6 +33,9 @@ public class OnStartUp implements ApplicationListener<ContextRefreshedEvent> {
     @Autowired
     private PreLoadTrainingDataFiles preLoadTrainingDataFiles;
 
+    @Autowired
+    private LanguagePunctuationService punctuationService;
+
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         System.setProperty(wordNetDictConfig.getValue(), wordNetDictConfig.getDict());
@@ -49,5 +53,9 @@ public class OnStartUp implements ApplicationListener<ContextRefreshedEvent> {
         logger.info("About to preload training data into temporary directory");
         preLoadTrainingDataFiles.createTemp();
         logger.info("Done setting training data into temporary directory");
+
+        logger.info("About to preload language punctuations into cache.");
+        punctuationService.loadLanguagePunctuationsIntoCache();
+        logger.info("Done loading language punctuations into cache.");
     }
 }

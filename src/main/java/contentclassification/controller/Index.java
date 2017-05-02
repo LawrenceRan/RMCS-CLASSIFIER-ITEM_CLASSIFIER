@@ -9,11 +9,13 @@ import contentclassification.domain.Categories;
 import contentclassification.domain.Color;
 import contentclassification.domain.ContentAreaGroupings;
 import contentclassification.domain.FabricName;
+import contentclassification.domain.LanguagePunctuations;
 import contentclassification.domain.LanguageSymbols;
 import contentclassification.domain.Languages;
 import contentclassification.domain.LearningImpl;
 import contentclassification.domain.NameAndContentMetaData;
 import contentclassification.domain.POSRESPONSES;
+import contentclassification.domain.PunctuationSign;
 import contentclassification.domain.ResponseCategoryToAttribute;
 import contentclassification.domain.ResponseMap;
 import contentclassification.domain.RestResponseKeys;
@@ -21,10 +23,12 @@ import contentclassification.domain.RulesEngineDataSet;
 import contentclassification.domain.TFIDFWeightedScore;
 import contentclassification.domain.TermSimilarityToList;
 import contentclassification.domain.TermToGroupScore;
+import contentclassification.domain.TextModificationIndex;
 import contentclassification.domain.TotalTermToGroup;
 import contentclassification.domain.WebMetaName;
 import contentclassification.service.ClassificationServiceImpl;
 import contentclassification.service.JsoupService;
+import contentclassification.service.LanguagePunctuationService;
 import contentclassification.service.LearningService;
 import contentclassification.service.SpellCheckerServiceImpl;
 import contentclassification.service.ThirdPartyProviderService;
@@ -74,8 +78,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-;
-
 /**
  * Created by rsl_prod_005 on 5/6/16.
  */
@@ -109,6 +111,9 @@ public class Index {
 
     @Autowired
     private LearningService learningService;
+
+    @Autowired
+    private LanguagePunctuationService languagePunctuationService;
 
 //    @Autowired
 //    private DomainGraphDBImpl domainGraphDB;
@@ -2288,29 +2293,107 @@ public class Index {
     }
 
 
+    /**
+     * sort
+     * @param request
+     * @param term
+     * @param requestBody
+     * @return
+     */
     @RequestMapping(value = "/v1/sort/", method = RequestMethod.POST, produces = "application/json;charset=utf-8")
-    public ModelAndView sortByReleaveToSearchTerm(HttpServletRequest request,
+    public ModelAndView sortByRelevanceToSearchTerm(HttpServletRequest request,
                                                   @RequestParam(name = "searchTerm", required = true) String term,
                                                   @RequestBody(required = true) String requestBody){
+        long startDate = new Date().getTime();
+        logger.info("About to process relevance to search terms. Search Term : "
+                + (StringUtils.isNotBlank(term) ? term : "None") + " Body : "
+                + (StringUtils.isNotBlank(requestBody) ? requestBody : "None"));
+
         ModelAndView modelAndView = new ModelAndView(new MappingJackson2JsonView());
         Map<String, Object> response = new HashMap<>();
 
+        List<PunctuationSign> punctuationSignList
+                = languagePunctuationService.getPunctuationSignsByLanguageAndType(Languages.EN, 0L);
+
+        response.put("orderedByTitles", new ArrayList<>());
+
+        boolean isSearchTermProvidedAndValid = StringUtils.isNotBlank(term);
+        boolean isRequestBodyValid = false;
+
         List<String> titles = new ArrayList<>();
 
+        List<TextModificationIndex> textModificationIndices = null;
         if(StringUtils.isNotBlank(requestBody)) {
             ObjectMapper objectMapper = new ObjectMapper();
             try {
                 @SuppressWarnings("unchecked")
                 List<String> requestTitles = objectMapper.readValue(requestBody, List.class);
                 if(requestTitles != null && !requestTitles.isEmpty()){
+                    List<Map> modifiedRequestTitles = languagePunctuationService.removePunctuationsFromList(requestTitles,
+                            punctuationSignList);
+
+                    if(!modifiedRequestTitles.isEmpty()){
+
+                        textModificationIndices = new ArrayList<>();
+                        requestTitles.clear();
+
+                        for(Map map : modifiedRequestTitles){
+                            if(map.containsKey("text")){
+                                Object textObj = map.get("text");
+                                if(textObj != null) {
+                                    requestTitles.add(textObj.toString());
+                                }
+                            }
+
+                            if(map.containsKey("modificationIndex")){
+                                Object modificationIndex = map.get("modificationIndex");
+                                if(modificationIndex instanceof TextModificationIndex){
+                                    TextModificationIndex termModification
+                                            = (TextModificationIndex) modificationIndex;
+                                    textModificationIndices.add(termModification);
+                                }
+                            }
+                        }
+                    }
+
                     titles.addAll(requestTitles);
+                    isRequestBodyValid = true;
                 }
             } catch (Exception e) {
                 logger.warn("Error in parsing JSON body. Message : " + e.getMessage());
             }
         }
 
-        String[] termTokens = classificationService.tokenize(term.toLowerCase().trim(), " ");
+        //Get punctuation marks with type id : 0 from search term.
+        TextModificationIndex termModification = null;
+        logger.info("About to remove punctuation marks with type id : 0 from term. Term : "
+                + (StringUtils.isNotBlank(term) ? term : "None"));
+
+        if(punctuationSignList != null && !punctuationSignList.isEmpty() && isSearchTermProvidedAndValid){
+
+            Map<String, Object> termModificationResults
+                    = languagePunctuationService.removePunctuations(term, punctuationSignList);
+
+            if(!termModificationResults.isEmpty()){
+
+                if(termModificationResults.containsKey("text")){
+                    term = termModificationResults.get("text").toString();
+                }
+
+                if(termModificationResults.containsKey("modificationIndex")){
+                    Object modificationIndex = termModificationResults.get("modificationIndex");
+                    if(modificationIndex instanceof TextModificationIndex){
+                        termModification = (TextModificationIndex) modificationIndex;
+                    }
+                }
+            }
+        }
+
+        logger.info("Done removing punctuation marks with type id : 0 from term. Result : "
+                + (StringUtils.isNotBlank(term) ? term : "None"));
+
+        String[] termTokens = (isSearchTermProvidedAndValid) ? classificationService.tokenize(term.toLowerCase().trim(), " ") : new String[]{};
+
         List<String> termTokensAsList = Arrays.asList(termTokens);
 
         Set<String> setB = new HashSet<>();
@@ -2319,7 +2402,7 @@ public class Index {
         logger.info("About to stem all tokens in search term provided by user. Incoming search terms : "
                 + Arrays.toString(setB.toArray()));
 
-        Set<String> stemmedSet = getStemSet(setB);
+        List<String> stemmedSet = classificationService.getStems(setB.toArray(new String[setB.size()]));
         setB.addAll(stemmedSet);
 
         logger.info("Done stemming all tokens in search term provided. Unique terms : "
@@ -2338,7 +2421,7 @@ public class Index {
 
         List<String> orderedTitles = new ArrayList<>();
 
-        if(!titles.isEmpty()){
+        if(!titles.isEmpty() && isRequestBodyValid && isSearchTermProvidedAndValid){
             for(String title : titles){
                 Map<String, Object> map = new HashMap<>();
                 String[] titleToken = classificationService.tokenize(title.toLowerCase().trim(), " ");
@@ -2349,7 +2432,7 @@ public class Index {
                 logger.info("About to stem all tokens in title term provided by user. Incoming search terms : "
                         + Arrays.toString(setA.toArray()));
 
-                stemmedSet = getStemSet(setA);
+                stemmedSet = classificationService.getStems(setA.toArray(new String[setB.size()]));
                 setA.addAll(stemmedSet);
 
                 logger.info("Done stemming all tokens in title term provided. Unique terms : "
@@ -2424,7 +2507,7 @@ public class Index {
         trainingVector.addElement(classAttribute);
 
 
-        Instances trainingInstances = new Instances("trainingRel", trainingVector, 10);
+        Instances trainingInstances = new Instances("trainingData", trainingVector, 10);
         trainingInstances.setClassIndex(trainingVector.size() - 1);
 
         Instance trainingInstance = new Instance(trainingVector.size());
@@ -2446,12 +2529,19 @@ public class Index {
 //        trainingInstance3.setValue((Attribute) trainingVector.elementAt(2), "no");
         trainingInstance3.setValue((Attribute) trainingVector.elementAt(1), "moderate");
 
+        Instance trainingInstance4 = new Instance(trainingVector.size());
+        trainingInstance4.setValue((Attribute) trainingVector.elementAt(0), 1.0);
+//        trainingInstance3.setValue((Attribute) trainingVector.elementAt(1), 1);
+//        trainingInstance3.setValue((Attribute) trainingVector.elementAt(2), "no");
+        trainingInstance4.setValue((Attribute) trainingVector.elementAt(1), "high");
+
         trainingInstances.add(trainingInstance);
         trainingInstances.add(trainingInstance2);
         trainingInstances.add(trainingInstance3);
+        trainingInstances.add(trainingInstance4);
 
 
-        Instances isTestingSet = new Instances("trainingData", trainingVector, 10);
+        Instances isTestingSet = new Instances("factualData", trainingVector, 10);
         isTestingSet.setClassIndex(trainingVector.size() - 1);
 
 
@@ -2505,17 +2595,22 @@ public class Index {
 
         Classifier multinomial = (Classifier) new NaiveBayesMultinomial();
         try {
-            multinomial.buildClassifier(isTestingSet );
+            multinomial.buildClassifier(trainingInstances);
             Evaluation evaluation = new Evaluation(isTestingSet);
 
             if(instanceList != null && !instanceList.isEmpty()) {
                 for (Instance instance : instanceList) {
                     double[] distribution = multinomial.distributionForInstance(instance);
-                    double d = evaluation.evaluateModelOnce(distribution, instance);
-                    double s = multinomial.classifyInstance(instance);
-                    logger.info("Status");
+                    double evaluateModelOnce = evaluation.evaluateModelOnce(distribution, instance);
+                    double classifyInstance = multinomial.classifyInstance(instance);
+
+                    logger.info("Classifier status : Distribution : "
+                            + Arrays.toString(distribution)
+                            + " Evaluation model once : "+ evaluateModelOnce
+                            + " Classify Instance : "+ classifyInstance);
                 }
             }
+
             double[]  evaluationResults = evaluation.evaluateModel(multinomial, isTestingSet);
             double kbMeansInfo = evaluation.KBMeanInformation();
             FastVector predictions = evaluation.predictions();
@@ -2551,11 +2646,11 @@ public class Index {
                             Double d2 = (Double) o2.get("margin");
 
                             if(d1 > d2){
-                                a = 1;
+                                a = -1;
                             }
 
                             if(d1 < d2){
-                                a = -1;
+                                a = 1;
                             }
                             return a;
                         }
@@ -2581,18 +2676,40 @@ public class Index {
             }
 
             String summary = evaluation.toSummaryString();
+            logger.info("Search term : "+ ((StringUtils.isNotBlank(term) ? term : "None")) +"Summary : "+ summary);
+
             double weightedFMeasure = evaluation.weightedFMeasure();
+            logger.info("Search term :"+ ((StringUtils.isNotBlank(term) ? term : "None"))
+                    +" Weighted Measure : "+ weightedFMeasure + ".");
+
             double[][] confusionMatrix = evaluation.confusionMatrix();
-            logger.info("Summary : "+ summary);
+
+            logger.info("Search term :"+ ((StringUtils.isNotBlank(term) ? term : "None"))
+                    +" Confusion matrix : "+ ((confusionMatrix != null
+                    && confusionMatrix.length > 0) ? Arrays.toString(confusionMatrix) : "None")+ ".");
+
 
             if(!orderedTitles.isEmpty()){
-                response.put("orderedByTitles", orderedTitles);
+                response.put("term", (termModification != null) ? termModification.getPreValue() : null);
+                List<String> updatedOrderedTitles
+                        = TextModificationIndex.restorePreValue(orderedTitles, textModificationIndices);
+                response.put("orderedByTitles", updatedOrderedTitles);
             }
+
         } catch (Exception e){
-            logger.warn("Error in computing multi-nominal naive bayes. Message : "+ e.getMessage());
+            logger.warn("Error in computing multi-nominal naive bayes. Search term : "
+                    + ((StringUtils.isNotBlank(term)) ? term : "None") +" Message : "
+                    + e.getMessage());
         }
 
         modelAndView.addAllObjects(response);
+        long endTime = new Date().getTime();
+        double diff = (endTime - startDate) * 0.001;
+
+        logger.info("Done process relevance to search terms. Search Term : "
+                + (StringUtils.isNotBlank(term) ? term : "None") + " Time elapse : "
+                + diff + "s");
+
         return modelAndView;
     }
 

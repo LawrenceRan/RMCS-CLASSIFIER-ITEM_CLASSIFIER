@@ -167,6 +167,7 @@
                     <include>en-ner-time.bin</include>
                     <include>labels_en.ttl</include>
                     <include>drl/classification_rules.drl</include>
+                    <include>ymls/en-punctuations.yml</include>
                 </includes>
             </resource>
         </resources>

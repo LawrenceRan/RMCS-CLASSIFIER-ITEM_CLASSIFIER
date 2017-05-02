@@ -15,7 +15,6 @@ import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
 
 import javax.annotation.Resource;
-import java.net.InetSocketAddress;
 
 /**
  * Created by rsl_prod_005 on 3/29/17.

@@ -39,7 +39,7 @@ public class AppUtils {
                 URL urlObj = new URL(url);
                 isValid = true;
             } catch (MalformedURLException e){
-
+                logger.warn("Error in creating URL object. Message : "+ e.getMessage());
             }
         }
         return isValid;
@@ -85,7 +85,7 @@ public class AppUtils {
         try{
             url = new URL(urlStr);
         } catch (MalformedURLException ex){
-            ex.printStackTrace();
+            logger.warn("Error in creating URL object. Message : "+ ex.getMessage());
         }
         return url;
     }
