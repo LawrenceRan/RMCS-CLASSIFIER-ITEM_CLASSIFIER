@@ -263,6 +263,11 @@ public class DictionaryIndexerService {
         return wordAndDefinitions;
     }
 
+    /**
+     * this method is used get the list of words from a file.
+     * @param fileName
+     * @return
+     */
     public List<WordAndDefinition> loadWordsFromFile(String fileName){
         List<WordAndDefinition> words = null;
         if(StringUtils.isNotBlank(fileName)){
